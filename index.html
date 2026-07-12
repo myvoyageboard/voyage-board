@@ -300,6 +300,124 @@
     #mobile-trip-select { display: block; }
     #toolbar, #timeline { padding-left: 16px; padding-right: 16px; }
   }
+
+
+  /* Mobile layout hardening: vertical scrolling only, no sideways canvas. */
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
+  #app, #main, #toolbar, #timeline { min-width: 0; max-width: 100%; }
+  #app { width: 100%; height: 100vh; height: 100dvh; }
+  img, svg, input, select, textarea, button { max-width: 100%; }
+  .field-input { min-width: 0; }
+
+  @media (max-width: 720px) {
+    body { overflow: hidden; }
+    #app { touch-action: pan-y; }
+    #main { width: 100vw; height: 100dvh; overflow: hidden; }
+    #toolbar { padding: 12px; flex-shrink: 0; }
+    #mobile-trip-select { margin-bottom: 10px; }
+    .toolbar-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      width: 100%;
+    }
+    #add-entry-btn, .toolbar-settings {
+      width: 100%;
+      min-width: 0;
+      min-height: 42px;
+      justify-content: center;
+      padding: 9px 7px;
+      font-size: 11.5px;
+      white-space: normal;
+      line-height: 1.2;
+      text-align: center;
+    }
+    .toolbar-hint { grid-column: 1 / -1; font-size: 10.5px; line-height: 1.45; }
+    #timeline {
+      width: 100%;
+      padding: 18px 10px 28px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+    .date-group, .date-header, .row { width: 100%; max-width: 100%; min-width: 0; }
+    .date-header { gap: 8px; }
+    .row { gap: 7px; padding-bottom: 14px; }
+    .row-time { width: 48px; font-size: 10px; padding-top: 7px; }
+    .spine { width: 16px; }
+    .event-card { min-width: 0; padding: 11px 12px; }
+    .event-top { display: block; min-width: 0; }
+    .event-title, .event-loc, .event-notes {
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .event-until { display: inline-block; margin: 5px 0 0; }
+    .event-side {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 9px;
+      gap: 8px;
+    }
+    .event-actions, .transport-actions { opacity: 1; }
+    .transport-row > div:last-child { min-width: 0 !important; gap: 0 !important; }
+    .transport-line { display: none; }
+    .transport-chip {
+      flex: 1 1 auto;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      padding: 8px 10px;
+      border-radius: 12px;
+      flex-wrap: wrap;
+    }
+    .transport-title { flex: 1 1 120px; max-width: none; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+    .transport-meta, .transport-price { flex: 0 0 auto; }
+    .transport-actions { margin-left: auto; }
+    .readonly-banner { margin: 0 10px; }
+
+    .overlay { padding: 0; align-items: stretch; overflow: hidden; }
+    .modal, .overlay .modal[style] {
+      width: 100vw !important;
+      max-width: 100vw !important;
+      height: 100dvh;
+      max-height: 100dvh;
+      margin: 0;
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-head { flex: 0 0 auto; padding: 18px 16px 0; }
+    .modal-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 14px 16px 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .modal-foot { flex: 0 0 auto; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
+    .grid-2, .grid-3 { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .grid-3 > div[style*="grid-column"] { grid-column: auto !important; }
+    .kind-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .field-row, .collab-link-row, .collab-user-row, .member-row { min-width: 0; flex-wrap: wrap; }
+    .field-row .field-action, .collab-link-row .field-action { min-height: 40px; }
+    .collab-link-row .field-input { flex: 1 1 190px; }
+    .collab-user-row > span { min-width: 0; overflow-wrap: anywhere; }
+    .member-email { flex-basis: 100%; }
+    .member-row select { width: auto; flex: 1 1 150px; }
+    .custom-category-row { grid-template-columns: 56px minmax(0, 1fr); }
+    .custom-category-row > :last-child { grid-column: 1 / -1; }
+  }
+
 </style>
 </head>
 <body>
@@ -499,6 +617,7 @@
           <button class="btn btn-primary" id="collab-login-btn">Send sign-in link</button>
         </div>
         <div id="collab-auth-message" class="collab-message"></div>
+        <div id="collab-session-note" class="field-help">Normal browsing keeps you signed in on this device. Private browsing forgets the session when its private tabs are closed.</div>
       </div>
 
       <div id="collab-signed-panel" class="collab-panel" style="display:none;">
@@ -585,8 +704,8 @@ const COLLAB_CONFIG = window.VOYAGE_BOARD_CONFIG || {
   // Fill these two values after creating the Supabase project described in
   // voyage-board-collaboration-setup.md. The publishable/anon key is safe to
   // expose in a browser only when the supplied Row Level Security policies are installed.
-  supabaseUrl: "https://ssqdatwuoefjzpmseyhm.supabase.co",
-  supabasePublishableKey: "sb_publishable_d1cBXwtzJIgzDAbX1FU3-A_RFk42Clt",
+  supabaseUrl: "PASTE_YOUR_SUPABASE_URL_HERE",
+  supabasePublishableKey: "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE",
 };
 const CLIENT_ID = (crypto.randomUUID ? crypto.randomUUID() : uid());
 
@@ -802,6 +921,15 @@ function makeSeed() {
   return { trips: [trip], items, activeTripId: tripId, settings: { language: "en", theme: "dark" } };
 }
 
+function makeEmptyState() {
+  return { trips: [], items: [], activeTripId: null, settings: { language: "en", theme: "dark" } };
+}
+
+function hasSharedRouteAtStartup() {
+  const params = new URLSearchParams(window.location.search);
+  return params.has("trip") || params.has("invite");
+}
+
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -864,7 +992,7 @@ function normalizeState(raw) {
   return normalized;
 }
 
-let state = normalizeState(load() || makeSeed());
+let state = normalizeState(load() || (hasSharedRouteAtStartup() ? makeEmptyState() : makeSeed()));
 let editingItemId = null;
 let editingTripId = null;
 let pendingDelete = null;
@@ -2061,7 +2189,7 @@ const COLLAB_I18N = {
     share:"↗ Share", localOnly:"Local only", synced:"Synced", saving:"Saving…", syncError:"Sync error", viewOnlyStatus:"View only",
     viewOnlyBanner:"View-only access — changes are disabled.", shareTitle:"Share & collaborate", done:"Done", email:"Email",
     authHelp:"Sign in by email before publishing or opening a shared trip.", sendSignIn:"Send sign-in link", signOut:"Sign out",
-    signInSent:"A sign-in link was sent. Return here after opening it.", configMissing:"Cloud collaboration is not configured yet. Add the Supabase URL and publishable key to COLLAB_CONFIG, run the supplied SQL, and host this file over HTTPS.",
+    signInSent:"A sign-in link was sent. Open it in this same browser.", sessionNote:"Normal browsing keeps you signed in on this device. Private browsing forgets the session when all private tabs are closed.", resendIn:"Send again in {seconds}s", emailRateLimited:"Too many sign-in emails were requested. Wait for the email limit to reset, or configure custom SMTP in Supabase.", configMissing:"Cloud collaboration is not configured yet. Add the Supabase URL and publishable key to COLLAB_CONFIG, run the supplied SQL, and host this file over HTTPS.",
     publishTitle:"Publish this trip", publishHelp:"This trip is currently stored only in this browser. Publishing creates a cloud copy and a stable shared URL.", publish:"Create shared trip",
     yourAccess:"Your access", owner:"Owner", admin:"Administrator", editor:"Can edit", viewer:"View only",
     memberLink:"Link for existing members", memberLinkHelp:"People must already be members. Create an invitation below for a new person.", copy:"Copy", copied:"Copied.",
@@ -2076,7 +2204,7 @@ const COLLAB_I18N = {
     share:"↗ 分享", localOnly:"僅儲存於本機", synced:"已同步", saving:"儲存中…", syncError:"同步錯誤", viewOnlyStatus:"僅供檢視",
     viewOnlyBanner:"目前為僅供檢視權限，無法修改內容。", shareTitle:"分享與共同編輯", done:"完成", email:"電子郵件",
     authHelp:"發布或開啟共享旅程前，請先使用電子郵件登入。", sendSignIn:"傳送登入連結", signOut:"登出",
-    signInSent:"登入連結已寄出；開啟連結後請回到此頁。", configMissing:"尚未設定雲端協作。請在 COLLAB_CONFIG 填入 Supabase URL 與 publishable key、執行隨附 SQL，並以 HTTPS 發布此檔案。",
+    signInSent:"登入連結已寄出；請在同一個瀏覽器中開啟。", sessionNote:"一般瀏覽會在此裝置保留登入狀態；關閉所有無痕分頁後，無痕瀏覽會清除登入狀態。", resendIn:"{seconds} 秒後可再次傳送", emailRateLimited:"登入郵件要求過多。請等待寄送限制重設，或在 Supabase 設定自訂 SMTP。", configMissing:"尚未設定雲端協作。請在 COLLAB_CONFIG 填入 Supabase URL 與 publishable key、執行隨附 SQL，並以 HTTPS 發布此檔案。",
     publishTitle:"發布此旅程", publishHelp:"此旅程目前只存在此瀏覽器。發布後會建立雲端副本與固定共享網址。", publish:"建立共享旅程",
     yourAccess:"您的權限", owner:"建立者", admin:"管理者", editor:"可編輯", viewer:"僅供檢視",
     memberLink:"現有成員連結", memberLinkHelp:"此連結只供已加入的成員使用；新增成員請建立下方邀請。", copy:"複製", copied:"已複製。",
@@ -2091,7 +2219,7 @@ const COLLAB_I18N = {
     share:"↗ 共有", localOnly:"ローカルのみ", synced:"同期済み", saving:"保存中…", syncError:"同期エラー", viewOnlyStatus:"閲覧のみ",
     viewOnlyBanner:"閲覧専用です。変更はできません。", shareTitle:"共有と共同編集", done:"完了", email:"メール",
     authHelp:"共有旅行を公開または開く前に、メールでサインインしてください。", sendSignIn:"サインインリンクを送信", signOut:"サインアウト",
-    signInSent:"サインインリンクを送信しました。リンクを開いた後、このページに戻ってください。", configMissing:"クラウド共同編集は未設定です。COLLAB_CONFIG に Supabase URL と publishable key を入力し、付属 SQL を実行して、このファイルを HTTPS で公開してください。",
+    signInSent:"サインインリンクを送信しました。同じブラウザで開いてください。", sessionNote:"通常のブラウズではこの端末にサインイン状態が保存されます。すべてのプライベートタブを閉じると状態は消去されます。", resendIn:"{seconds}秒後に再送信", emailRateLimited:"サインインメールの要求が多すぎます。制限の解除を待つか、Supabase でカスタム SMTP を設定してください。", configMissing:"クラウド共同編集は未設定です。COLLAB_CONFIG に Supabase URL と publishable key を入力し、付属 SQL を実行して、このファイルを HTTPS で公開してください。",
     publishTitle:"この旅行を公開", publishHelp:"現在、この旅行はこのブラウザだけに保存されています。公開するとクラウドコピーと固定共有 URL が作成されます。", publish:"共有旅行を作成",
     yourAccess:"あなたの権限", owner:"作成者", admin:"管理者", editor:"編集可能", viewer:"閲覧のみ",
     memberLink:"既存メンバー用リンク", memberLinkHelp:"このリンクは既に参加済みのメンバー用です。新しい人には下の招待を作成してください。", copy:"コピー", copied:"コピーしました。",
@@ -2111,7 +2239,7 @@ function ct(key, variables = {}) {
 function applyCollabTranslations() {
   const set = (id, key) => { const element = document.getElementById(id); if (element) element.textContent = ct(key); };
   set("share-trip-btn", "share"); set("readonly-banner", "viewOnlyBanner"); set("share-modal-title", "shareTitle"); set("share-done", "done");
-  set("collab-email-label", "email"); set("collab-auth-help", "authHelp"); set("collab-login-btn", "sendSignIn"); set("collab-logout-btn", "signOut");
+  set("collab-email-label", "email"); set("collab-auth-help", "authHelp"); set("collab-session-note", "sessionNote"); set("collab-login-btn", "sendSignIn"); set("collab-logout-btn", "signOut");
   set("publish-title", "publishTitle"); set("publish-help", "publishHelp"); set("publish-trip-btn", "publish"); set("access-label", "yourAccess");
   set("shared-link-label", "memberLink"); set("shared-link-help", "memberLinkHelp"); set("copy-share-link-btn", "copy"); set("invite-title", "inviteTitle");
   set("create-invite-btn", "createInvite"); set("invite-link-label", "invitationLink"); set("copy-invite-link-btn", "copy"); set("email-invite-btn", "emailInvite"); set("members-title", "members");
@@ -2401,11 +2529,41 @@ document.getElementById("share-trip-btn").addEventListener("click", openShareMod
 document.getElementById("share-close").addEventListener("click", closeShareModal);
 document.getElementById("share-done").addEventListener("click", closeShareModal);
 document.getElementById("share-overlay").addEventListener("click", event => { if (event.target.id === "share-overlay") closeShareModal(); });
+let signInCooldownTimer = null;
+function startSignInCooldown(seconds = 60) {
+  const button = document.getElementById("collab-login-btn");
+  clearInterval(signInCooldownTimer);
+  let remaining = seconds;
+  button.disabled = true;
+  button.textContent = ct("resendIn", { seconds: remaining });
+  signInCooldownTimer = setInterval(() => {
+    remaining -= 1;
+    if (remaining <= 0) {
+      clearInterval(signInCooldownTimer);
+      signInCooldownTimer = null;
+      button.disabled = false;
+      button.textContent = ct("sendSignIn");
+      return;
+    }
+    button.textContent = ct("resendIn", { seconds: remaining });
+  }, 1000);
+}
+
 document.getElementById("collab-login-btn").addEventListener("click", async () => {
   const email = document.getElementById("collab-login-email").value.trim();
   if (!/^\S+@\S+\.\S+$/.test(email)) return setCollabMessage(ct("invalidEmail"), true, "collab-auth-message");
+  const button = document.getElementById("collab-login-btn");
+  button.disabled = true;
   const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href.split("#")[0] } });
-  setCollabMessage(error ? error.message : ct("signInSent"), Boolean(error), "collab-auth-message");
+  if (error) {
+    const rateLimited = /rate limit|too many requests/i.test(error.message || "");
+    setCollabMessage(rateLimited ? ct("emailRateLimited") : error.message, true, "collab-auth-message");
+    button.disabled = false;
+    button.textContent = ct("sendSignIn");
+    return;
+  }
+  setCollabMessage(ct("signInSent"), false, "collab-auth-message");
+  startSignInCooldown(60);
 });
 document.getElementById("collab-logout-btn").addEventListener("click", async () => { await supabaseClient.auth.signOut(); collabUser = null; refreshSharePanel(); });
 document.getElementById("publish-trip-btn").addEventListener("click", publishActiveTrip);
