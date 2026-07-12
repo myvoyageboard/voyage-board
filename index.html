@@ -1,0 +1,2445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voyage Board — Travel Schedule</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Serif+JP:wght@400;500;600;700&family=Noto+Serif+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --ink: #090D14;
+    --panel: #111824;
+    --panel-2: #1B2636;
+    --border: #33445D;
+    --text-hi: #F8FBFF;
+    --text-lo: #B7C4D6;
+    --amber: #FFC247;
+    --danger: #FF7867;
+    --hover: rgba(255,255,255,0.065);
+    --soft: rgba(255,255,255,0.045);
+    --overlay-bg: rgba(4,7,12,0.76);
+    --flip-top: #24334A;
+    --flip-bottom: #111824;
+    --shadow: rgba(0,0,0,0.50);
+    --font-ui: "JetBrains Mono", "FangSong", "STFangsong", "FangSong_GB2312", "Noto Serif TC", "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", monospace;
+  }
+  html[data-theme="light"] {
+    color-scheme: light;
+    --ink: #F2F6FB;
+    --panel: #FFFFFF;
+    --panel-2: #E9F0F8;
+    --border: #C4D1E0;
+    --text-hi: #142238;
+    --text-lo: #5E6F84;
+    --amber: #E98A00;
+    --danger: #D94B3D;
+    --hover: rgba(20,45,80,0.07);
+    --soft: rgba(20,45,80,0.045);
+    --overlay-bg: rgba(24,39,58,0.42);
+    --flip-top: #FFFFFF;
+    --flip-bottom: #E8EFF7;
+    --shadow: rgba(39,60,86,0.22);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--ink);
+    font-family: var(--font-ui);
+    color: var(--text-hi);
+    -webkit-font-smoothing: antialiased;
+  }
+  .font-display { font-family: var(--font-ui); font-weight: 600; }
+  .font-mono { font-family: var(--font-ui); }
+
+  #app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* Scrollbars */
+  .scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scroll::-webkit-scrollbar-track { background: transparent; }
+  .scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+
+  /* Sidebar */
+  #sidebar {
+    width: 260px; flex-shrink: 0; display: flex; flex-direction: column;
+    border-right: 1px solid var(--border); background: var(--panel);
+  }
+  .brand { display: flex; align-items: center; gap: 8px; padding: 22px 20px 14px; }
+  .brand-badge { width: 32px; height: 32px; border-radius: 8px; background: var(--amber); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .brand-title { font-size: 15px; letter-spacing: 0.03em; }
+
+  .section-label { font-family: var(--font-ui); font-size: 11px; letter-spacing: 0.12em; color: var(--text-lo); padding: 0 8px; margin-bottom: 8px; }
+  #trip-list { flex: 1; overflow-y: auto; padding: 0 12px 16px; }
+
+  .ticket-stub {
+    position: relative; display: flex; align-items: center; gap: 12px;
+    border-radius: 10px; padding: 12px; margin-bottom: 8px; cursor: pointer;
+    border: 1px solid transparent; background: transparent; width: 100%; text-align: left;
+    color: var(--text-hi); font-family: inherit; transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+    --trip-color: var(--amber);
+  }
+  .ticket-stub:hover { background: var(--hover); }
+  .ticket-stub.active {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--trip-color) 22%, var(--panel-2)), var(--panel-2));
+    border-color: var(--trip-color);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--trip-color) 28%, transparent), 0 8px 24px color-mix(in srgb, var(--trip-color) 12%, transparent);
+  }
+  .ticket-stub::after { content: ""; position: absolute; right: 0; top: 6px; bottom: 6px; border-right: 1.5px dashed var(--border); }
+  .ticket-bar { width: 8px; height: 36px; border-radius: 7px; flex-shrink: 0; background: var(--trip-color); box-shadow: 0 0 14px color-mix(in srgb, var(--trip-color) 55%, transparent); }
+  .ticket-info { min-width: 0; flex: 1; }
+  .ticket-name { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ticket-meta { display: block; font-family: var(--font-ui); font-size: 11px; color: var(--text-lo); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .ticket-chev { color: var(--text-lo); opacity: 0.25; flex-shrink: 0; }
+  .ticket-stub.active .ticket-chev { opacity: 1; }
+  .ticket-stub[draggable="true"] { cursor: grab; }
+  .ticket-stub.trip-dragging { opacity: 0.35; }
+  .ticket-stub.trip-drag-over-top { box-shadow: inset 0 2px 0 var(--amber); }
+  .ticket-stub.trip-drag-over-bottom { box-shadow: inset 0 -2px 0 var(--amber); }
+
+  #new-trip-btn {
+    width: 100%; border: 1px dashed var(--border); border-radius: 10px; padding: 10px;
+    color: var(--text-lo); background: transparent; font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit;
+  }
+  #new-trip-btn:hover { background: var(--soft); }
+
+  #spend-box { border-top: 1px solid var(--border); padding: 16px 20px; }
+  #spend-values { font-size: 20px; color: var(--amber); }
+  #spend-values .empty { font-size: 13px; color: var(--text-lo); }
+  #spend-breakdown { margin-top: 10px; display: flex; flex-direction: column; gap: 7px; }
+  .spend-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+  .spend-row-label { display: flex; align-items: center; gap: 6px; color: var(--text-lo); min-width: 0; }
+  .spend-row-label span.cat-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .spend-row-amt { font-family: var(--font-ui); color: var(--text-hi); white-space: nowrap; flex-shrink: 0; }
+
+  /* Main */
+  #main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  #toolbar { border-bottom: 1px solid var(--border); padding: 20px 32px; }
+  #mobile-trip-select { display: none; width: 100%; margin-bottom: 12px; background: var(--panel-2); border: 1px solid var(--border); color: var(--text-hi); border-radius: 8px; padding: 8px; font-family: inherit; font-size: 13px; }
+
+  .toolbar-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  #add-entry-btn {
+    display: flex; align-items: center; gap: 8px; border: none; border-radius: 10px;
+    padding: 11px 18px; background: var(--amber); color: #171A21; font-weight: 600;
+    font-family: var(--font-ui); font-size: 13.5px; cursor: pointer;
+  }
+  #add-entry-btn:hover { filter: brightness(1.06); }
+  .toolbar-hint { font-size: 12.5px; color: var(--text-lo); }
+  .toolbar-settings { border: 1px solid var(--border); background: var(--panel-2); }
+  .toolbar-settings:hover { color: var(--text-hi); border-color: var(--text-lo); }
+
+  /* Timeline */
+  #timeline { flex: 1; overflow-y: auto; padding: 26px 32px; }
+  .date-group { margin-top: 28px; }
+  .date-group:first-child { margin-top: 0; }
+  .date-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .flip-badge {
+    width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
+    background: linear-gradient(180deg, var(--flip-top) 0%, var(--flip-bottom) 100%);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; position: relative;
+  }
+  .flip-badge::before { content: ""; position: absolute; left: 4px; right: 4px; top: 50%; height: 1px; background: rgba(255,255,255,0.08); }
+  .flip-day { font-family: var(--font-ui); font-weight: 500; font-size: 14px; color: var(--amber); }
+  .date-dow { font-family: var(--font-ui); font-size: 11px; letter-spacing: 0.1em; color: var(--text-lo); }
+  .date-full { font-size: 13px; }
+  .date-rule { height: 1px; background: var(--border); flex: 1; }
+
+  .row { display: flex; gap: 12px; padding-bottom: 20px; cursor: grab; border-radius: 10px; transition: opacity 0.15s; }
+  .row:active { cursor: grabbing; }
+  .row.dragging { opacity: 0.35; }
+  .row.drag-over-top .event-card,
+  .row.drag-over-top .transport-chip { box-shadow: inset 0 2px 0 var(--amber); }
+  .row.drag-over-bottom .event-card,
+  .row.drag-over-bottom .transport-chip { box-shadow: inset 0 -2px 0 var(--amber); }
+  .date-group.drag-over-empty { outline: 1.5px dashed var(--amber); outline-offset: 6px; border-radius: 10px; }
+  .row-time { width: 64px; flex-shrink: 0; text-align: right; font-family: var(--font-ui); font-size: 12px; color: var(--text-lo); padding-top: 8px; }
+  .spine { width: 24px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; }
+  .spine-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; box-shadow: 0 0 0 4px var(--panel); }
+  .spine-line { width: 1px; flex: 1; background: var(--border); margin-top: 4px; }
+
+  .event-card {
+    flex: 1; min-width: 0; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--panel); padding: 12px 16px; transition: transform 0.1s, border-color 0.15s;
+  }
+  .event-card:hover { transform: translateY(-1px); }
+  .event-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .kind-pill { display: inline-flex; align-items: center; gap: 5px; height: 20px; border-radius: 999px; padding: 0 8px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.03em; }
+  .event-until { font-family: var(--font-ui); font-size: 11px; color: var(--text-lo); margin-left: 8px; }
+  .event-title { margin-top: 6px; font-family: var(--font-ui); font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .event-loc { margin-top: 3px; display: flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--text-lo); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .event-loc a { color: inherit; text-decoration: none; overflow: hidden; text-overflow: ellipsis; }
+  .event-loc a:hover { color: var(--amber); text-decoration: underline; }
+  .event-notes { margin-top: 6px; font-size: 12.5px; font-style: italic; color: var(--text-lo); }
+  .event-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+  .event-price { font-family: var(--font-ui); font-size: 13px; color: var(--amber); }
+  .event-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+  .event-card:hover .event-actions { opacity: 1; }
+  .icon-btn { width: 24px; height: 24px; border-radius: 6px; border: none; background: transparent; color: var(--text-lo); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .icon-btn:hover { background: var(--hover); }
+  .icon-btn.danger:hover { color: var(--danger); }
+
+  .transport-row { align-items: center; }
+  .transport-line { flex: 1; height: 0; border-top: 1.5px dashed var(--dash-color); }
+  .transport-chip {
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0; border-radius: 999px;
+    padding: 7px 12px; border: 1px solid var(--dash-border); background: var(--dash-bg);
+  }
+  .transport-title { font-size: 12.5px; font-weight: 500; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .transport-meta { font-family: var(--font-ui); font-size: 11px; color: var(--text-lo); }
+  .transport-price { font-family: var(--font-ui); font-size: 11.5px; color: var(--amber); }
+  .transport-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; margin-left: 2px; }
+  .transport-row:hover .transport-actions { opacity: 1; }
+
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px 20px; color: var(--text-lo); }
+  .empty-state .big { font-family: var(--font-ui); font-weight: 600; font-size: 15px; color: var(--text-hi); margin-top: 10px; }
+  .empty-state .small { font-size: 13px; margin-top: 4px; max-width: 320px; }
+
+  /* Modal */
+  .overlay { position: fixed; inset: 0; background: var(--overlay-bg); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; backdrop-filter: blur(2px); }
+  .overlay.show { display: flex; }
+  .modal { width: 100%; max-width: 480px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 20px 60px var(--shadow); }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 0; }
+  .modal-head h3 { font-family: var(--font-ui); font-size: 16px; margin: 0; }
+  .modal-close { background: none; border: none; color: var(--text-lo); cursor: pointer; }
+  .modal-body { max-height: 68vh; overflow-y: auto; padding: 16px 20px; }
+  .modal-foot { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding: 14px 20px; }
+
+  .field-label { display: block; margin-top: 12px; margin-bottom: 5px; font-size: 11px; letter-spacing: 0.04em; color: var(--text-lo); }
+  .field-input {
+    width: 100%; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; font-size: 13px; color: var(--text-hi); outline: none; font-family: var(--font-ui);
+  }
+  .field-input:focus { border-color: var(--amber); }
+  textarea.field-input { min-height: 60px; resize: vertical; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .kind-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
+  .kind-opt {
+    display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px;
+    border-radius: 10px; border: 1px solid var(--border); background: transparent; cursor: pointer;
+    color: var(--text-lo); font-size: 10px; font-family: inherit;
+  }
+  .kind-opt.active { color: var(--kind-color); border-color: var(--kind-color); background: color-mix(in srgb, var(--kind-color) 12%, transparent); }
+
+  .field-row { display: flex; align-items: stretch; gap: 8px; }
+  .field-row .field-input { flex: 1; min-width: 0; }
+  .field-action { flex-shrink: 0; border: 1px solid var(--border); background: var(--panel-2); color: var(--text-lo); border-radius: 8px; padding: 0 12px; cursor: pointer; font-family: inherit; font-size: 12px; }
+  .field-action:hover { color: var(--text-hi); border-color: var(--text-lo); }
+  .field-help { margin-top: 5px; color: var(--text-lo); font-size: 11px; line-height: 1.4; }
+  .custom-category-row { display: none; grid-template-columns: 64px 1fr auto; gap: 8px; margin-top: 8px; }
+  .custom-category-row.show { display: grid; }
+  .category-manager { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .category-chip { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; font-size: 12px; color: var(--text-lo); }
+  .category-chip button { border: none; background: transparent; color: var(--danger); cursor: pointer; }
+  .muted-box { margin-top: 8px; padding: 9px 10px; border-radius: 8px; background: var(--soft); color: var(--text-lo); font-size: 11.5px; line-height: 1.45; }
+
+  .btn { border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .btn-ghost { background: transparent; color: var(--text-lo); }
+  .btn-primary { background: var(--amber); color: #171A21; font-weight: 600; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-danger-text { background: transparent; border: none; color: var(--danger); font-size: 12.5px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: inherit; }
+  .btn-danger { background: var(--danger); color: #171A21; font-weight: 600; }
+  .color-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .color-picker { width: 52px; height: 38px; padding: 3px; border-radius: 8px; cursor: pointer; }
+  .color-swatches { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .color-swatch { width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 2px solid var(--panel); outline: 1px solid var(--border); cursor: pointer; background: var(--swatch); box-shadow: 0 0 8px color-mix(in srgb, var(--swatch) 35%, transparent); }
+  .color-swatch:hover, .color-swatch.active { outline: 2px solid var(--text-hi); transform: scale(1.06); }
+  .appearance-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .appearance-opt { border: 1px solid var(--border); border-radius: 10px; background: var(--panel-2); color: var(--text-lo); padding: 11px; cursor: pointer; font-family: inherit; }
+  .appearance-opt.active { color: var(--text-hi); border-color: var(--amber); box-shadow: inset 0 0 0 1px var(--amber); }
+  .appearance-preview { display: block; height: 42px; margin-bottom: 7px; border-radius: 7px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+  .appearance-preview::before { content: ""; position: absolute; inset: 0 64% 0 0; background: var(--preview-sidebar); }
+  .appearance-preview::after { content: ""; position: absolute; left: 43%; right: 10%; top: 10px; height: 8px; border-radius: 5px; background: var(--preview-card); box-shadow: 0 14px 0 var(--preview-card); }
+  .preview-dark { --preview-sidebar:#111824; --preview-card:#33445D; background:#090D14; }
+  .preview-light { --preview-sidebar:#FFFFFF; --preview-card:#C4D1E0; background:#F2F6FB; }
+  html[data-theme="light"] .spine-dot { box-shadow: 0 0 0 4px var(--panel); }
+
+
+
+  /* Collaboration */
+  .sync-status {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 30px;
+    border: 1px solid var(--border); border-radius: 999px; padding: 5px 10px;
+    color: var(--text-lo); background: var(--panel-2); font-size: 10.5px;
+  }
+  .sync-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--text-lo); }
+  .sync-status[data-state="synced"]::before { background: #55E08A; }
+  .sync-status[data-state="saving"]::before { background: var(--amber); animation: sync-pulse 1s infinite alternate; }
+  .sync-status[data-state="error"]::before { background: var(--danger); }
+  .sync-status[data-state="viewer"]::before { background: #63C7FF; }
+  @keyframes sync-pulse { from { opacity: .35; } to { opacity: 1; } }
+  .role-badge { display:inline-flex; border:1px solid var(--border); border-radius:999px; padding:4px 8px; font-size:10.5px; color:var(--text-lo); background:var(--panel-2); }
+  .collab-panel { display:flex; flex-direction:column; gap:12px; }
+  .collab-user-row, .collab-link-row, .member-row { display:flex; align-items:center; gap:8px; }
+  .collab-user-row { justify-content:space-between; border:1px solid var(--border); border-radius:10px; padding:10px 12px; background:var(--panel-2); }
+  .collab-section { border-top:1px solid var(--border); padding-top:14px; margin-top:2px; }
+  .collab-section-title { font-size:12px; font-weight:700; margin-bottom:8px; }
+  .collab-link-row .field-input { min-width:0; }
+  .invite-grid { display:grid; grid-template-columns:minmax(0,1fr) 128px auto; gap:8px; }
+  .member-list { display:flex; flex-direction:column; gap:7px; margin-top:8px; }
+  .member-row { border:1px solid var(--border); border-radius:9px; padding:8px 10px; background:var(--panel-2); }
+  .member-email { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px; }
+  .member-row select { width:116px; }
+  .collab-message { min-height:18px; color:var(--text-lo); font-size:11px; }
+  .collab-message.error { color:var(--danger); }
+  .collab-message.success { color:#55E08A; }
+  .readonly-banner { margin:0 32px; border:1px solid color-mix(in srgb, #63C7FF 55%, var(--border)); border-top:0; border-radius:0 0 10px 10px; padding:7px 12px; font-size:11px; color:var(--text-lo); background:color-mix(in srgb, #63C7FF 9%, var(--panel)); display:none; }
+  body.is-viewer .readonly-banner { display:block; }
+  body.is-viewer .event-actions, body.is-viewer .transport-actions { display:none !important; }
+  @media (max-width:720px) {
+    .invite-grid { grid-template-columns:1fr; }
+    .sync-status { display:none; }
+    .readonly-banner { margin:0 16px; }
+  }
+
+  @media (max-width: 720px) {
+    #sidebar { display: none; }
+    #mobile-trip-select { display: block; }
+    #toolbar, #timeline { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="brand-badge">✈️</div>
+      <div class="font-display brand-title">VOYAGE BOARD</div>
+    </div>
+    <div class="section-label" id="trips-label">TRIPS</div>
+    <div id="trip-list" class="scroll"></div>
+    <button id="new-trip-btn">+ New trip</button>
+    <div id="spend-box">
+      <div class="section-label" id="trip-spend-label" style="padding:0;">TRIP SPEND</div>
+      <div id="spend-values" style="margin-top:4px;"></div>
+      <div id="spend-breakdown"></div>
+    </div>
+  </aside>
+
+  <main id="main">
+    <div id="toolbar">
+      <select id="mobile-trip-select"></select>
+      <div class="toolbar-row">
+        <button id="add-entry-btn">+ Add entry</button>
+        <button id="trip-settings-btn" class="btn btn-ghost toolbar-settings">⚙ Trip settings</button>
+        <button id="app-settings-btn" class="btn btn-ghost toolbar-settings">◐ App settings</button>
+        <button id="share-trip-btn" class="btn btn-ghost toolbar-settings">↗ Share</button>
+        <span id="sync-status" class="sync-status" data-state="local">Local only</span>
+        <span class="toolbar-hint" id="toolbar-hint">Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.</span>
+      </div>
+    </div>
+    <div id="readonly-banner" class="readonly-banner">View-only access — changes are disabled.</div>
+    <div id="timeline" class="scroll"></div>
+  </main>
+</div>
+
+<div class="overlay" id="item-overlay">
+  <div class="modal">
+    <div class="modal-head"><h3 id="item-modal-title">Add entry</h3><button class="modal-close" id="item-close">✕</button></div>
+    <div class="modal-body">
+      <label class="field-label" data-i18n="type">Type</label>
+      <div class="kind-grid" id="kind-grid"></div>
+
+      <label class="field-label" data-i18n="titleLabel">Title</label>
+      <input class="field-input" id="f-title" list="title-options" placeholder="e.g. Flight to Tokyo">
+      <datalist id="title-options"></datalist>
+
+      <label class="field-label" data-i18n="entryColor">Entry color</label>
+      <div class="color-row">
+        <input class="field-input color-picker" type="color" id="f-color" value="#FFD84D">
+        <button type="button" class="field-action" id="f-color-default">Use type default</button>
+      </div>
+      <div class="field-help" id="f-color-help">Uses the selected type's default color unless you choose a custom color.</div>
+
+      <div id="single-place-fields">
+        <label class="field-label" id="loc-label">Location</label>
+        <input class="field-input" id="f-location" list="place-options" placeholder="Hotel Ginza Six">
+      </div>
+      <div id="route-place-fields" class="grid-2" style="display:none;">
+        <div>
+          <label class="field-label" id="from-label">From</label>
+          <input class="field-input" id="f-from" list="place-options" placeholder="Origin">
+        </div>
+        <div>
+          <label class="field-label" id="to-label">To</label>
+          <input class="field-input" id="f-to" list="place-options" placeholder="Destination">
+        </div>
+      </div>
+      <datalist id="place-options"></datalist>
+
+      <label class="field-label" data-i18n="googleMapsLink">Google Maps link</label>
+      <div class="field-row">
+        <input class="field-input" id="f-map-link" type="url" placeholder="Paste a Google Maps or maps.app.goo.gl link">
+        <button type="button" class="field-action" id="map-search-btn">Open Maps</button>
+      </div>
+      <div class="field-help" data-i18n="mapHelp">Paste a place link, or use “Open Maps” to search using the location or route above.</div>
+
+      <div class="grid-3">
+        <div><label class="field-label" data-i18n="date">Date</label><input type="date" class="field-input" id="f-date"></div>
+        <div><label class="field-label" data-i18n="start">Start</label><input type="time" class="field-input" id="f-start"></div>
+        <div><label class="field-label" data-i18n="end">End</label><input type="time" class="field-input" id="f-end"></div>
+      </div>
+      <div class="grid-2">
+        <div><label class="field-label" data-i18n="price">Price</label><input type="number" min="0" step="any" class="field-input" id="f-price" placeholder="0"></div>
+        <div>
+          <label class="field-label" data-i18n="currency">Currency</label>
+          <select class="field-input" id="f-currency"></select>
+        </div>
+      </div>
+      <div class="field-help" id="currency-help"></div>
+
+      <label class="field-label" data-i18n="spendingCategory">Spending category</label>
+      <select class="field-input" id="f-category"></select>
+      <div class="custom-category-row" id="custom-category-row">
+        <input class="field-input" id="f-category-icon" maxlength="4" placeholder="🛍️">
+        <input class="field-input" id="f-category-name" placeholder="e.g. Shopping">
+        <button type="button" class="field-action" id="add-category-btn" data-i18n="add">Add</button>
+      </div>
+
+      <label class="field-label" data-i18n="trip">Trip</label>
+      <select class="field-input" id="f-trip"></select>
+      <label class="field-label" data-i18n="notes">Notes</label>
+      <textarea class="field-input" id="f-notes" placeholder="Optional"></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-danger-text" id="item-delete-btn" style="display:none;">🗑 Delete</button>
+      <span></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost" id="item-cancel">Cancel</button>
+        <button class="btn btn-primary" id="item-save">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="trip-overlay">
+  <div class="modal">
+    <div class="modal-head"><h3 id="trip-modal-title">New trip</h3><button class="modal-close" id="trip-close">✕</button></div>
+    <div class="modal-body">
+      <label class="field-label" data-i18n="tripName">Trip name</label>
+      <input class="field-input" id="t-name" placeholder="e.g. Iceland Roadtrip — leave blank for \"Untitled\"">
+      <div class="grid-2">
+        <div><label class="field-label" data-i18n="startDate">Start date</label><input type="date" class="field-input" id="t-start"></div>
+        <div><label class="field-label" data-i18n="endDate">End date</label><input type="date" class="field-input" id="t-end"></div>
+      </div>
+      <label class="field-label" data-i18n="defaultCurrency">Default price currency</label>
+      <select class="field-input" id="t-currency"></select>
+      <div class="muted-box" id="currency-default-note">Entries set to “Trip default” follow this currency automatically. An entry-specific currency still overrides it.</div>
+
+      <label class="field-label" data-i18n="tripColor">Trip color</label>
+      <div class="color-row">
+        <input class="field-input color-picker" type="color" id="t-color" value="#63C7FF">
+        <div class="color-swatches" id="t-color-swatches"></div>
+      </div>
+      <div class="field-help" id="trip-color-help">Choose a preset or any custom color for this trip's box in the left list.</div>
+
+      <div id="trip-category-settings">
+        <label class="field-label" data-i18n="customCategories">Custom spending categories</label>
+        <div id="trip-category-manager" class="category-manager"></div>
+        <div class="field-help" data-i18n="categoryHelp">Add categories while editing an entry. They are saved only for this trip.</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-danger-text" id="trip-delete-btn" style="display:none;">🗑 Delete trip</button>
+      <span></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost" id="trip-cancel">Cancel</button>
+        <button class="btn btn-primary" id="trip-save">Create trip</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="app-overlay">
+  <div class="modal" style="max-width:430px;">
+    <div class="modal-head"><h3 id="app-modal-title">App settings</h3><button class="modal-close" id="app-close">✕</button></div>
+    <div class="modal-body">
+      <label class="field-label" data-i18n="language">Language</label>
+      <select class="field-input" id="s-language">
+        <option value="en">English</option>
+        <option value="zh-TW">繁體中文</option>
+        <option value="ja">日本語</option>
+      </select>
+
+      <label class="field-label" data-i18n="appearance">Appearance</label>
+      <div class="appearance-grid" id="appearance-grid">
+        <button type="button" class="appearance-opt" data-theme-choice="dark">
+          <span class="appearance-preview preview-dark"></span>
+          <span data-i18n="darkTheme">Dark</span>
+        </button>
+        <button type="button" class="appearance-opt" data-theme-choice="light">
+          <span class="appearance-preview preview-light"></span>
+          <span data-i18n="lightTheme">Light</span>
+        </button>
+      </div>
+      <div class="field-help" id="appearance-help">The selected theme applies to the whole app.</div>
+    </div>
+    <div class="modal-foot" style="justify-content:flex-end;">
+      <button class="btn btn-ghost" id="app-cancel">Cancel</button>
+      <button class="btn btn-primary" id="app-save">Save</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="overlay" id="share-overlay">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-head"><h3 id="share-modal-title">Share & collaborate</h3><button class="modal-close" id="share-close">✕</button></div>
+    <div class="modal-body">
+      <div id="collab-config-warning" class="muted-box" style="display:none;"></div>
+
+      <div id="collab-auth-panel" class="collab-panel" style="display:none;">
+        <div class="muted-box" id="collab-auth-help">Sign in by email before publishing or opening a shared trip.</div>
+        <label class="field-label" id="collab-email-label">Email</label>
+        <div class="collab-link-row">
+          <input class="field-input" id="collab-login-email" type="email" autocomplete="email" placeholder="you@example.com">
+          <button class="btn btn-primary" id="collab-login-btn">Send sign-in link</button>
+        </div>
+        <div id="collab-auth-message" class="collab-message"></div>
+      </div>
+
+      <div id="collab-signed-panel" class="collab-panel" style="display:none;">
+        <div class="collab-user-row">
+          <span id="collab-user-email"></span>
+          <button class="btn btn-ghost" id="collab-logout-btn">Sign out</button>
+        </div>
+
+        <div id="collab-unshared-panel" class="collab-section">
+          <div class="collab-section-title" id="publish-title">Publish this trip</div>
+          <div class="field-help" id="publish-help">The trip is currently stored only in this browser. Publishing creates a cloud copy and a stable shared URL.</div>
+          <button class="btn btn-primary" id="publish-trip-btn" style="margin-top:10px;">Create shared trip</button>
+        </div>
+
+        <div id="collab-shared-panel" style="display:none;">
+          <div class="collab-section">
+            <div class="collab-user-row" style="margin-bottom:10px;">
+              <span id="access-label">Your access</span>
+              <span id="collab-role" class="role-badge">Owner</span>
+            </div>
+            <label class="field-label" id="shared-link-label">Link for existing members</label>
+            <div class="collab-link-row">
+              <input class="field-input" id="collab-share-link" readonly>
+              <button class="field-action" id="copy-share-link-btn">Copy</button>
+            </div>
+            <div class="field-help" id="shared-link-help">People must already be members of the trip. Use an invitation below for a new person.</div>
+          </div>
+
+          <div id="collab-admin-section" class="collab-section" style="display:none;">
+            <div class="collab-section-title" id="invite-title">Invite a collaborator</div>
+            <div class="invite-grid">
+              <input class="field-input" id="invite-email" type="email" placeholder="person@example.com">
+              <select class="field-input" id="invite-role">
+                <option value="viewer">View only</option>
+                <option value="editor">Allow editing</option>
+                <option value="admin">Manage trip & people</option>
+              </select>
+              <button class="btn btn-primary" id="create-invite-btn">Create invite</button>
+            </div>
+            <div id="invite-message" class="collab-message"></div>
+            <div id="invite-result" style="display:none; margin-top:8px;">
+              <label class="field-label" id="invite-link-label">Invitation link</label>
+              <div class="collab-link-row">
+                <input class="field-input" id="invite-link" readonly>
+                <button class="field-action" id="copy-invite-link-btn">Copy</button>
+                <button class="field-action" id="email-invite-btn">Email</button>
+              </div>
+            </div>
+
+            <div class="collab-section-title" id="members-title" style="margin-top:16px;">People with access</div>
+            <div id="member-list" class="member-list"></div>
+          </div>
+        </div>
+
+        <div id="collab-main-message" class="collab-message"></div>
+      </div>
+    </div>
+    <div class="modal-foot" style="justify-content:flex-end;">
+      <button class="btn btn-ghost" id="share-done">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="confirm-overlay">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-body" style="padding-top:20px;">
+      <h3 class="font-display" style="font-size:16px; margin:0;" id="confirm-title">Delete this?</h3>
+      <p style="color:var(--text-lo); font-size:13px; margin-top:6px;">This can't be undone.</p>
+    </div>
+    <div class="modal-foot" style="justify-content:flex-end;">
+      <button class="btn btn-ghost" id="confirm-cancel">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+
+const COLLAB_CONFIG = window.VOYAGE_BOARD_CONFIG || {
+  // Fill these two values after creating the Supabase project described in
+  // voyage-board-collaboration-setup.md. The publishable/anon key is safe to
+  // expose in a browser only when the supplied Row Level Security policies are installed.
+  supabaseUrl: "https://ssqdatwuoefjzpmseyhm.supabase.co",
+  supabasePublishableKey: "sb_publishable_d1cBXwtzJIgzDAbX1FU3-A_RFk42Clt",
+};
+const CLIENT_ID = (crypto.randomUUID ? crypto.randomUUID() : uid());
+
+const KIND_CONFIG = {
+  flight:      { label: "Flight",      icon: "✈️", color: "#63C7FF", transport: true  },
+  train:       { label: "Train",       icon: "🚆", color: "#55E08A", transport: true  },
+  bus:         { label: "Bus",         icon: "🚌", color: "#A7E65C", transport: true  },
+  car:         { label: "Car / Taxi",  icon: "🚕", color: "#FFAE57", transport: true  },
+  ferry:       { label: "Ferry",       icon: "⛴️", color: "#42D9D3", transport: true  },
+  walk:        { label: "Walk",        icon: "🚶", color: "#B7C8DD", transport: true  },
+  hotel:       { label: "Hotel",       icon: "🛏️", color: "#D78BFF", transport: false },
+  food:        { label: "Food",        icon: "🍽️", color: "#FF806F", transport: false },
+  activity:    { label: "Activity",    icon: "✨", color: "#FFD84D", transport: false },
+  sightseeing: { label: "Sightseeing", icon: "📷", color: "#FFD84D", transport: false },
+  meeting:     { label: "Meeting",     icon: "👥", color: "#C3D0E3", transport: false },
+  other:       { label: "Other",       icon: "•",  color: "#C3D0E3", transport: false },
+};
+
+const TRIP_PALETTE = ["#63C7FF", "#FFB83E", "#D78BFF", "#55E08A", "#FF806F", "#42D9D3", "#FFAE57", "#FF69B4"];
+const OLD_TRIP_COLOR_MAP = {
+  "#5FA8E0": "#63C7FF", "#FFB23E": "#FFB83E", "#C08FE0": "#D78BFF",
+  "#63C77E": "#55E08A", "#FF8F66": "#FF806F", "#6FC2C2": "#42D9D3", "#E0A867": "#FFAE57"
+};
+const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "TWD", "CNY", "HKD", "KRW", "SGD", "THB", "AUD", "CAD", "CHF", "NZD", "MYR", "IDR", "PHP", "VND", "INR", "AED"];
+const I18N = {
+  en: {
+    trips:"TRIPS", tripSpend:"TRIP SPEND", newTrip:"+ New trip", addEntry:"+ Add entry", tripSettings:"⚙ Trip settings", appSettings:"◐ App settings",
+    toolbarHint:"Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.", type:"Type", titleLabel:"Title", entryColor:"Entry color",
+    useTypeDefault:"Use type default", colorDefaultHelp:"Uses the selected type's default color unless you choose a custom color.", colorCustomHelp:"Custom color override is active for this entry.",
+    location:"Location", propertyLocation:"Property / location", from:"From", to:"To", departureAirport:"Departure airport", arrivalAirport:"Arrival airport",
+    googleMapsLink:"Google Maps link", openMaps:"Open Maps", mapHelp:"Paste a place link, or use “Open Maps” to search using the location or route above.",
+    date:"Date", start:"Start", end:"End", price:"Price", currency:"Currency", spendingCategory:"Spending category", add:"Add", trip:"Trip", notes:"Notes",
+    delete:"🗑 Delete", cancel:"Cancel", save:"Save", language:"Language", appearance:"Appearance", darkTheme:"Dark", lightTheme:"Light",
+    appearanceHelp:"The selected theme applies to the whole app.", appSettingsTitle:"App settings", tripName:"Trip name", startDate:"Start date", endDate:"End date",
+    defaultCurrency:"Default price currency", currencyDefaultNote:"Entries set to “Trip default” follow this currency automatically. An entry-specific currency still overrides it.",
+    tripColor:"Trip color", tripColorHelp:"Choose a preset or any custom color for this trip's box in the left list.", customCategories:"Custom spending categories",
+    categoryHelp:"Add categories while editing an entry. They are saved only for this trip.", noCustomCategories:"No custom categories yet.", remove:"Remove",
+    createTrip:"Create trip", saveSettings:"Save settings", deleteTrip:"🗑 Delete trip", newTripTitle:"New trip", tripSettingsTitle:"Trip settings", addEntryTitle:"Add entry", editEntryTitle:"Edit entry",
+    noCosts:"No costs logged yet", noTrips:"No trips yet", createFirstTrip:"Create your first trip", emptyTrip:"{name} is empty", emptyTripHelp:"Use “Add entry” to log a flight, hotel, meal, shopping stop, or activity.",
+    item:"item", items:"items", until:"until", tripDefault:"Trip default ({currency})", inheritedCurrency:"Using trip default: {currency}. Select another currency to override it for this entry.",
+    customCurrency:"This entry overrides the trip default ({currency}).", invalidMap:"Please enter a valid http:// or https:// map link.", untitled:"Untitled", optional:"Optional",
+    addCustomCategory:"＋ Add custom category…", titlePlaceholder:"e.g. Flight to Tokyo", mapPlaceholder:"Paste a Google Maps or maps.app.goo.gl link", categoryPlaceholder:"e.g. Shopping", tripNamePlaceholder:"e.g. Iceland Roadtrip — leave blank for Untitled",
+    selectAirport:"Select or type an airport", origin:"Origin", destination:"Destination", placeAddress:"Place or address", hotelPlaceholder:"Hotel or property name",
+    foodPlaceholder:"Restaurant, café, or market", activityPlaceholder:"Venue or meeting point", sightseeingPlaceholder:"Landmark or area", meetingPlaceholder:"Office or meeting venue",
+    confirmDelete:'Delete "{label}"?', cannotUndo:"This can't be undone.", deleteAction:"Delete",
+    kind_flight:"Flight", kind_train:"Train", kind_bus:"Bus", kind_car:"Car / Taxi", kind_ferry:"Ferry", kind_walk:"Walk", kind_hotel:"Hotel", kind_food:"Food", kind_activity:"Activity", kind_sightseeing:"Sightseeing", kind_meeting:"Meeting", kind_other:"Other",
+    cat_flight:"Flights", cat_transport:"Transportation", cat_hotel:"Lodging", cat_food:"Food", cat_activity:"Activities", cat_shopping:"Shopping", cat_meeting:"Meetings", cat_other:"Other"
+  },
+  "zh-TW": {
+    trips:"旅程", tripSpend:"旅程支出", newTrip:"＋ 新增旅程", addEntry:"＋ 新增項目", tripSettings:"⚙ 旅程設定", appSettings:"◐ App 設定",
+    toolbarHint:"拖曳時間軸項目可重新排序；拖曳左側旅程可調整旅程順序。", type:"類型", titleLabel:"標題", entryColor:"項目顏色",
+    useTypeDefault:"使用類型預設色", colorDefaultHelp:"除非選擇自訂顏色，否則會使用所選類型的預設色。", colorCustomHelp:"此項目已啟用自訂顏色。",
+    location:"地點", propertyLocation:"住宿／地點", from:"出發地", to:"目的地", departureAirport:"出發機場", arrivalAirport:"抵達機場",
+    googleMapsLink:"Google 地圖連結", openMaps:"開啟地圖", mapHelp:"貼上地點連結，或使用「開啟地圖」依上方地點或路線搜尋。",
+    date:"日期", start:"開始", end:"結束", price:"價格", currency:"幣別", spendingCategory:"支出分類", add:"新增", trip:"旅程", notes:"備註",
+    delete:"🗑 刪除", cancel:"取消", save:"儲存", language:"語言", appearance:"外觀", darkTheme:"深色", lightTheme:"淺色",
+    appearanceHelp:"所選主題會套用到整個 App。", appSettingsTitle:"App 設定", tripName:"旅程名稱", startDate:"開始日期", endDate:"結束日期",
+    defaultCurrency:"預設價格幣別", currencyDefaultNote:"設為「旅程預設」的項目會自動沿用此幣別；個別項目仍可覆寫。",
+    tripColor:"旅程顏色", tripColorHelp:"可選擇預設色，或為左側旅程方塊指定任意自訂顏色。", customCategories:"自訂支出分類",
+    categoryHelp:"可在編輯項目時新增分類；分類只會儲存在此旅程。", noCustomCategories:"尚無自訂分類。", remove:"移除",
+    createTrip:"建立旅程", saveSettings:"儲存設定", deleteTrip:"🗑 刪除旅程", newTripTitle:"新增旅程", tripSettingsTitle:"旅程設定", addEntryTitle:"新增項目", editEntryTitle:"編輯項目",
+    noCosts:"尚未記錄支出", noTrips:"尚無旅程", createFirstTrip:"建立第一個旅程", emptyTrip:"{name} 尚無內容", emptyTripHelp:"使用「新增項目」記錄航班、住宿、餐飲、購物或活動。",
+    item:"個項目", items:"個項目", until:"至", tripDefault:"旅程預設（{currency}）", inheritedCurrency:"使用旅程預設：{currency}。選擇其他幣別即可覆寫此項目。",
+    customCurrency:"此項目已覆寫旅程預設幣別（{currency}）。", invalidMap:"請輸入有效的 http:// 或 https:// 地圖連結。", untitled:"未命名", optional:"選填",
+    addCustomCategory:"＋ 新增自訂分類…", titlePlaceholder:"例如：前往東京的航班", mapPlaceholder:"貼上 Google 地圖或 maps.app.goo.gl 連結", categoryPlaceholder:"例如：購物", tripNamePlaceholder:"例如：冰島自駕；留白則使用「未命名」",
+    selectAirport:"選擇或輸入機場", origin:"出發地", destination:"目的地", placeAddress:"地點或地址", hotelPlaceholder:"飯店或住宿名稱",
+    foodPlaceholder:"餐廳、咖啡廳或市場", activityPlaceholder:"場地或集合點", sightseeingPlaceholder:"景點或區域", meetingPlaceholder:"辦公室或會議地點",
+    confirmDelete:'刪除「{label}」？', cannotUndo:"此動作無法復原。", deleteAction:"刪除",
+    kind_flight:"航班", kind_train:"火車", kind_bus:"巴士", kind_car:"汽車／計程車", kind_ferry:"渡輪", kind_walk:"步行", kind_hotel:"住宿", kind_food:"餐飲", kind_activity:"活動", kind_sightseeing:"觀光", kind_meeting:"會議", kind_other:"其他",
+    cat_flight:"航班", cat_transport:"交通", cat_hotel:"住宿", cat_food:"餐飲", cat_activity:"活動", cat_shopping:"購物", cat_meeting:"會議", cat_other:"其他"
+  },
+  ja: {
+    trips:"旅行", tripSpend:"旅行支出", newTrip:"＋ 新しい旅行", addEntry:"＋ 予定を追加", tripSettings:"⚙ 旅行設定", appSettings:"◐ アプリ設定",
+    toolbarHint:"タイムライン項目をドラッグして並べ替えます。左側の旅行もドラッグできます。", type:"種類", titleLabel:"タイトル", entryColor:"項目の色",
+    useTypeDefault:"種類の既定色", colorDefaultHelp:"カスタム色を選ばない場合、種類の既定色を使用します。", colorCustomHelp:"この項目にはカスタム色が設定されています。",
+    location:"場所", propertyLocation:"宿泊施設／場所", from:"出発地", to:"目的地", departureAirport:"出発空港", arrivalAirport:"到着空港",
+    googleMapsLink:"Google マップリンク", openMaps:"マップを開く", mapHelp:"場所のリンクを貼るか、上の場所／経路から検索できます。",
+    date:"日付", start:"開始", end:"終了", price:"価格", currency:"通貨", spendingCategory:"支出カテゴリ", add:"追加", trip:"旅行", notes:"メモ",
+    delete:"🗑 削除", cancel:"キャンセル", save:"保存", language:"言語", appearance:"外観", darkTheme:"ダーク", lightTheme:"ライト",
+    appearanceHelp:"選択したテーマはアプリ全体に適用されます。", appSettingsTitle:"アプリ設定", tripName:"旅行名", startDate:"開始日", endDate:"終了日",
+    defaultCurrency:"既定の通貨", currencyDefaultNote:"「旅行の既定値」の項目はこの通貨を自動的に使用し、個別項目で上書きできます。",
+    tripColor:"旅行の色", tripColorHelp:"プリセットまたは任意の色を左側の旅行ボックスに設定できます。", customCategories:"カスタム支出カテゴリ",
+    categoryHelp:"項目の編集中にカテゴリを追加できます。この旅行にのみ保存されます。", noCustomCategories:"カスタムカテゴリはありません。", remove:"削除",
+    createTrip:"旅行を作成", saveSettings:"設定を保存", deleteTrip:"🗑 旅行を削除", newTripTitle:"新しい旅行", tripSettingsTitle:"旅行設定", addEntryTitle:"予定を追加", editEntryTitle:"予定を編集",
+    noCosts:"支出はまだありません", noTrips:"旅行はまだありません", createFirstTrip:"最初の旅行を作成", emptyTrip:"{name} は空です", emptyTripHelp:"「予定を追加」でフライト、ホテル、食事、買い物、アクティビティを登録します。",
+    item:"件", items:"件", until:"まで", tripDefault:"旅行の既定値（{currency}）", inheritedCurrency:"旅行の既定値を使用：{currency}。別の通貨を選ぶと上書きできます。",
+    customCurrency:"この項目は旅行の既定通貨（{currency}）を上書きしています。", invalidMap:"有効な http:// または https:// の地図リンクを入力してください。", untitled:"無題", optional:"任意",
+    addCustomCategory:"＋ カスタムカテゴリを追加…", titlePlaceholder:"例：東京へのフライト", mapPlaceholder:"Google マップまたは maps.app.goo.gl のリンクを貼り付け", categoryPlaceholder:"例：買い物", tripNamePlaceholder:"例：アイスランド旅行（空欄は「無題」）",
+    selectAirport:"空港を選択または入力", origin:"出発地", destination:"目的地", placeAddress:"場所または住所", hotelPlaceholder:"ホテルまたは宿泊施設名",
+    foodPlaceholder:"レストラン、カフェ、市場", activityPlaceholder:"会場または集合場所", sightseeingPlaceholder:"観光地またはエリア", meetingPlaceholder:"オフィスまたは会議場所",
+    confirmDelete:'「{label}」を削除しますか？', cannotUndo:"この操作は元に戻せません。", deleteAction:"削除",
+    kind_flight:"フライト", kind_train:"列車", kind_bus:"バス", kind_car:"車／タクシー", kind_ferry:"フェリー", kind_walk:"徒歩", kind_hotel:"ホテル", kind_food:"食事", kind_activity:"アクティビティ", kind_sightseeing:"観光", kind_meeting:"会議", kind_other:"その他",
+    cat_flight:"フライト", cat_transport:"交通", cat_hotel:"宿泊", cat_food:"食事", cat_activity:"アクティビティ", cat_shopping:"買い物", cat_meeting:"会議", cat_other:"その他"
+  }
+};
+
+const CATEGORY_META = {
+  flight:    { label: "Flights",        icon: "✈️", kinds: ["flight"] },
+  transport: { label: "Transportation", icon: "🚗", kinds: ["train", "bus", "car", "ferry", "walk"] },
+  hotel:     { label: "Lodging",        icon: "🛏️", kinds: ["hotel"] },
+  food:      { label: "Food",           icon: "🍽️", kinds: ["food"] },
+  activity:  { label: "Activities",     icon: "✨", kinds: ["activity", "sightseeing"] },
+  shopping:  { label: "Shopping",       icon: "🛍️", kinds: [] },
+  meeting:   { label: "Meetings",       icon: "👥", kinds: ["meeting"] },
+  other:     { label: "Other",          icon: "•",  kinds: ["other"] },
+};
+const CATEGORY_ORDER = ["flight", "transport", "hotel", "food", "activity", "shopping", "meeting", "other"];
+
+const AIRPORT_OPTIONS = [
+  "TPE — Taiwan Taoyuan International Airport",
+  "TSA — Taipei Songshan Airport",
+  "KHH — Kaohsiung International Airport",
+  "NRT — Narita International Airport",
+  "HND — Tokyo Haneda Airport",
+  "KIX — Kansai International Airport",
+  "ITM — Osaka Itami Airport",
+  "NGO — Chubu Centrair International Airport",
+  "FUK — Fukuoka Airport",
+  "CTS — New Chitose Airport",
+  "ICN — Incheon International Airport",
+  "GMP — Gimpo International Airport",
+  "HKG — Hong Kong International Airport",
+  "MFM — Macau International Airport",
+  "SIN — Singapore Changi Airport",
+  "BKK — Suvarnabhumi Airport",
+  "DMK — Don Mueang International Airport",
+  "KUL — Kuala Lumpur International Airport",
+  "MNL — Ninoy Aquino International Airport",
+  "SGN — Tan Son Nhat International Airport",
+  "HAN — Noi Bai International Airport",
+  "PEK — Beijing Capital International Airport",
+  "PKX — Beijing Daxing International Airport",
+  "PVG — Shanghai Pudong International Airport",
+  "SHA — Shanghai Hongqiao International Airport",
+  "CAN — Guangzhou Baiyun International Airport",
+  "SZX — Shenzhen Bao'an International Airport",
+  "LAX — Los Angeles International Airport",
+  "SFO — San Francisco International Airport",
+  "JFK — John F. Kennedy International Airport",
+  "LHR — London Heathrow Airport",
+  "CDG — Paris Charles de Gaulle Airport",
+  "FRA — Frankfurt Airport",
+  "AMS — Amsterdam Airport Schiphol",
+  "DXB — Dubai International Airport",
+  "SYD — Sydney Airport"
+];
+
+const PLACE_SUGGESTIONS = {
+  flight: AIRPORT_OPTIONS,
+  train: ["Taipei Main Station", "Hsinchu Station", "Tokyo Station", "Shinjuku Station", "Shibuya Station", "Kyoto Station", "Shin-Osaka Station", "Seoul Station", "Hong Kong West Kowloon Station"],
+  bus: ["Airport bus terminal", "Main bus station", "Hotel bus stop", "City center bus stop"],
+  car: ["Airport terminal", "Hotel", "Railway station", "Rental car center", "City center"],
+  ferry: ["Ferry terminal", "Cruise terminal", "Harbor", "Pier"],
+  walk: ["Hotel", "Station", "Restaurant", "Attraction", "Meeting point"],
+  hotel: ["Hotel", "Hostel", "Resort", "Vacation rental", "Guesthouse"],
+  food: ["Restaurant", "Café", "Night market", "Food court", "Bar", "Bakery"],
+  activity: ["Museum", "Theme park", "Shopping mall", "Spa", "Tour meeting point", "Event venue"],
+  sightseeing: ["Temple", "Shrine", "Observation deck", "Historic district", "Park", "Landmark"],
+  meeting: ["Office", "Convention center", "Hotel lobby", "Meeting room", "Customer site"],
+  other: ["Airport", "Station", "Hotel", "Restaurant", "Venue"]
+};
+
+const TITLE_SUGGESTIONS = {
+  flight: ["Outbound flight", "Return flight", "Connecting flight"],
+  train: ["High-speed rail", "Airport express", "Local train", "Metro"],
+  bus: ["Airport bus", "Intercity bus", "Local bus"],
+  car: ["Airport transfer", "Taxi", "Rental car pickup", "Rental car return"],
+  ferry: ["Ferry", "Harbor transfer", "Cruise boarding"],
+  walk: ["Walk to next stop", "Walking tour"],
+  hotel: ["Hotel check-in", "Hotel check-out", "Lodging"],
+  food: ["Breakfast", "Lunch", "Dinner", "Coffee", "Snack"],
+  activity: ["Museum visit", "Guided tour", "Shopping", "Show", "Spa"],
+  sightseeing: ["Landmark visit", "Temple visit", "Photo stop", "Scenic viewpoint"],
+  meeting: ["Business meeting", "Conference", "Customer visit"],
+  other: ["Reservation", "Reminder", "Free time"]
+};
+
+const TODAY = new Date().toISOString().slice(0, 10);
+const STORAGE_KEY = "voyage-board-data";
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+}
+
+function kindToCategory(kind) {
+  return CATEGORY_ORDER.find(key => CATEGORY_META[key]?.kinds.includes(kind)) || "other";
+}
+
+// ---------------------------------------------------------------------------
+// State and migration
+// ---------------------------------------------------------------------------
+function makeSeed() {
+  const tripId = uid();
+  const trip = {
+    id: tripId,
+    name: "Tokyo, July 2026",
+    startDate: "2026-07-20",
+    endDate: "2026-07-25",
+    color: TRIP_PALETTE[0],
+    defaultCurrency: "USD",
+    customCategories: [],
+    order: 0,
+  };
+  const items = [
+    { id: uid(), tripId, kind: "flight", title: "TPE → NRT", fromPlace: "TPE — Taiwan Taoyuan International Airport", toPlace: "NRT — Narita International Airport", location: "TPE → NRT", date: "2026-07-20", startTime: "08:10", endTime: "12:05", price: 420, currency: null, categoryId: "flight", mapUrl: "", notes: "China Airlines CI100, seat 22A" },
+    { id: uid(), tripId, kind: "car", title: "Airport transfer", fromPlace: "Narita International Airport", toPlace: "Ginza hotel", location: "Narita International Airport → Ginza hotel", date: "2026-07-20", startTime: "13:00", endTime: "14:15", price: 45, currency: null, categoryId: "transport", mapUrl: "", notes: "Narita Express + taxi" },
+    { id: uid(), tripId, kind: "hotel", title: "Check in — Hotel Ginza", location: "Hotel Ginza Six", date: "2026-07-20", startTime: "14:30", endTime: "", price: 890, currency: null, categoryId: "hotel", mapUrl: "", notes: "3 nights, king room" },
+    { id: uid(), tripId, kind: "food", title: "Ramen dinner", location: "Fuunji, Shinjuku", date: "2026-07-20", startTime: "19:00", endTime: "20:00", price: 14, currency: null, categoryId: "food", mapUrl: "", notes: "" },
+    { id: uid(), tripId, kind: "sightseeing", title: "Senso-ji Temple", location: "Asakusa", date: "2026-07-21", startTime: "09:00", endTime: "11:00", price: null, currency: null, categoryId: "activity", mapUrl: "", notes: "Go early to beat crowds" },
+    { id: uid(), tripId, kind: "train", title: "Yamanote Line", fromPlace: "Asakusa", toPlace: "Shibuya", location: "Asakusa → Shibuya", date: "2026-07-21", startTime: "11:30", endTime: "12:10", price: 4, currency: null, categoryId: "transport", mapUrl: "", notes: "" },
+    { id: uid(), tripId, kind: "activity", title: "teamLab Planets", location: "Toyosu", date: "2026-07-21", startTime: "15:00", endTime: "17:00", price: 32, currency: null, categoryId: "activity", mapUrl: "", notes: "Book tickets online in advance" },
+  ];
+  return { trips: [trip], items, activeTripId: tripId, settings: { language: "en", theme: "dark" } };
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed.trips) || !parsed.trips.length) return null;
+    return parsed;
+  } catch (error) {
+    console.warn("Could not load saved Voyage Board data.", error);
+    return null;
+  }
+}
+
+function normalizeState(raw) {
+  const normalized = raw || makeSeed();
+  normalized.trips = Array.isArray(normalized.trips) ? normalized.trips : [];
+  normalized.items = Array.isArray(normalized.items) ? normalized.items : [];
+  normalized.settings = normalized.settings && typeof normalized.settings === "object" ? normalized.settings : {};
+  normalized.settings.language = ["en", "zh-TW", "ja"].includes(normalized.settings.language) ? normalized.settings.language : "en";
+  normalized.settings.theme = ["dark", "light"].includes(normalized.settings.theme) ? normalized.settings.theme : "dark";
+
+  normalized.trips.forEach((trip, index) => {
+    const hadTripDefault = CURRENCIES.includes(trip.defaultCurrency);
+    if (!hadTripDefault) {
+      const counts = {};
+      normalized.items
+        .filter(item => item.tripId === trip.id && CURRENCIES.includes(item.currency))
+        .forEach(item => { counts[item.currency] = (counts[item.currency] || 0) + 1; });
+      trip.defaultCurrency = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])[0]?.[0] || "USD";
+
+      // In the old data format every entry had to store a currency. Convert
+      // entries matching the inferred trip currency to inheritance, while
+      // preserving different currencies as genuine per-entry overrides.
+      normalized.items.forEach(item => {
+        if (item.tripId === trip.id && item.currency === trip.defaultCurrency) {
+          item.currency = null;
+        }
+      });
+    }
+
+    trip.customCategories = Array.isArray(trip.customCategories) ? trip.customCategories : [];
+    trip.order = Number.isFinite(trip.order) ? trip.order : index;
+    trip.color = OLD_TRIP_COLOR_MAP[trip.color] || trip.color || TRIP_PALETTE[index % TRIP_PALETTE.length];
+    if (!/^#[0-9a-f]{6}$/i.test(trip.color)) trip.color = TRIP_PALETTE[index % TRIP_PALETTE.length];
+  });
+
+  normalized.items.forEach(item => {
+    item.currency = item.currency === undefined ? null : item.currency;
+    item.categoryId = item.categoryId || kindToCategory(item.kind);
+    item.mapUrl = item.mapUrl || "";
+    item.fromPlace = item.fromPlace || "";
+    item.toPlace = item.toPlace || "";
+    item.color = /^#[0-9a-f]{6}$/i.test(item.color || "") ? item.color : null;
+  });
+
+  if (!normalized.trips.some(trip => trip.id === normalized.activeTripId)) {
+    normalized.activeTripId = normalized.trips[0]?.id || null;
+  }
+  return normalized;
+}
+
+let state = normalizeState(load() || makeSeed());
+let editingItemId = null;
+let editingTripId = null;
+let pendingDelete = null;
+let draftThemeChoice = null;
+
+function currentLanguage() {
+  return state.settings?.language || "en";
+}
+function currentLocale() {
+  return currentLanguage() === "zh-TW" ? "zh-TW" : currentLanguage() === "ja" ? "ja-JP" : "en-US";
+}
+function t(key, variables = {}) {
+  const table = I18N[currentLanguage()] || I18N.en;
+  let value = table[key] ?? I18N.en[key] ?? key;
+  Object.entries(variables).forEach(([name, replacement]) => {
+    value = value.replaceAll(`{${name}}`, String(replacement));
+  });
+  return value;
+}
+function kindLabel(kind) { return t(`kind_${kind}`); }
+function categoryLabel(id, fallback = "") { return t(`cat_${id}`) || fallback; }
+function applyTheme() {
+  document.documentElement.dataset.theme = state.settings?.theme || "dark";
+}
+function applyStaticTranslations() {
+  document.documentElement.lang = currentLanguage();
+  document.title = currentLanguage() === "zh-TW" ? "Voyage Board — 旅遊行程" : currentLanguage() === "ja" ? "Voyage Board — 旅行スケジュール" : "Voyage Board — Travel Schedule";
+  document.querySelectorAll("[data-i18n]").forEach(element => {
+    element.textContent = t(element.dataset.i18n);
+  });
+  const textMap = {
+    "trips-label":"trips", "trip-spend-label":"tripSpend", "new-trip-btn":"newTrip", "add-entry-btn":"addEntry",
+    "trip-settings-btn":"tripSettings", "app-settings-btn":"appSettings", "toolbar-hint":"toolbarHint", "map-search-btn":"openMaps",
+    "item-cancel":"cancel", "item-save":"save", "trip-cancel":"cancel", "app-cancel":"cancel", "app-save":"save",
+    "currency-default-note":"currencyDefaultNote", "trip-color-help":"tripColorHelp", "appearance-help":"appearanceHelp"
+  };
+  Object.entries(textMap).forEach(([id, key]) => { const el = document.getElementById(id); if (el) el.textContent = t(key); });
+  document.getElementById("f-notes").placeholder = t("optional");
+  document.getElementById("f-title").placeholder = t("titlePlaceholder");
+  document.getElementById("f-map-link").placeholder = t("mapPlaceholder");
+  document.getElementById("f-category-name").placeholder = t("categoryPlaceholder");
+  document.getElementById("t-name").placeholder = t("tripNamePlaceholder");
+  document.getElementById("f-color-default").textContent = t("useTypeDefault");
+  document.getElementById("item-delete-btn").textContent = t("delete");
+  applyCollabTranslations();
+}
+
+function persist() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    scheduleRemoteSave();
+  } catch (error) {
+    console.error("Could not save Voyage Board data.", error);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[char]));
+}
+
+function timeToMinutes(time) {
+  if (!time) return 24 * 60 + 1;
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + (minutes || 0);
+}
+
+function fmtTime(time) {
+  if (!time) return "—";
+  const [hours, minutes] = time.split(":").map(Number);
+  const date = new Date(2000, 0, 1, hours, minutes);
+  return date.toLocaleTimeString(currentLocale(), { hour: "2-digit", minute: "2-digit", hour12: currentLanguage() === "en" });
+}
+
+function fmtDuration(start, end) {
+  if (!start || !end) return null;
+  let minutes = timeToMinutes(end) - timeToMinutes(start);
+  if (minutes < 0) minutes += 24 * 60;
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  if (currentLanguage() === "zh-TW") return `${hours ? `${hours} 小時` : ""}${hours && remainder ? " " : ""}${remainder ? `${remainder} 分` : ""}`;
+  if (currentLanguage() === "ja") return `${hours ? `${hours}時間` : ""}${remainder ? `${remainder}分` : ""}`;
+  if (hours && remainder) return `${hours}h ${remainder}m`;
+  if (hours) return `${hours}h`;
+  return `${remainder}m`;
+}
+
+function fmtDateHeader(dateString) {
+  const date = new Date(dateString + "T00:00:00");
+  return {
+    dow: date.toLocaleDateString(currentLocale(), { weekday: "short" }).toUpperCase(),
+    mon: date.toLocaleDateString(currentLocale(), { month: "short" }).toUpperCase(),
+    day: date.getDate(),
+    year: dateString.slice(0, 4),
+  };
+}
+
+function fmtRange(startDate, endDate) {
+  if (!startDate) return "";
+  const options = { month: "short", day: "numeric" };
+  const start = new Date(startDate + "T00:00:00").toLocaleDateString(currentLocale(), options);
+  if (!endDate || endDate === startDate) return start;
+  const end = new Date(endDate + "T00:00:00").toLocaleDateString(currentLocale(), options);
+  return `${start} – ${end}`;
+}
+
+function money(price, currency) {
+  if (price === null || price === undefined || price === "") return null;
+  const symbols = { USD: "$", EUR: "€", GBP: "£", JPY: "¥", TWD: "NT$", CNY: "CN¥", HKD: "HK$", KRW: "₩", SGD: "S$", THB: "฿", AUD: "A$", CAD: "C$", CHF: "CHF ", NZD: "NZ$", MYR: "RM", PHP: "₱", INR: "₹", AED: "د.إ " };
+  const symbol = symbols[currency] || `${currency || "USD"} `;
+  return `${symbol}${Number(price).toLocaleString(currentLocale(), { maximumFractionDigits: 2 })}`;
+}
+
+function hexToRgb(hex) {
+  const value = hex.replace("#", "");
+  const number = parseInt(value, 16);
+  return [(number >> 16) & 255, (number >> 8) & 255, number & 255];
+}
+
+function rgba(hex, alpha) {
+  const [red, green, blue] = hexToRgb(hex);
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
+function minutesToTime(minutes) {
+  const bounded = Math.max(0, Math.min(23 * 60 + 59, Math.round(minutes)));
+  const hours = Math.floor(bounded / 60);
+  const remainder = bounded % 60;
+  return `${String(hours).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+}
+
+function safeHttpUrl(raw) {
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function splitRoute(location) {
+  if (!location) return ["", ""];
+  const parts = location.split(/\s*(?:→|->|–|—)\s*/);
+  return parts.length >= 2 ? [parts[0].trim(), parts.slice(1).join(" → ").trim()] : [location.trim(), ""];
+}
+
+function currencyOptions(selected, includeTripDefault = false, defaultCurrency = "USD") {
+  const defaultOption = includeTripDefault
+    ? `<option value="" ${selected ? "" : "selected"}>${esc(t("tripDefault", { currency: defaultCurrency }))}</option>`
+    : "";
+  return defaultOption + CURRENCIES.map(currency =>
+    `<option value="${currency}" ${selected === currency ? "selected" : ""}>${currency}</option>`
+  ).join("");
+}
+
+function nextUntitledName() {
+  const used = new Set(state.trips.map(trip => trip.name.trim().toLowerCase()));
+  const base = t("untitled");
+  if (!used.has(base.toLowerCase())) return base;
+  let index = 1;
+  while (used.has(`${base.toLowerCase()} ${index}`)) index++;
+  return `${base} ${index}`;
+}
+
+// ---------------------------------------------------------------------------
+// Derived data
+// ---------------------------------------------------------------------------
+function orderedTrips() {
+  return state.trips.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+}
+
+function tripById(id) {
+  return state.trips.find(trip => trip.id === id) || null;
+}
+
+function activeTrip() {
+  return tripById(state.activeTripId) || orderedTrips()[0] || null;
+}
+
+function tripRole(trip = activeTrip()) {
+  if (!trip?.remoteId) return "owner";
+  return trip.remoteRole || "viewer";
+}
+function canEditTrip(trip = activeTrip()) {
+  return Boolean(trip) && (!trip.remoteId || ["owner", "admin", "editor"].includes(tripRole(trip)));
+}
+function canManageTrip(trip = activeTrip()) {
+  return Boolean(trip?.remoteId) && ["owner", "admin"].includes(tripRole(trip));
+}
+function canDeleteTrip(trip = activeTrip()) {
+  return Boolean(trip) && (!trip.remoteId || tripRole(trip) === "owner");
+}
+
+function effectiveCurrency(item) {
+  return item.currency || tripById(item.tripId)?.defaultCurrency || "USD";
+}
+
+function tripItems() {
+  const trip = activeTrip();
+  if (!trip) return [];
+  return state.items
+    .filter(item => item.tripId === trip.id)
+    .slice()
+    .sort((a, b) => a.date !== b.date
+      ? (a.date < b.date ? -1 : 1)
+      : timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+}
+
+function tripItemsForDate(date) {
+  return tripItems().filter(item => item.date === date);
+}
+
+function groupedItems() {
+  const groups = new Map();
+  tripItems().forEach(item => {
+    if (!groups.has(item.date)) groups.set(item.date, []);
+    groups.get(item.date).push(item);
+  });
+  return Array.from(groups.entries()).map(([date, items]) => ({ date, items }));
+}
+
+function categoryMeta(trip, categoryId) {
+  if (CATEGORY_META[categoryId]) return { ...CATEGORY_META[categoryId], label: categoryLabel(categoryId, CATEGORY_META[categoryId].label) };
+  const custom = trip?.customCategories?.find(category => category.id === categoryId);
+  return custom ? { label: custom.label, icon: custom.icon || "🧾", kinds: [] } : CATEGORY_META.other;
+}
+
+function tripSpend() {
+  const totals = {};
+  tripItems().forEach(item => {
+    if (item.price === null || item.price === undefined || item.price === "") return;
+    const currency = effectiveCurrency(item);
+    totals[currency] = (totals[currency] || 0) + Number(item.price);
+  });
+  return totals;
+}
+
+function tripSpendByCategory() {
+  const byCategory = {};
+  tripItems().forEach(item => {
+    if (item.price === null || item.price === undefined || item.price === "") return;
+    const categoryId = item.categoryId || kindToCategory(item.kind);
+    const currency = effectiveCurrency(item);
+    if (!byCategory[categoryId]) byCategory[categoryId] = {};
+    byCategory[categoryId][currency] = (byCategory[categoryId][currency] || 0) + Number(item.price);
+  });
+  return byCategory;
+}
+
+// ---------------------------------------------------------------------------
+// Render
+// ---------------------------------------------------------------------------
+function renderAll() {
+  applyTheme();
+  applyStaticTranslations();
+  renderSidebar();
+  renderToolbarSelect();
+  renderTimeline();
+  const trip = activeTrip();
+  const editable = canEditTrip(trip);
+  document.getElementById("add-entry-btn").disabled = !trip || !editable;
+  document.getElementById("trip-settings-btn").disabled = !trip || !editable;
+  document.getElementById("share-trip-btn").disabled = !trip;
+  document.body.classList.toggle("is-viewer", Boolean(trip?.remoteId) && !editable);
+  updateSyncStatus();
+  persist();
+  queueMicrotask(ensureRealtimeForActiveTrip);
+}
+
+function renderSidebar() {
+  const list = document.getElementById("trip-list");
+  const trips = orderedTrips();
+  list.innerHTML = trips.map(trip => {
+    const color = trip.color || TRIP_PALETTE[0];
+    const count = state.items.filter(item => item.tripId === trip.id).length;
+    const isActive = trip.id === state.activeTripId;
+    return `
+      <button class="ticket-stub ${isActive ? "active" : ""}" draggable="true" data-trip="${trip.id}" style="--trip-color:${color};">
+        <span class="ticket-bar"></span>
+        <span class="ticket-info">
+          <span class="ticket-name font-display">${esc(trip.name)}</span>
+          <span class="ticket-meta">${fmtRange(trip.startDate, trip.endDate)} · ${count} ${count === 1 ? t("item") : t("items")} · ${esc(trip.defaultCurrency)}</span>
+        </span>
+        <span class="ticket-chev">↕</span>
+      </button>`;
+  }).join("");
+
+  list.querySelectorAll("[data-trip]").forEach(button => {
+    button.addEventListener("click", () => {
+      if (button.dataset.dragged === "true") {
+        button.dataset.dragged = "";
+        return;
+      }
+      state.activeTripId = button.dataset.trip;
+      renderAll();
+    });
+  });
+
+  const spend = tripSpend();
+  const values = document.getElementById("spend-values");
+  const currencies = Object.keys(spend);
+  values.innerHTML = currencies.length === 0
+    ? `<span class="empty">${esc(t("noCosts"))}</span>`
+    : currencies.map(currency => `<div class="font-mono">${money(spend[currency], currency)}</div>`).join("");
+
+  const trip = activeTrip();
+  const byCategory = tripSpendByCategory();
+  const breakdown = document.getElementById("spend-breakdown");
+  const customOrder = trip?.customCategories?.map(category => category.id) || [];
+  const categoryIds = [...CATEGORY_ORDER, ...customOrder].filter(categoryId => byCategory[categoryId]);
+  Object.keys(byCategory).forEach(categoryId => {
+    if (!categoryIds.includes(categoryId)) categoryIds.push(categoryId);
+  });
+
+  breakdown.innerHTML = categoryIds.map(categoryId => {
+    const meta = categoryMeta(trip, categoryId);
+    const amounts = Object.entries(byCategory[categoryId])
+      .map(([currency, amount]) => money(amount, currency))
+      .join(" · ");
+    return `
+      <div class="spend-row">
+        <span class="spend-row-label"><span>${esc(meta.icon)}</span><span class="cat-name">${esc(meta.label)}</span></span>
+        <span class="spend-row-amt">${amounts}</span>
+      </div>`;
+  }).join("");
+}
+
+function renderToolbarSelect() {
+  const select = document.getElementById("mobile-trip-select");
+  select.innerHTML = orderedTrips().map(trip =>
+    `<option value="${trip.id}" ${trip.id === state.activeTripId ? "selected" : ""}>${esc(trip.name)}</option>`
+  ).join("");
+  select.onchange = () => {
+    state.activeTripId = select.value;
+    renderAll();
+  };
+}
+
+function renderTimeline() {
+  const timeline = document.getElementById("timeline");
+  const trip = activeTrip();
+
+  if (!trip) {
+    timeline.innerHTML = `<div class="empty-state"><div style="font-size:26px;">✈️</div><div class="big">${esc(t("noTrips"))}</div><button class="btn btn-primary" style="margin-top:14px;" onclick="openTripModal(null)">${esc(t("createFirstTrip"))}</button></div>`;
+    return;
+  }
+
+  const groups = groupedItems();
+  if (!groups.length) {
+    timeline.innerHTML = `<div class="empty-state"><div style="font-size:26px;">🗂️</div><div class="big">${esc(t("emptyTrip", { name: trip.name }))}</div><div class="small">${esc(t("emptyTripHelp"))}</div></div>`;
+    return;
+  }
+
+  timeline.innerHTML = groups.map((group, groupIndex) => {
+    const { dow, mon, day, year } = fmtDateHeader(group.date);
+    const rows = group.items.map((item, itemIndex) => {
+      const config = KIND_CONFIG[item.kind] || KIND_CONFIG.other;
+      const isLast = groupIndex === groups.length - 1 && itemIndex === group.items.length - 1;
+      return config.transport
+        ? transportRowHtml(item, config, isLast)
+        : eventRowHtml(item, config, isLast);
+    }).join("");
+
+    return `
+      <div class="date-group" data-date="${group.date}">
+        <div class="date-header">
+          <div class="flip-badge"><span class="flip-day">${day}</span></div>
+          <div>
+            <div class="date-dow">${dow}</div>
+            <div class="date-full font-display">${mon} ${year}</div>
+          </div>
+          <div class="date-rule"></div>
+        </div>
+        ${rows}
+      </div>`;
+  }).join("");
+
+  timeline.querySelectorAll("[data-edit]").forEach(button => {
+    button.addEventListener("click", event => {
+      event.stopPropagation();
+      openItemModal(button.dataset.edit);
+    });
+  });
+
+  timeline.querySelectorAll("[data-del]").forEach(button => {
+    button.addEventListener("click", event => {
+      event.stopPropagation();
+      const item = state.items.find(candidate => candidate.id === button.dataset.del);
+      if (item) openConfirm("item", item.id, item.title);
+    });
+  });
+}
+
+function locationHtml(item) {
+  if (!item.location) return "";
+  const safeUrl = safeHttpUrl(item.mapUrl);
+  const content = safeUrl
+    ? `<a href="${esc(safeUrl)}" target="_blank" rel="noopener noreferrer">${esc(item.location)}</a>`
+    : esc(item.location);
+  return `<div class="event-loc">📍 ${content}</div>`;
+}
+
+function eventRowHtml(item, config, isLast) {
+  const price = money(item.price, effectiveCurrency(item));
+  const displayColor = item.color || config.color;
+  return `
+    <div class="row" draggable="${canEditTrip(tripById(item.tripId)) ? "true" : "false"}" data-id="${item.id}" data-date="${item.date}">
+      <div class="row-time">${fmtTime(item.startTime)}</div>
+      <div class="spine">
+        <span class="spine-dot" style="background:${displayColor};"></span>
+        ${isLast ? "" : `<span class="spine-line"></span>`}
+      </div>
+      <div class="event-card" style="border-left:3px solid ${displayColor};">
+        <div class="event-top">
+          <div style="min-width:0;">
+            <span class="kind-pill" style="background:${rgba(displayColor, 0.15)}; color:${displayColor};">${config.icon} ${esc(kindLabel(item.kind).toUpperCase())}</span>
+            ${item.endTime ? `<span class="event-until">${esc(t("until"))} ${fmtTime(item.endTime)}</span>` : ""}
+            <div class="event-title">${esc(item.title)}</div>
+            ${locationHtml(item)}
+            ${item.notes ? `<div class="event-notes">${esc(item.notes)}</div>` : ""}
+          </div>
+          <div class="event-side">
+            ${price ? `<span class="event-price">${price}</span>` : ""}
+            ${canEditTrip(tripById(item.tripId)) ? `<div class="event-actions">
+              <button class="icon-btn" data-edit="${item.id}">✎</button>
+              <button class="icon-btn danger" data-del="${item.id}">🗑</button>
+            </div>` : ""}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function transportRowHtml(item, config, isLast) {
+  const duration = fmtDuration(item.startTime, item.endTime);
+  const displayColor = item.color || config.color;
+  const price = money(item.price, effectiveCurrency(item));
+  const mapUrl = safeHttpUrl(item.mapUrl);
+  return `
+    <div class="row transport-row" draggable="${canEditTrip(tripById(item.tripId)) ? "true" : "false"}" data-id="${item.id}" data-date="${item.date}">
+      <div class="row-time">${fmtTime(item.startTime)}</div>
+      <div class="spine">
+        <span class="spine-dot" style="background:${displayColor};"></span>
+        ${isLast ? "" : `<span class="spine-line"></span>`}
+      </div>
+      <div style="flex:1; min-width:0; display:flex; align-items:center; gap:10px;">
+        <div class="transport-line" style="--dash-color:${rgba(displayColor, 0.62)};"></div>
+        <div class="transport-chip" style="--dash-border:${rgba(displayColor, 0.42)}; --dash-bg:${rgba(displayColor, 0.11)}; border-color:${rgba(displayColor, 0.42)}; background:${rgba(displayColor, 0.11)};">
+          <span>${config.icon}</span>
+          <span class="transport-title" title="${esc(item.location || item.title)}">${esc(item.title)}</span>
+          ${duration ? `<span class="transport-meta">· ${duration}</span>` : ""}
+          ${price ? `<span class="transport-price">· ${price}</span>` : ""}
+          ${mapUrl ? `<a href="${esc(mapUrl)}" target="_blank" rel="noopener noreferrer" class="icon-btn" style="width:20px;height:20px;text-decoration:none;" title="${esc(item.location || "Open map")}">📍</a>` : ""}
+          ${canEditTrip(tripById(item.tripId)) ? `<span class="transport-actions">
+            <button class="icon-btn" style="width:20px;height:20px;" data-edit="${item.id}">✎</button>
+            <button class="icon-btn danger" style="width:20px;height:20px;" data-del="${item.id}">🗑</button>
+          </span>` : ""}
+        </div>
+        <div class="transport-line" style="--dash-color:${rgba(displayColor, 0.62)};"></div>
+      </div>
+    </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Item modal
+// ---------------------------------------------------------------------------
+function selectedKind() {
+  return document.querySelector(".kind-opt.active")?.dataset.kind || "activity";
+}
+
+function formTrip() {
+  return tripById(document.getElementById("f-trip").value) || activeTrip();
+}
+
+function setDatalist(id, values) {
+  document.getElementById(id).innerHTML = values.map(value => `<option value="${esc(value)}"></option>`).join("");
+}
+
+function updateKindSpecificFields(kind, preserveCategory = true) {
+  const config = KIND_CONFIG[kind] || KIND_CONFIG.other;
+  const isTransport = config.transport;
+
+  document.getElementById("single-place-fields").style.display = isTransport ? "none" : "block";
+  document.getElementById("route-place-fields").style.display = isTransport ? "grid" : "none";
+  document.getElementById("loc-label").textContent = kind === "hotel" ? t("propertyLocation") : t("location");
+
+  if (kind === "flight") {
+    document.getElementById("from-label").textContent = t("departureAirport");
+    document.getElementById("to-label").textContent = t("arrivalAirport");
+    document.getElementById("f-from").placeholder = t("selectAirport");
+    document.getElementById("f-to").placeholder = t("selectAirport");
+  } else {
+    document.getElementById("from-label").textContent = t("from");
+    document.getElementById("to-label").textContent = t("to");
+    document.getElementById("f-from").placeholder = t("origin");
+    document.getElementById("f-to").placeholder = t("destination");
+  }
+
+  const placeSuggestions = PLACE_SUGGESTIONS[kind] || PLACE_SUGGESTIONS.other;
+  setDatalist("place-options", placeSuggestions);
+  setDatalist("title-options", TITLE_SUGGESTIONS[kind] || TITLE_SUGGESTIONS.other);
+
+  const placeholderByKind = {
+    hotel: t("hotelPlaceholder"), food: t("foodPlaceholder"), activity: t("activityPlaceholder"),
+    sightseeing: t("sightseeingPlaceholder"), meeting: t("meetingPlaceholder"), other: t("placeAddress"),
+  };
+  document.getElementById("f-location").placeholder = placeholderByKind[kind] || t("placeAddress");
+
+  if (document.getElementById("f-color").dataset.override !== "true") {
+    document.getElementById("f-color").value = config.color;
+    updateItemColorHelp(false);
+  }
+
+  if (!preserveCategory && document.getElementById("f-category")) {
+    renderCategoryOptions(kindToCategory(kind));
+  }
+}
+
+function buildKindGrid(kind) {
+  const grid = document.getElementById("kind-grid");
+  grid.innerHTML = Object.entries(KIND_CONFIG).map(([key, config]) => `
+    <button type="button" class="kind-opt ${key === kind ? "active" : ""}" data-kind="${key}" style="--kind-color:${config.color};">
+      <span style="font-size:15px;">${config.icon}</span>${esc(kindLabel(key))}
+    </button>`).join("");
+
+  grid.querySelectorAll("[data-kind]").forEach(button => {
+    button.addEventListener("click", () => {
+      grid.querySelectorAll(".kind-opt").forEach(candidate => candidate.classList.remove("active"));
+      button.classList.add("active");
+      updateKindSpecificFields(button.dataset.kind, false);
+    });
+  });
+}
+
+function updateItemColorHelp(isOverride) {
+  const input = document.getElementById("f-color");
+  input.dataset.override = isOverride ? "true" : "false";
+  document.getElementById("f-color-help").textContent = t(isOverride ? "colorCustomHelp" : "colorDefaultHelp");
+  document.getElementById("f-color-default").disabled = !isOverride;
+}
+
+document.getElementById("f-color").addEventListener("input", () => updateItemColorHelp(true));
+document.getElementById("f-color-default").addEventListener("click", () => {
+  const config = KIND_CONFIG[selectedKind()] || KIND_CONFIG.other;
+  document.getElementById("f-color").value = config.color;
+  updateItemColorHelp(false);
+});
+
+function renderCurrencySelect(selectedCurrency = "") {
+  const trip = formTrip();
+  const defaultCurrency = trip?.defaultCurrency || "USD";
+  document.getElementById("f-currency").innerHTML = currencyOptions(selectedCurrency, true, defaultCurrency);
+  document.getElementById("f-currency").value = selectedCurrency || "";
+  document.getElementById("currency-help").textContent = selectedCurrency
+    ? t("customCurrency", { currency: defaultCurrency })
+    : t("inheritedCurrency", { currency: defaultCurrency });
+}
+
+function renderCategoryOptions(selectedCategory = "") {
+  const trip = formTrip();
+  const select = document.getElementById("f-category");
+  const builtIn = CATEGORY_ORDER.map(categoryId => {
+    const meta = CATEGORY_META[categoryId];
+    return `<option value="${categoryId}">${esc(meta.icon)} ${esc(categoryLabel(categoryId, meta.label))}</option>`;
+  }).join("");
+  const custom = (trip?.customCategories || []).map(category =>
+    `<option value="${category.id}">${esc(category.icon || "🧾")} ${esc(category.label)}</option>`
+  ).join("");
+
+  select.innerHTML = builtIn + custom + `<option value="__add__">${esc(t("addCustomCategory"))}</option>`;
+
+  const available = Array.from(select.options).some(option => option.value === selectedCategory);
+  select.value = available ? selectedCategory : kindToCategory(selectedKind());
+  document.getElementById("custom-category-row").classList.toggle("show", select.value === "__add__");
+}
+
+function addCustomCategory() {
+  const trip = formTrip();
+  if (!trip || !canEditTrip(trip)) return;
+  const label = document.getElementById("f-category-name").value.trim();
+  const icon = document.getElementById("f-category-icon").value.trim() || "🧾";
+  if (!label) {
+    document.getElementById("f-category-name").focus();
+    return;
+  }
+
+  const category = { id: `custom-${uid()}`, label, icon };
+  trip.customCategories.push(category);
+  document.getElementById("f-category-name").value = "";
+  document.getElementById("f-category-icon").value = "";
+  renderCategoryOptions(category.id);
+  persist();
+}
+
+function openItemModal(itemId) {
+  editingItemId = itemId || null;
+  const item = itemId ? state.items.find(candidate => candidate.id === itemId) : null;
+  const targetTrip = item ? tripById(item.tripId) : activeTrip();
+  if (!canEditTrip(targetTrip)) { editingItemId = null; return; }
+  const kind = item?.kind || "activity";
+
+  document.getElementById("item-modal-title").textContent = item ? t("editEntryTitle") : t("addEntryTitle");
+  document.getElementById("item-delete-btn").style.display = item ? "flex" : "none";
+
+  const tripSelect = document.getElementById("f-trip");
+  const sourceTrip = item ? tripById(item.tripId) : activeTrip();
+  const selectableTrips = sourceTrip?.remoteId ? [sourceTrip] : orderedTrips();
+  tripSelect.innerHTML = selectableTrips.map(trip => `<option value="${trip.id}">${esc(trip.name)}</option>`).join("");
+  tripSelect.value = item?.tripId || state.activeTripId;
+  tripSelect.disabled = Boolean(sourceTrip?.remoteId);
+
+  buildKindGrid(kind);
+  document.getElementById("f-color").value = item?.color || KIND_CONFIG[kind].color;
+  updateItemColorHelp(Boolean(item?.color));
+  updateKindSpecificFields(kind, true);
+
+  document.getElementById("f-title").value = item?.title || "";
+  document.getElementById("f-location").value = item?.location || "";
+  const parsedRoute = splitRoute(item?.location || "");
+  document.getElementById("f-from").value = item?.fromPlace || parsedRoute[0];
+  document.getElementById("f-to").value = item?.toPlace || parsedRoute[1];
+  document.getElementById("f-map-link").value = item?.mapUrl || "";
+  document.getElementById("f-date").value = item?.date || TODAY;
+  document.getElementById("f-start").value = item?.startTime || "";
+  document.getElementById("f-end").value = item?.endTime || "";
+  document.getElementById("f-price").value = item?.price != null ? item.price : "";
+  document.getElementById("f-notes").value = item?.notes || "";
+
+  renderCurrencySelect(item?.currency || "");
+  renderCategoryOptions(item?.categoryId || kindToCategory(kind));
+
+  document.getElementById("custom-category-row").classList.remove("show");
+  document.getElementById("item-overlay").classList.add("show");
+  document.getElementById("f-title").focus({ preventScroll: true });
+  document.querySelector("#item-overlay .modal-body").scrollTop = 0;
+}
+
+function closeItemModal() {
+  document.getElementById("item-overlay").classList.remove("show");
+  document.getElementById("f-trip").disabled = false;
+  editingItemId = null;
+}
+
+document.getElementById("add-entry-btn").addEventListener("click", () => { if (canEditTrip(activeTrip())) openItemModal(null); });
+document.getElementById("item-close").addEventListener("click", closeItemModal);
+document.getElementById("item-cancel").addEventListener("click", closeItemModal);
+document.getElementById("item-overlay").addEventListener("click", event => {
+  if (event.target.id === "item-overlay") closeItemModal();
+});
+
+document.getElementById("f-trip").addEventListener("change", () => {
+  const currentCurrency = document.getElementById("f-currency").value;
+  const currentCategory = document.getElementById("f-category").value;
+  renderCurrencySelect(currentCurrency);
+  renderCategoryOptions(currentCategory);
+});
+
+document.getElementById("f-category").addEventListener("change", event => {
+  document.getElementById("custom-category-row").classList.toggle("show", event.target.value === "__add__");
+  if (event.target.value === "__add__") document.getElementById("f-category-name").focus();
+});
+
+document.getElementById("add-category-btn").addEventListener("click", addCustomCategory);
+document.getElementById("f-category-name").addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    addCustomCategory();
+  }
+});
+
+document.getElementById("map-search-btn").addEventListener("click", () => {
+  const pastedUrl = safeHttpUrl(document.getElementById("f-map-link").value.trim());
+  if (pastedUrl) {
+    window.open(pastedUrl, "_blank", "noopener,noreferrer");
+    return;
+  }
+
+  const kind = selectedKind();
+  const config = KIND_CONFIG[kind] || KIND_CONFIG.other;
+  if (config.transport) {
+    const origin = document.getElementById("f-from").value.trim();
+    const destination = document.getElementById("f-to").value.trim();
+    if (origin && destination) {
+      const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+  }
+
+  const query = config.transport
+    ? document.getElementById("f-to").value.trim() || document.getElementById("f-from").value.trim()
+    : document.getElementById("f-location").value.trim();
+  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || document.getElementById("f-title").value.trim())}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+});
+
+document.getElementById("item-save").addEventListener("click", () => {
+  const targetTrip = tripById(document.getElementById("f-trip").value);
+  if (!canEditTrip(targetTrip)) return;
+  const title = document.getElementById("f-title").value.trim();
+  if (!title) {
+    document.getElementById("f-title").focus();
+    return;
+  }
+
+  const kind = selectedKind();
+  const config = KIND_CONFIG[kind] || KIND_CONFIG.other;
+  const fromPlace = document.getElementById("f-from").value.trim();
+  const toPlace = document.getElementById("f-to").value.trim();
+  const location = config.transport
+    ? [fromPlace, toPlace].filter(Boolean).join(" → ")
+    : document.getElementById("f-location").value.trim();
+
+  const mapRaw = document.getElementById("f-map-link").value.trim();
+  const mapUrl = safeHttpUrl(mapRaw);
+  if (mapRaw && !mapUrl) {
+    alert(t("invalidMap"));
+    document.getElementById("f-map-link").focus();
+    return;
+  }
+
+  const priceRaw = document.getElementById("f-price").value;
+  let categoryId = document.getElementById("f-category").value;
+  if (!categoryId || categoryId === "__add__") categoryId = kindToCategory(kind);
+
+  const form = {
+    tripId: document.getElementById("f-trip").value,
+    kind,
+    title,
+    location,
+    fromPlace: config.transport ? fromPlace : "",
+    toPlace: config.transport ? toPlace : "",
+    mapUrl,
+    date: document.getElementById("f-date").value || TODAY,
+    startTime: document.getElementById("f-start").value,
+    endTime: document.getElementById("f-end").value,
+    price: priceRaw === "" ? null : Number(priceRaw),
+    currency: document.getElementById("f-currency").value || null,
+    categoryId,
+    notes: document.getElementById("f-notes").value.trim(),
+    color: document.getElementById("f-color").dataset.override === "true" ? document.getElementById("f-color").value : null,
+  };
+
+  if (editingItemId) {
+    const index = state.items.findIndex(item => item.id === editingItemId);
+    if (index >= 0) state.items[index] = { ...state.items[index], ...form };
+  } else {
+    state.items.push({ id: uid(), ...form });
+  }
+
+  closeItemModal();
+  renderAll();
+});
+
+document.getElementById("item-delete-btn").addEventListener("click", () => {
+  const item = state.items.find(candidate => candidate.id === editingItemId);
+  if (item) openConfirm("item", item.id, item.title);
+});
+
+// ---------------------------------------------------------------------------
+// Trip modal and trip-level settings
+// ---------------------------------------------------------------------------
+function renderTripCategoryManager(trip) {
+  const manager = document.getElementById("trip-category-manager");
+  if (!trip || !trip.customCategories.length) {
+    manager.innerHTML = `<div class="field-help">${esc(t("noCustomCategories"))}</div>`;
+    return;
+  }
+
+  manager.innerHTML = trip.customCategories.map(category => `
+    <div class="category-chip">
+      <span>${esc(category.icon || "🧾")} ${esc(category.label)}</span>
+      <button type="button" data-remove-category="${category.id}" title="${esc(t("remove"))}">${esc(t("remove"))}</button>
+    </div>`
+  ).join("");
+
+  manager.querySelectorAll("[data-remove-category]").forEach(button => {
+    button.addEventListener("click", () => {
+      if (!canEditTrip(trip)) return;
+      const categoryId = button.dataset.removeCategory;
+      trip.customCategories = trip.customCategories.filter(category => category.id !== categoryId);
+      state.items.forEach(item => {
+        if (item.tripId === trip.id && item.categoryId === categoryId) item.categoryId = "other";
+      });
+      renderTripCategoryManager(trip);
+      persist();
+    });
+  });
+}
+
+function renderTripColorSwatches(selectedColor) {
+  const container = document.getElementById("t-color-swatches");
+  container.innerHTML = TRIP_PALETTE.map(color => `<button type="button" class="color-swatch ${color.toLowerCase() === selectedColor.toLowerCase() ? "active" : ""}" data-color="${color}" style="--swatch:${color};" aria-label="${color}"></button>`).join("");
+  container.querySelectorAll("[data-color]").forEach(button => {
+    button.addEventListener("click", () => {
+      document.getElementById("t-color").value = button.dataset.color;
+      renderTripColorSwatches(button.dataset.color);
+    });
+  });
+}
+document.getElementById("t-color").addEventListener("input", event => renderTripColorSwatches(event.target.value));
+
+function openTripModal(tripId = null) {
+  editingTripId = typeof tripId === "string" ? tripId : null;
+  const trip = editingTripId ? tripById(editingTripId) : null;
+  if (trip && !canEditTrip(trip)) { editingTripId = null; return; }
+
+  document.getElementById("trip-modal-title").textContent = trip ? t("tripSettingsTitle") : t("newTripTitle");
+  document.getElementById("trip-save").textContent = trip ? t("saveSettings") : t("createTrip");
+  document.getElementById("trip-delete-btn").textContent = t("deleteTrip");
+  document.getElementById("trip-delete-btn").style.display = trip && canDeleteTrip(trip) ? "flex" : "none";
+  document.getElementById("trip-category-settings").style.display = trip ? "block" : "none";
+
+  document.getElementById("t-name").value = trip?.name || "";
+  document.getElementById("t-start").value = trip?.startDate || TODAY;
+  document.getElementById("t-end").value = trip?.endDate || TODAY;
+  document.getElementById("t-currency").innerHTML = currencyOptions(trip?.defaultCurrency || "USD", false);
+  document.getElementById("t-currency").value = trip?.defaultCurrency || "USD";
+  const tripColor = trip?.color || TRIP_PALETTE[state.trips.length % TRIP_PALETTE.length];
+  document.getElementById("t-color").value = tripColor;
+  renderTripColorSwatches(tripColor);
+  renderTripCategoryManager(trip);
+
+  document.getElementById("trip-overlay").classList.add("show");
+  document.getElementById("t-name").focus({ preventScroll: true });
+  document.querySelector("#trip-overlay .modal-body").scrollTop = 0;
+}
+
+function closeTripModal() {
+  document.getElementById("trip-overlay").classList.remove("show");
+  editingTripId = null;
+}
+
+document.getElementById("new-trip-btn").addEventListener("click", () => openTripModal(null));
+document.getElementById("trip-settings-btn").addEventListener("click", () => {
+  const trip = activeTrip();
+  if (trip && canEditTrip(trip)) openTripModal(trip.id);
+});
+document.getElementById("trip-close").addEventListener("click", closeTripModal);
+document.getElementById("trip-cancel").addEventListener("click", closeTripModal);
+document.getElementById("trip-overlay").addEventListener("click", event => {
+  if (event.target.id === "trip-overlay") closeTripModal();
+});
+
+document.getElementById("trip-save").addEventListener("click", () => {
+  if (editingTripId && !canEditTrip(tripById(editingTripId))) return;
+  const name = document.getElementById("t-name").value.trim() || nextUntitledName();
+  const startDate = document.getElementById("t-start").value || TODAY;
+  const endDate = document.getElementById("t-end").value || startDate;
+  const defaultCurrency = document.getElementById("t-currency").value || "USD";
+  const color = document.getElementById("t-color").value || TRIP_PALETTE[0];
+
+  if (editingTripId) {
+    const trip = tripById(editingTripId);
+    if (trip) Object.assign(trip, { name, startDate, endDate, defaultCurrency, color });
+  } else {
+    const newTrip = {
+      id: uid(),
+      name,
+      startDate,
+      endDate,
+      defaultCurrency,
+      customCategories: [],
+      color,
+      order: orderedTrips().length,
+    };
+    state.trips.push(newTrip);
+    state.activeTripId = newTrip.id;
+  }
+
+  closeTripModal();
+  renderAll();
+});
+
+document.getElementById("trip-delete-btn").addEventListener("click", () => {
+  const trip = tripById(editingTripId);
+  if (trip) openConfirm("trip", trip.id, trip.name);
+});
+
+// ---------------------------------------------------------------------------
+// App preferences: language and dark/light appearance
+// ---------------------------------------------------------------------------
+function openAppSettings() {
+  document.getElementById("app-modal-title").textContent = t("appSettingsTitle");
+  document.getElementById("s-language").value = currentLanguage();
+  draftThemeChoice = state.settings.theme || "dark";
+  document.querySelectorAll("[data-theme-choice]").forEach(button => {
+    button.classList.toggle("active", button.dataset.themeChoice === draftThemeChoice);
+  });
+  document.getElementById("app-overlay").classList.add("show");
+}
+function closeAppSettings() {
+  document.getElementById("app-overlay").classList.remove("show");
+  draftThemeChoice = null;
+}
+document.getElementById("app-settings-btn").addEventListener("click", openAppSettings);
+document.getElementById("app-close").addEventListener("click", closeAppSettings);
+document.getElementById("app-cancel").addEventListener("click", closeAppSettings);
+document.getElementById("app-overlay").addEventListener("click", event => { if (event.target.id === "app-overlay") closeAppSettings(); });
+document.querySelectorAll("[data-theme-choice]").forEach(button => {
+  button.addEventListener("click", () => {
+    draftThemeChoice = button.dataset.themeChoice;
+    document.querySelectorAll("[data-theme-choice]").forEach(candidate => candidate.classList.toggle("active", candidate === button));
+  });
+});
+document.getElementById("app-save").addEventListener("click", () => {
+  state.settings.language = document.getElementById("s-language").value;
+  state.settings.theme = draftThemeChoice || state.settings.theme || "dark";
+  closeAppSettings();
+  renderAll();
+});
+
+// ---------------------------------------------------------------------------
+// Confirm modal
+// ---------------------------------------------------------------------------
+function openConfirm(type, id, label) {
+  pendingDelete = { type, id, label };
+  document.getElementById("confirm-title").textContent = t("confirmDelete", { label });
+  document.querySelector("#confirm-overlay p").textContent = t("cannotUndo");
+  document.getElementById("confirm-cancel").textContent = t("cancel");
+  document.getElementById("confirm-ok").textContent = t("deleteAction");
+  document.getElementById("confirm-overlay").classList.add("show");
+}
+
+function closeConfirm() {
+  document.getElementById("confirm-overlay").classList.remove("show");
+  pendingDelete = null;
+}
+
+document.getElementById("confirm-cancel").addEventListener("click", closeConfirm);
+document.getElementById("confirm-overlay").addEventListener("click", event => {
+  if (event.target.id === "confirm-overlay") closeConfirm();
+});
+
+document.getElementById("confirm-ok").addEventListener("click", async () => {
+  if (!pendingDelete) return;
+
+  if (pendingDelete.type === "item") {
+    state.items = state.items.filter(item => item.id !== pendingDelete.id);
+  } else if (pendingDelete.type === "trip") {
+    const deletingTrip = tripById(pendingDelete.id);
+    if (deletingTrip?.remoteId) {
+      if (!canDeleteTrip(deletingTrip) || !supabaseClient) return;
+      const { error } = await supabaseClient.from("voyage_trips").delete().eq("id", deletingTrip.remoteId);
+      if (error) { setCollabMessage(error.message, true); return; }
+    }
+    state.trips = state.trips.filter(trip => trip.id !== pendingDelete.id);
+    state.items = state.items.filter(item => item.tripId !== pendingDelete.id);
+    orderedTrips().forEach((trip, index) => { trip.order = index; });
+    if (state.activeTripId === pendingDelete.id) state.activeTripId = orderedTrips()[0]?.id || null;
+  }
+
+  closeItemModal();
+  closeTripModal();
+  closeConfirm();
+  renderAll();
+});
+
+// ---------------------------------------------------------------------------
+// Timeline drag to reorder
+// ---------------------------------------------------------------------------
+let draggedId = null;
+
+function applyDragReposition(item, targetDate, previousItem, nextItem) {
+  const DAY_START = 0;
+  const DAY_END = 23 * 60 + 55;
+  const duration = item.startTime && item.endTime
+    ? (timeToMinutes(item.endTime) - timeToMinutes(item.startTime) + 1440) % 1440
+    : null;
+
+  const previousMinutes = previousItem ? timeToMinutes(previousItem.endTime || previousItem.startTime) : DAY_START;
+  const nextMinutes = nextItem ? timeToMinutes(nextItem.startTime) : DAY_END;
+
+  let newStart;
+  if (previousItem && nextItem) {
+    newStart = Math.round(((previousMinutes + nextMinutes) / 2) / 5) * 5;
+    if (newStart <= previousMinutes || newStart >= nextMinutes) {
+      newStart = nextMinutes - previousMinutes > 1
+        ? previousMinutes + Math.max(1, Math.floor((nextMinutes - previousMinutes) / 2))
+        : previousMinutes;
+    }
+  } else if (previousItem && !nextItem) {
+    newStart = Math.min(previousMinutes + 60, DAY_END);
+  } else if (!previousItem && nextItem) {
+    newStart = Math.max(nextMinutes - 60, DAY_START);
+  } else {
+    newStart = 9 * 60;
+  }
+
+  newStart = Math.max(DAY_START, Math.min(DAY_END, newStart));
+  item.date = targetDate;
+  item.startTime = minutesToTime(newStart);
+
+  if (duration !== null && duration > 0) {
+    let newEnd = newStart + duration;
+    if (nextItem) newEnd = Math.min(newEnd, nextMinutes - 1);
+    newEnd = Math.max(newEnd, newStart + 1);
+    item.endTime = minutesToTime(newEnd);
+  }
+}
+
+function clearDragVisuals() {
+  document.querySelectorAll(".row.dragging").forEach(row => row.classList.remove("dragging"));
+  document.querySelectorAll(".row").forEach(row => {
+    row.classList.remove("drag-over-top");
+    row.classList.remove("drag-over-bottom");
+  });
+  document.querySelectorAll(".date-group").forEach(group => group.classList.remove("drag-over-empty"));
+}
+
+function initDragHandlers() {
+  const timeline = document.getElementById("timeline");
+
+  timeline.addEventListener("dragstart", event => {
+    if (!canEditTrip(activeTrip())) { event.preventDefault(); return; }
+    const row = event.target.closest(".row");
+    if (!row) return;
+    draggedId = row.dataset.id;
+    row.classList.add("dragging");
+    event.dataTransfer.effectAllowed = "move";
+    try { event.dataTransfer.setData("text/plain", draggedId); } catch {}
+  });
+
+  timeline.addEventListener("dragover", event => {
+    if (!draggedId) return;
+    event.preventDefault();
+    const row = event.target.closest(".row");
+
+    document.querySelectorAll(".row").forEach(candidate => {
+      candidate.classList.remove("drag-over-top");
+      candidate.classList.remove("drag-over-bottom");
+    });
+    document.querySelectorAll(".date-group").forEach(group => group.classList.remove("drag-over-empty"));
+
+    if (row && row.dataset.id !== draggedId) {
+      const rectangle = row.getBoundingClientRect();
+      const before = event.clientY < rectangle.top + rectangle.height / 2;
+      row.classList.add(before ? "drag-over-top" : "drag-over-bottom");
+    } else {
+      event.target.closest(".date-group")?.classList.add("drag-over-empty");
+    }
+  });
+
+  timeline.addEventListener("drop", event => {
+    if (!canEditTrip(activeTrip()) || !draggedId) return;
+    event.preventDefault();
+
+    const draggedItem = state.items.find(item => item.id === draggedId);
+    const row = event.target.closest(".row");
+    clearDragVisuals();
+
+    if (!draggedItem) {
+      draggedId = null;
+      return;
+    }
+
+    let targetDate;
+    let previousItem = null;
+    let nextItem = null;
+
+    if (row && row.dataset.id !== draggedId) {
+      targetDate = row.dataset.date;
+      const rectangle = row.getBoundingClientRect();
+      const before = event.clientY < rectangle.top + rectangle.height / 2;
+      const dayItems = tripItemsForDate(targetDate).filter(item => item.id !== draggedId);
+      const targetIndex = dayItems.findIndex(item => item.id === row.dataset.id);
+
+      if (before) {
+        previousItem = dayItems[targetIndex - 1] || null;
+        nextItem = dayItems[targetIndex] || null;
+      } else {
+        previousItem = dayItems[targetIndex] || null;
+        nextItem = dayItems[targetIndex + 1] || null;
+      }
+    } else {
+      const group = event.target.closest(".date-group");
+      if (!group) {
+        draggedId = null;
+        return;
+      }
+      targetDate = group.dataset.date;
+      const dayItems = tripItemsForDate(targetDate).filter(item => item.id !== draggedId);
+      previousItem = dayItems[dayItems.length - 1] || null;
+    }
+
+    applyDragReposition(draggedItem, targetDate, previousItem, nextItem);
+    draggedId = null;
+    renderAll();
+  });
+
+  timeline.addEventListener("dragend", () => {
+    draggedId = null;
+    clearDragVisuals();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Sidebar trip drag to reorder
+// ---------------------------------------------------------------------------
+let draggedTripId = null;
+
+function clearTripDragVisuals() {
+  document.querySelectorAll(".ticket-stub").forEach(button => {
+    button.classList.remove("trip-dragging", "trip-drag-over-top", "trip-drag-over-bottom");
+  });
+}
+
+function initTripDragHandlers() {
+  const list = document.getElementById("trip-list");
+
+  list.addEventListener("dragstart", event => {
+    const button = event.target.closest(".ticket-stub");
+    if (!button) return;
+    draggedTripId = button.dataset.trip;
+    button.classList.add("trip-dragging");
+    button.dataset.dragged = "true";
+    event.dataTransfer.effectAllowed = "move";
+    try { event.dataTransfer.setData("text/plain", draggedTripId); } catch {}
+  });
+
+  list.addEventListener("dragover", event => {
+    if (!draggedTripId) return;
+    event.preventDefault();
+    clearTripDragVisuals();
+
+    const target = event.target.closest(".ticket-stub");
+    const dragged = list.querySelector(`[data-trip="${draggedTripId}"]`);
+    if (dragged) dragged.classList.add("trip-dragging");
+
+    if (target && target.dataset.trip !== draggedTripId) {
+      const rectangle = target.getBoundingClientRect();
+      const before = event.clientY < rectangle.top + rectangle.height / 2;
+      target.classList.add(before ? "trip-drag-over-top" : "trip-drag-over-bottom");
+    }
+  });
+
+  list.addEventListener("drop", event => {
+    if (!draggedTripId) return;
+    event.preventDefault();
+
+    const trips = orderedTrips();
+    const draggedIndex = trips.findIndex(trip => trip.id === draggedTripId);
+    if (draggedIndex < 0) {
+      draggedTripId = null;
+      clearTripDragVisuals();
+      return;
+    }
+
+    const [draggedTrip] = trips.splice(draggedIndex, 1);
+    const target = event.target.closest(".ticket-stub");
+
+    if (target && target.dataset.trip !== draggedTripId) {
+      const targetIndex = trips.findIndex(trip => trip.id === target.dataset.trip);
+      const rectangle = target.getBoundingClientRect();
+      const before = event.clientY < rectangle.top + rectangle.height / 2;
+      trips.splice(Math.max(0, targetIndex + (before ? 0 : 1)), 0, draggedTrip);
+    } else {
+      trips.push(draggedTrip);
+    }
+
+    trips.forEach((trip, index) => { trip.order = index; });
+    draggedTripId = null;
+    clearTripDragVisuals();
+    renderAll();
+  });
+
+  list.addEventListener("dragend", event => {
+    const button = event.target.closest(".ticket-stub");
+    if (button) {
+      setTimeout(() => { button.dataset.dragged = ""; }, 0);
+    }
+    draggedTripId = null;
+    clearTripDragVisuals();
+  });
+}
+
+
+
+// ---------------------------------------------------------------------------
+// Collaboration: Supabase Auth, RLS-protected shared trips, invitations,
+// role-based editing, autosave, and realtime refresh.
+// ---------------------------------------------------------------------------
+const COLLAB_I18N = {
+  en: {
+    share:"↗ Share", localOnly:"Local only", synced:"Synced", saving:"Saving…", syncError:"Sync error", viewOnlyStatus:"View only",
+    viewOnlyBanner:"View-only access — changes are disabled.", shareTitle:"Share & collaborate", done:"Done", email:"Email",
+    authHelp:"Sign in by email before publishing or opening a shared trip.", sendSignIn:"Send sign-in link", signOut:"Sign out",
+    signInSent:"A sign-in link was sent. Return here after opening it.", configMissing:"Cloud collaboration is not configured yet. Add the Supabase URL and publishable key to COLLAB_CONFIG, run the supplied SQL, and host this file over HTTPS.",
+    publishTitle:"Publish this trip", publishHelp:"This trip is currently stored only in this browser. Publishing creates a cloud copy and a stable shared URL.", publish:"Create shared trip",
+    yourAccess:"Your access", owner:"Owner", admin:"Administrator", editor:"Can edit", viewer:"View only",
+    memberLink:"Link for existing members", memberLinkHelp:"People must already be members. Create an invitation below for a new person.", copy:"Copy", copied:"Copied.",
+    inviteTitle:"Invite a collaborator", createInvite:"Create invite", invitationLink:"Invitation link", emailInvite:"Email", members:"People with access",
+    inviteCreated:"Invitation created. Copy it or open your email app.", invalidEmail:"Enter a valid email address.", removeMember:"Remove", loading:"Loading…",
+    accessDenied:"This account does not have access to that trip.", inviteAccepted:"Invitation accepted.", inviteWrongEmail:"Sign in using the same email address that received the invitation.",
+    remoteLoaded:"Shared trip loaded.", remotePublished:"Shared trip created.", noTrip:"Select a trip first.", signInRequired:"Sign in to continue.",
+    roleViewer:"View only", roleEditor:"Allow editing", roleAdmin:"Manage trip & people", inviteSubject:"Invitation to collaborate on {trip}",
+    inviteBody:"You have been invited to collaborate on {trip}. Open this link and sign in with {email}:\n\n{link}"
+  },
+  "zh-TW": {
+    share:"↗ 分享", localOnly:"僅儲存於本機", synced:"已同步", saving:"儲存中…", syncError:"同步錯誤", viewOnlyStatus:"僅供檢視",
+    viewOnlyBanner:"目前為僅供檢視權限，無法修改內容。", shareTitle:"分享與共同編輯", done:"完成", email:"電子郵件",
+    authHelp:"發布或開啟共享旅程前，請先使用電子郵件登入。", sendSignIn:"傳送登入連結", signOut:"登出",
+    signInSent:"登入連結已寄出；開啟連結後請回到此頁。", configMissing:"尚未設定雲端協作。請在 COLLAB_CONFIG 填入 Supabase URL 與 publishable key、執行隨附 SQL，並以 HTTPS 發布此檔案。",
+    publishTitle:"發布此旅程", publishHelp:"此旅程目前只存在此瀏覽器。發布後會建立雲端副本與固定共享網址。", publish:"建立共享旅程",
+    yourAccess:"您的權限", owner:"建立者", admin:"管理者", editor:"可編輯", viewer:"僅供檢視",
+    memberLink:"現有成員連結", memberLinkHelp:"此連結只供已加入的成員使用；新增成員請建立下方邀請。", copy:"複製", copied:"已複製。",
+    inviteTitle:"邀請協作者", createInvite:"建立邀請", invitationLink:"邀請連結", emailInvite:"寄送郵件", members:"可存取的人員",
+    inviteCreated:"邀請已建立；可複製連結或開啟郵件程式。", invalidEmail:"請輸入有效的電子郵件。", removeMember:"移除", loading:"載入中…",
+    accessDenied:"此帳號沒有該旅程的存取權。", inviteAccepted:"已接受邀請。", inviteWrongEmail:"請使用收到邀請的同一個電子郵件登入。",
+    remoteLoaded:"共享旅程已載入。", remotePublished:"共享旅程已建立。", noTrip:"請先選擇旅程。", signInRequired:"請先登入。",
+    roleViewer:"僅供檢視", roleEditor:"允許編輯", roleAdmin:"管理旅程與成員", inviteSubject:"邀請共同編輯 {trip}",
+    inviteBody:"您受邀共同編輯 {trip}。請開啟下列連結，並使用 {email} 登入：\n\n{link}"
+  },
+  ja: {
+    share:"↗ 共有", localOnly:"ローカルのみ", synced:"同期済み", saving:"保存中…", syncError:"同期エラー", viewOnlyStatus:"閲覧のみ",
+    viewOnlyBanner:"閲覧専用です。変更はできません。", shareTitle:"共有と共同編集", done:"完了", email:"メール",
+    authHelp:"共有旅行を公開または開く前に、メールでサインインしてください。", sendSignIn:"サインインリンクを送信", signOut:"サインアウト",
+    signInSent:"サインインリンクを送信しました。リンクを開いた後、このページに戻ってください。", configMissing:"クラウド共同編集は未設定です。COLLAB_CONFIG に Supabase URL と publishable key を入力し、付属 SQL を実行して、このファイルを HTTPS で公開してください。",
+    publishTitle:"この旅行を公開", publishHelp:"現在、この旅行はこのブラウザだけに保存されています。公開するとクラウドコピーと固定共有 URL が作成されます。", publish:"共有旅行を作成",
+    yourAccess:"あなたの権限", owner:"作成者", admin:"管理者", editor:"編集可能", viewer:"閲覧のみ",
+    memberLink:"既存メンバー用リンク", memberLinkHelp:"このリンクは既に参加済みのメンバー用です。新しい人には下の招待を作成してください。", copy:"コピー", copied:"コピーしました。",
+    inviteTitle:"共同編集者を招待", createInvite:"招待を作成", invitationLink:"招待リンク", emailInvite:"メール", members:"アクセスできる人",
+    inviteCreated:"招待を作成しました。リンクをコピーするかメールアプリを開いてください。", invalidEmail:"有効なメールアドレスを入力してください。", removeMember:"削除", loading:"読み込み中…",
+    accessDenied:"このアカウントには旅行へのアクセス権がありません。", inviteAccepted:"招待を承認しました。", inviteWrongEmail:"招待を受け取ったメールアドレスでサインインしてください。",
+    remoteLoaded:"共有旅行を読み込みました。", remotePublished:"共有旅行を作成しました。", noTrip:"先に旅行を選択してください。", signInRequired:"サインインしてください。",
+    roleViewer:"閲覧のみ", roleEditor:"編集を許可", roleAdmin:"旅行とメンバーを管理", inviteSubject:"{trip} の共同編集への招待",
+    inviteBody:"{trip} の共同編集に招待されました。次のリンクを開き、{email} でサインインしてください。\n\n{link}"
+  }
+};
+function ct(key, variables = {}) {
+  let value = (COLLAB_I18N[currentLanguage()] || COLLAB_I18N.en)[key] ?? COLLAB_I18N.en[key] ?? key;
+  Object.entries(variables).forEach(([name, replacement]) => { value = value.replaceAll(`{${name}}`, String(replacement)); });
+  return value;
+}
+function applyCollabTranslations() {
+  const set = (id, key) => { const element = document.getElementById(id); if (element) element.textContent = ct(key); };
+  set("share-trip-btn", "share"); set("readonly-banner", "viewOnlyBanner"); set("share-modal-title", "shareTitle"); set("share-done", "done");
+  set("collab-email-label", "email"); set("collab-auth-help", "authHelp"); set("collab-login-btn", "sendSignIn"); set("collab-logout-btn", "signOut");
+  set("publish-title", "publishTitle"); set("publish-help", "publishHelp"); set("publish-trip-btn", "publish"); set("access-label", "yourAccess");
+  set("shared-link-label", "memberLink"); set("shared-link-help", "memberLinkHelp"); set("copy-share-link-btn", "copy"); set("invite-title", "inviteTitle");
+  set("create-invite-btn", "createInvite"); set("invite-link-label", "invitationLink"); set("copy-invite-link-btn", "copy"); set("email-invite-btn", "emailInvite"); set("members-title", "members");
+  const inviteRole = document.getElementById("invite-role");
+  if (inviteRole) {
+    inviteRole.querySelector('[value="viewer"]').textContent = ct("roleViewer");
+    inviteRole.querySelector('[value="editor"]').textContent = ct("roleEditor");
+    inviteRole.querySelector('[value="admin"]').textContent = ct("roleAdmin");
+  }
+  updateSyncStatus();
+}
+
+let supabaseClient = null;
+let collabUser = null;
+let remoteSaveTimer = null;
+let remoteSaveInFlight = false;
+let suppressRemoteSave = false;
+let realtimeChannel = null;
+let realtimeTripId = null;
+let lastInvite = null;
+
+function collabConfigured() {
+  let validUrl = false;
+  try { validUrl = new URL(COLLAB_CONFIG.supabaseUrl || "").protocol === "https:"; } catch {}
+  return Boolean(window.supabase?.createClient)
+    && validUrl
+    && COLLAB_CONFIG.supabasePublishableKey
+    && !COLLAB_CONFIG.supabasePublishableKey.includes("PASTE_YOUR");
+}
+function baseShareUrl() {
+  const url = new URL(window.location.href);
+  url.hash = "";
+  url.search = "";
+  return url;
+}
+function tripMemberUrl(remoteId) {
+  const url = baseShareUrl();
+  url.searchParams.set("trip", remoteId);
+  return url.href;
+}
+function tripInviteUrl(token) {
+  const url = baseShareUrl();
+  url.searchParams.set("invite", token);
+  return url.href;
+}
+function roleText(role) { return ct(role || "viewer"); }
+function setCollabMessage(message = "", isError = false, target = "collab-main-message") {
+  const element = document.getElementById(target);
+  if (!element) return;
+  element.textContent = message;
+  element.className = `collab-message${message ? (isError ? " error" : " success") : ""}`;
+}
+function updateSyncStatus(forcedState = "") {
+  const element = document.getElementById("sync-status");
+  if (!element) return;
+  const trip = activeTrip();
+  let stateName = forcedState;
+  let text = "";
+  if (!trip?.remoteId) { stateName = stateName || "local"; text = ct("localOnly"); }
+  else if (!canEditTrip(trip)) { stateName = stateName || "viewer"; text = ct("viewOnlyStatus"); }
+  else if (stateName === "saving") text = ct("saving");
+  else if (stateName === "error") text = ct("syncError");
+  else { stateName = "synced"; text = ct("synced"); }
+  element.dataset.state = stateName;
+  element.textContent = text;
+}
+function sharedDocument(trip) {
+  const documentTrip = { ...trip };
+  ["remoteId", "remoteRole", "remoteVersion", "remoteUpdatedAt", "remoteSnapshot"].forEach(key => delete documentTrip[key]);
+  return {
+    schemaVersion: 1,
+    trip: documentTrip,
+    items: state.items.filter(item => item.tripId === trip.id).map(item => ({ ...item })),
+  };
+}
+function applySharedDocument(remoteId, documentData, role, version, updatedAt = "") {
+  if (!documentData?.trip || !Array.isArray(documentData.items)) return;
+  const existing = state.trips.find(trip => trip.remoteId === remoteId);
+  let localId = existing?.id || documentData.trip.id || uid();
+  if (!existing && state.trips.some(trip => trip.id === localId && trip.remoteId !== remoteId)) localId = uid();
+  const incomingTrip = {
+    ...documentData.trip,
+    id: localId,
+    remoteId,
+    remoteRole: role || existing?.remoteRole || "viewer",
+    remoteVersion: version || existing?.remoteVersion || 1,
+    remoteUpdatedAt: updatedAt || existing?.remoteUpdatedAt || "",
+  };
+  incomingTrip.customCategories = Array.isArray(incomingTrip.customCategories) ? incomingTrip.customCategories : [];
+  incomingTrip.defaultCurrency = incomingTrip.defaultCurrency || "USD";
+  incomingTrip.color = incomingTrip.color || TRIP_PALETTE[0];
+  incomingTrip.order = existing?.order ?? incomingTrip.order ?? orderedTrips().length;
+
+  suppressRemoteSave = true;
+  if (existing) Object.assign(existing, incomingTrip);
+  else state.trips.push(incomingTrip);
+  state.items = state.items.filter(item => item.tripId !== localId);
+  state.items.push(...documentData.items.map(item => ({ ...item, tripId: localId })));
+  state.activeTripId = localId;
+  (existing || incomingTrip).remoteSnapshot = JSON.stringify(sharedDocument(existing || incomingTrip));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+  renderAll();
+  suppressRemoteSave = false;
+}
+async function fetchRole(remoteId) {
+  if (!supabaseClient || !collabUser) return null;
+  const { data, error } = await supabaseClient.rpc("get_voyage_role", { p_trip_id: remoteId });
+  if (error) throw error;
+  return data || null;
+}
+async function loadRemoteTrip(remoteId, silent = false) {
+  if (!supabaseClient || !collabUser) return false;
+  if (!silent) setCollabMessage(ct("loading"));
+  const role = await fetchRole(remoteId);
+  if (!role) { setCollabMessage(ct("accessDenied"), true); return false; }
+  const { data, error } = await supabaseClient.from("voyage_trips").select("id,name,document,version,updated_at").eq("id", remoteId).single();
+  if (error) { setCollabMessage(ct("accessDenied"), true); return false; }
+  applySharedDocument(remoteId, data.document, role, data.version, data.updated_at);
+  if (!silent) setCollabMessage(ct("remoteLoaded"));
+  return true;
+}
+function scheduleRemoteSave() {
+  if (suppressRemoteSave || !supabaseClient || !collabUser) return;
+  const trip = activeTrip();
+  if (!trip?.remoteId || !canEditTrip(trip)) return;
+  const fingerprint = JSON.stringify(sharedDocument(trip));
+  if (trip.remoteSnapshot === fingerprint) return;
+  clearTimeout(remoteSaveTimer);
+  remoteSaveTimer = setTimeout(saveActiveRemoteTrip, 450);
+}
+async function saveActiveRemoteTrip() {
+  const trip = activeTrip();
+  if (!trip?.remoteId || !canEditTrip(trip) || !supabaseClient || remoteSaveInFlight) return;
+  remoteSaveInFlight = true;
+  updateSyncStatus("saving");
+  const payload = { name: trip.name, document: sharedDocument(trip), last_client_id: CLIENT_ID };
+  const { data, error } = await supabaseClient.from("voyage_trips").update(payload).eq("id", trip.remoteId).select("version,updated_at").single();
+  remoteSaveInFlight = false;
+  if (error) { updateSyncStatus("error"); setCollabMessage(error.message, true); return; }
+  trip.remoteVersion = data.version;
+  trip.remoteUpdatedAt = data.updated_at;
+  trip.remoteSnapshot = JSON.stringify(sharedDocument(trip));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+  updateSyncStatus("synced");
+}
+async function ensureRealtimeForActiveTrip() {
+  if (!supabaseClient || !collabUser) return;
+  const remoteId = activeTrip()?.remoteId || null;
+  if (remoteId === realtimeTripId) return;
+  if (realtimeChannel) await supabaseClient.removeChannel(realtimeChannel);
+  realtimeChannel = null;
+  realtimeTripId = remoteId;
+  if (!remoteId) return;
+  realtimeChannel = supabaseClient.channel(`voyage-trip-${remoteId}`)
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "voyage_trips", filter: `id=eq.${remoteId}` }, async payload => {
+      if (payload.new.last_client_id === CLIENT_ID) return;
+      const role = await fetchRole(remoteId).catch(() => null);
+      if (!role) return;
+      applySharedDocument(remoteId, payload.new.document, role, payload.new.version, payload.new.updated_at);
+      updateSyncStatus("synced");
+    })
+    .on("postgres_changes", { event: "DELETE", schema: "public", table: "voyage_trips", filter: `id=eq.${remoteId}` }, () => {
+      const trip = state.trips.find(candidate => candidate.remoteId === remoteId);
+      if (!trip) return;
+      state.items = state.items.filter(item => item.tripId !== trip.id);
+      state.trips = state.trips.filter(candidate => candidate.id !== trip.id);
+      state.activeTripId = orderedTrips()[0]?.id || null;
+      renderAll();
+    })
+    .subscribe();
+}
+async function publishActiveTrip() {
+  const trip = activeTrip();
+  if (!trip) return setCollabMessage(ct("noTrip"), true);
+  if (!collabUser) return setCollabMessage(ct("signInRequired"), true);
+  if (trip.remoteId) return refreshSharePanel();
+  setCollabMessage(ct("loading"));
+  const { data, error } = await supabaseClient.rpc("create_voyage_trip", { p_name: trip.name, p_document: sharedDocument(trip) });
+  if (error) return setCollabMessage(error.message, true);
+  const result = Array.isArray(data) ? data[0] : data;
+  trip.remoteId = result.trip_id;
+  trip.remoteRole = result.role || "owner";
+  trip.remoteVersion = result.version || 1;
+  trip.remoteSnapshot = JSON.stringify(sharedDocument(trip));
+  history.replaceState({}, "", tripMemberUrl(trip.remoteId));
+  renderAll();
+  setCollabMessage(ct("remotePublished"));
+  refreshSharePanel();
+}
+async function acceptInvite(token) {
+  if (!collabUser || !supabaseClient) return false;
+  const { data, error } = await supabaseClient.rpc("accept_voyage_invite", { p_token: token });
+  if (error) { setCollabMessage(error.message.toLowerCase().includes("email") ? ct("inviteWrongEmail") : error.message, true); return false; }
+  const remoteId = typeof data === "string" ? data : data?.trip_id || data;
+  history.replaceState({}, "", tripMemberUrl(remoteId));
+  await loadRemoteTrip(remoteId);
+  setCollabMessage(ct("inviteAccepted"));
+  return true;
+}
+async function listMembers() {
+  const trip = activeTrip();
+  const list = document.getElementById("member-list");
+  if (!trip?.remoteId || !canManageTrip(trip)) { list.innerHTML = ""; return; }
+  list.innerHTML = `<div class="field-help">${esc(ct("loading"))}</div>`;
+  const { data, error } = await supabaseClient.rpc("list_voyage_members", { p_trip_id: trip.remoteId });
+  if (error) { list.innerHTML = `<div class="collab-message error">${esc(error.message)}</div>`; return; }
+  list.innerHTML = (data || []).map(member => {
+    const isOwner = member.role === "owner";
+    const canTouch = tripRole(trip) === "owner" ? !isOwner : ["viewer", "editor"].includes(member.role) && member.user_id !== collabUser.id;
+    const roleOptions = tripRole(trip) === "owner"
+      ? ["admin", "editor", "viewer"]
+      : ["editor", "viewer"];
+    return `<div class="member-row" data-member="${esc(member.user_id)}">
+      <span class="member-email" title="${esc(member.email)}">${esc(member.email)}</span>
+      ${!canTouch ? `<span class="role-badge">${esc(roleText(member.role))}</span>` : `<select class="field-input" data-member-role>${roleOptions.map(role => `<option value="${role}" ${member.role === role ? "selected" : ""}>${esc(roleText(role))}</option>`).join("")}</select>`}
+      ${canTouch ? `<button class="icon-btn danger" data-remove-member title="${esc(ct("removeMember"))}">✕</button>` : ""}
+    </div>`;
+  }).join("");
+  list.querySelectorAll("[data-member-role]").forEach(select => select.addEventListener("change", async () => {
+    const row = select.closest("[data-member]");
+    const { error } = await supabaseClient.rpc("set_voyage_member_role", { p_trip_id: trip.remoteId, p_user_id: row.dataset.member, p_role: select.value });
+    if (error) setCollabMessage(error.message, true); else listMembers();
+  }));
+  list.querySelectorAll("[data-remove-member]").forEach(button => button.addEventListener("click", async () => {
+    const row = button.closest("[data-member]");
+    const { error } = await supabaseClient.rpc("remove_voyage_member", { p_trip_id: trip.remoteId, p_user_id: row.dataset.member });
+    if (error) setCollabMessage(error.message, true); else listMembers();
+  }));
+}
+async function refreshSharePanel() {
+  const configured = collabConfigured();
+  document.getElementById("collab-config-warning").style.display = configured ? "none" : "block";
+  document.getElementById("collab-config-warning").textContent = configured ? "" : ct("configMissing");
+  document.getElementById("collab-auth-panel").style.display = configured && !collabUser ? "flex" : "none";
+  document.getElementById("collab-signed-panel").style.display = configured && collabUser ? "flex" : "none";
+  if (!configured || !collabUser) return;
+  document.getElementById("collab-user-email").textContent = collabUser.email || collabUser.id;
+  const trip = activeTrip();
+  const shared = Boolean(trip?.remoteId);
+  document.getElementById("collab-unshared-panel").style.display = shared ? "none" : "block";
+  document.getElementById("collab-shared-panel").style.display = shared ? "block" : "none";
+  if (!shared) return;
+  document.getElementById("collab-role").textContent = roleText(tripRole(trip));
+  document.getElementById("collab-share-link").value = tripMemberUrl(trip.remoteId);
+  const manageable = canManageTrip(trip);
+  document.getElementById("collab-admin-section").style.display = manageable ? "block" : "none";
+  const adminOption = document.querySelector('#invite-role option[value="admin"]');
+  if (adminOption) adminOption.hidden = tripRole(trip) !== "owner";
+  if (tripRole(trip) !== "owner" && document.getElementById("invite-role").value === "admin") document.getElementById("invite-role").value = "editor";
+  if (manageable) await listMembers();
+}
+function openShareModal() {
+  applyCollabTranslations();
+  setCollabMessage("");
+  document.getElementById("share-overlay").classList.add("show");
+  refreshSharePanel();
+}
+function closeShareModal() { document.getElementById("share-overlay").classList.remove("show"); }
+async function processCollabRoute() {
+  const params = new URLSearchParams(location.search);
+  const invite = params.get("invite");
+  const tripId = params.get("trip");
+  if (!collabUser && (invite || tripId)) { openShareModal(); return; }
+  if (invite && collabUser) { openShareModal(); await acceptInvite(invite); return; }
+  if (tripId && collabUser) await loadRemoteTrip(tripId, true);
+  else {
+    const cachedRemote = activeTrip()?.remoteId;
+    if (cachedRemote && collabUser) await loadRemoteTrip(cachedRemote, true).catch(() => false);
+  }
+}
+async function initCollaboration() {
+  if (!collabConfigured()) { updateSyncStatus(); return; }
+  supabaseClient = window.supabase.createClient(COLLAB_CONFIG.supabaseUrl, COLLAB_CONFIG.supabasePublishableKey, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
+  const { data } = await supabaseClient.auth.getSession();
+  collabUser = data.session?.user || null;
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    collabUser = session?.user || null;
+    setTimeout(async () => { await processCollabRoute(); refreshSharePanel(); }, 0);
+  });
+  await processCollabRoute();
+  refreshSharePanel();
+}
+
+document.getElementById("share-trip-btn").addEventListener("click", openShareModal);
+document.getElementById("share-close").addEventListener("click", closeShareModal);
+document.getElementById("share-done").addEventListener("click", closeShareModal);
+document.getElementById("share-overlay").addEventListener("click", event => { if (event.target.id === "share-overlay") closeShareModal(); });
+document.getElementById("collab-login-btn").addEventListener("click", async () => {
+  const email = document.getElementById("collab-login-email").value.trim();
+  if (!/^\S+@\S+\.\S+$/.test(email)) return setCollabMessage(ct("invalidEmail"), true, "collab-auth-message");
+  const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href.split("#")[0] } });
+  setCollabMessage(error ? error.message : ct("signInSent"), Boolean(error), "collab-auth-message");
+});
+document.getElementById("collab-logout-btn").addEventListener("click", async () => { await supabaseClient.auth.signOut(); collabUser = null; refreshSharePanel(); });
+document.getElementById("publish-trip-btn").addEventListener("click", publishActiveTrip);
+document.getElementById("copy-share-link-btn").addEventListener("click", async () => { await navigator.clipboard.writeText(document.getElementById("collab-share-link").value); setCollabMessage(ct("copied")); });
+document.getElementById("copy-invite-link-btn").addEventListener("click", async () => { await navigator.clipboard.writeText(document.getElementById("invite-link").value); setCollabMessage(ct("copied"), false, "invite-message"); });
+document.getElementById("create-invite-btn").addEventListener("click", async () => {
+  const trip = activeTrip();
+  const email = document.getElementById("invite-email").value.trim().toLowerCase();
+  const role = document.getElementById("invite-role").value;
+  if (!/^\S+@\S+\.\S+$/.test(email)) return setCollabMessage(ct("invalidEmail"), true, "invite-message");
+  const { data, error } = await supabaseClient.rpc("create_voyage_invite", { p_trip_id: trip.remoteId, p_email: email, p_role: role });
+  if (error) return setCollabMessage(error.message, true, "invite-message");
+  const token = typeof data === "string" ? data : data?.token || data;
+  const link = tripInviteUrl(token);
+  lastInvite = { email, role, link, tripName: trip.name };
+  document.getElementById("invite-link").value = link;
+  document.getElementById("invite-result").style.display = "block";
+  setCollabMessage(ct("inviteCreated"), false, "invite-message");
+});
+document.getElementById("email-invite-btn").addEventListener("click", () => {
+  if (!lastInvite) return;
+  const subject = ct("inviteSubject", { trip: lastInvite.tripName });
+  const body = ct("inviteBody", { trip: lastInvite.tripName, email: lastInvite.email, link: lastInvite.link });
+  location.href = `mailto:${encodeURIComponent(lastInvite.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+});
+
+
+// ---------------------------------------------------------------------------
+// Init
+// ---------------------------------------------------------------------------
+initDragHandlers();
+initTripDragHandlers();
+renderAll();
+initCollaboration();
+</script>
+</body>
+</html>
