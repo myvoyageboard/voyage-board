@@ -418,6 +418,50 @@
     .custom-category-row > :last-child { grid-column: 1 / -1; }
   }
 
+
+  /* Mobile spending summary and touch controls */
+  #mobile-spend-panel { display:none; }
+  #mobile-spend-toggle { display:none; }
+  .spend-panel-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .spend-toggle-icon { display:inline-block; transition:transform .18s ease; }
+  #mobile-spend-panel.is-collapsed .spend-toggle-icon { transform:rotate(-90deg); }
+  #mobile-spend-panel.is-collapsed .mobile-spend-content { display:none; }
+  .mobile-spend-content { margin-top:10px; }
+  .touch-drag-ghost {
+    position:fixed; z-index:1000; pointer-events:none; opacity:.9; transform:scale(.98);
+    box-shadow:0 16px 42px rgba(0,0,0,.42); border-radius:12px;
+  }
+  body.touch-reordering { user-select:none; -webkit-user-select:none; }
+  body.touch-reordering #timeline { overflow:hidden; }
+
+  @media (max-width:720px) {
+    #mobile-spend-panel {
+      display:block; flex:0 0 auto; margin:0 10px; padding:10px 12px;
+      border:1px solid var(--border); border-top:0; border-radius:0 0 12px 12px;
+      background:var(--panel); max-width:calc(100vw - 20px); overflow:hidden;
+    }
+    #mobile-spend-toggle {
+      display:flex; width:100%; min-height:44px; padding:4px 0; align-items:center;
+      justify-content:space-between; border:0; background:transparent; color:var(--text-hi);
+      font:inherit; cursor:pointer; text-align:left;
+    }
+    #mobile-spend-values { font-size:18px; color:var(--amber); }
+    #mobile-spend-values .empty { font-size:12px; color:var(--text-lo); }
+    #mobile-spend-breakdown { margin-top:9px; display:flex; flex-direction:column; gap:7px; }
+    .icon-btn,
+    .transport-actions .icon-btn,
+    .event-actions .icon-btn,
+    .member-row .icon-btn {
+      width:44px !important; height:44px !important; min-width:44px; min-height:44px;
+      border-radius:10px; font-size:17px;
+    }
+    .event-actions, .transport-actions { gap:6px; }
+    .transport-chip, .event-card, .modal, .modal-body, .modal-foot,
+    .collab-section, .invite-grid, .member-list, .member-row { max-width:100%; min-width:0; }
+    .modal-foot > div { min-width:0; max-width:100%; flex-wrap:wrap; }
+    .modal-foot .btn { min-height:44px; }
+  }
+
 </style>
 </head>
 <body>
@@ -449,6 +493,16 @@
         <span class="toolbar-hint" id="toolbar-hint">Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.</span>
       </div>
     </div>
+    <section id="mobile-spend-panel" aria-label="Trip spending summary">
+      <button id="mobile-spend-toggle" type="button" aria-expanded="true">
+        <span class="font-display" id="mobile-trip-spend-label">TRIP SPEND</span>
+        <span class="spend-toggle-icon" aria-hidden="true">▾</span>
+      </button>
+      <div class="mobile-spend-content">
+        <div id="mobile-spend-values"></div>
+        <div id="mobile-spend-breakdown"></div>
+      </div>
+    </section>
     <div id="readonly-banner" class="readonly-banner">View-only access — changes are disabled.</div>
     <div id="timeline" class="scroll"></div>
   </main>
@@ -704,8 +758,8 @@ const COLLAB_CONFIG = window.VOYAGE_BOARD_CONFIG || {
   // Fill these two values after creating the Supabase project described in
   // voyage-board-collaboration-setup.md. The publishable/anon key is safe to
   // expose in a browser only when the supplied Row Level Security policies are installed.
-  supabaseUrl: "https://ssqdatwuoefjzpmseyhm.supabase.co",
-  supabasePublishableKey: "sb_publishable_d1cBXwtzJIgzDAbX1FU3-A_RFk42Clt",
+  supabaseUrl: "PASTE_YOUR_SUPABASE_URL_HERE",
+  supabasePublishableKey: "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE",
 };
 const CLIENT_ID = (crypto.randomUUID ? crypto.randomUUID() : uid());
 
@@ -1024,7 +1078,7 @@ function applyStaticTranslations() {
     element.textContent = t(element.dataset.i18n);
   });
   const textMap = {
-    "trips-label":"trips", "trip-spend-label":"tripSpend", "new-trip-btn":"newTrip", "add-entry-btn":"addEntry",
+    "trips-label":"trips", "trip-spend-label":"tripSpend", "mobile-trip-spend-label":"tripSpend", "new-trip-btn":"newTrip", "add-entry-btn":"addEntry",
     "trip-settings-btn":"tripSettings", "app-settings-btn":"appSettings", "toolbar-hint":"toolbarHint", "map-search-btn":"openMaps",
     "item-cancel":"cancel", "item-save":"save", "trip-cancel":"cancel", "app-cancel":"cancel", "app-save":"save",
     "currency-default-note":"currencyDefaultNote", "trip-color-help":"tripColorHelp", "appearance-help":"appearanceHelp"
@@ -1254,6 +1308,35 @@ function tripSpendByCategory() {
 // ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
+function renderSpendSummary(valuesId, breakdownId) {
+  const values = document.getElementById(valuesId);
+  const breakdown = document.getElementById(breakdownId);
+  if (!values || !breakdown) return;
+
+  const spend = tripSpend();
+  const currencies = Object.keys(spend);
+  values.innerHTML = currencies.length === 0
+    ? `<span class="empty">${esc(t("noCosts"))}</span>`
+    : currencies.map(currency => `<div class="font-mono">${money(spend[currency], currency)}</div>`).join("");
+
+  const trip = activeTrip();
+  const byCategory = tripSpendByCategory();
+  const customOrder = trip?.customCategories?.map(category => category.id) || [];
+  const categoryIds = [...CATEGORY_ORDER, ...customOrder].filter(categoryId => byCategory[categoryId]);
+  Object.keys(byCategory).forEach(categoryId => {
+    if (!categoryIds.includes(categoryId)) categoryIds.push(categoryId);
+  });
+  breakdown.innerHTML = categoryIds.map(categoryId => {
+    const meta = categoryMeta(trip, categoryId);
+    const amounts = Object.entries(byCategory[categoryId])
+      .map(([currency, amount]) => money(amount, currency)).join(" · ");
+    return `<div class="spend-row">
+      <span class="spend-row-label"><span>${esc(meta.icon)}</span><span class="cat-name">${esc(meta.label)}</span></span>
+      <span class="spend-row-amt">${amounts}</span>
+    </div>`;
+  }).join("");
+}
+
 function renderAll() {
   applyTheme();
   applyStaticTranslations();
@@ -1300,33 +1383,8 @@ function renderSidebar() {
     });
   });
 
-  const spend = tripSpend();
-  const values = document.getElementById("spend-values");
-  const currencies = Object.keys(spend);
-  values.innerHTML = currencies.length === 0
-    ? `<span class="empty">${esc(t("noCosts"))}</span>`
-    : currencies.map(currency => `<div class="font-mono">${money(spend[currency], currency)}</div>`).join("");
-
-  const trip = activeTrip();
-  const byCategory = tripSpendByCategory();
-  const breakdown = document.getElementById("spend-breakdown");
-  const customOrder = trip?.customCategories?.map(category => category.id) || [];
-  const categoryIds = [...CATEGORY_ORDER, ...customOrder].filter(categoryId => byCategory[categoryId]);
-  Object.keys(byCategory).forEach(categoryId => {
-    if (!categoryIds.includes(categoryId)) categoryIds.push(categoryId);
-  });
-
-  breakdown.innerHTML = categoryIds.map(categoryId => {
-    const meta = categoryMeta(trip, categoryId);
-    const amounts = Object.entries(byCategory[categoryId])
-      .map(([currency, amount]) => money(amount, currency))
-      .join(" · ");
-    return `
-      <div class="spend-row">
-        <span class="spend-row-label"><span>${esc(meta.icon)}</span><span class="cat-name">${esc(meta.label)}</span></span>
-        <span class="spend-row-amt">${amounts}</span>
-      </div>`;
-  }).join("");
+  renderSpendSummary("spend-values", "spend-breakdown");
+  renderSpendSummary("mobile-spend-values", "mobile-spend-breakdown");
 }
 
 function renderToolbarSelect() {
@@ -2099,6 +2157,134 @@ function initDragHandlers() {
 }
 
 // ---------------------------------------------------------------------------
+// Touch / long-press drag to reorder timeline entries
+// ---------------------------------------------------------------------------
+function initTouchDragHandlers() {
+  const timeline = document.getElementById("timeline");
+  let pressTimer = null;
+  let sourceRow = null;
+  let ghost = null;
+  let active = false;
+  let startX = 0;
+  let startY = 0;
+  let lastX = 0;
+  let lastY = 0;
+
+  function clearTargetMarks() {
+    timeline.querySelectorAll(".row").forEach(row => row.classList.remove("drag-over-top", "drag-over-bottom"));
+    timeline.querySelectorAll(".date-group").forEach(group => group.classList.remove("drag-over-empty"));
+  }
+
+  function cancelTouchDrag() {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+    active = false;
+    draggedId = null;
+    sourceRow?.classList.remove("dragging");
+    ghost?.remove();
+    ghost = null;
+    sourceRow = null;
+    clearTargetMarks();
+    document.body.classList.remove("touch-reordering");
+  }
+
+  function positionGhost(x, y) {
+    if (!ghost) return;
+    const width = Math.min(sourceRow.getBoundingClientRect().width, window.innerWidth - 24);
+    ghost.style.width = `${width}px`;
+    ghost.style.left = `${Math.max(12, Math.min(window.innerWidth - width - 12, x - width / 2))}px`;
+    ghost.style.top = `${Math.max(8, Math.min(window.innerHeight - 72, y - 28))}px`;
+  }
+
+  function markTarget(x, y) {
+    clearTargetMarks();
+    ghost.style.display = "none";
+    const target = document.elementFromPoint(x, y);
+    ghost.style.display = "";
+    const row = target?.closest?.(".row");
+    if (row && row.dataset.id !== draggedId) {
+      const rect = row.getBoundingClientRect();
+      row.classList.add(y < rect.top + rect.height / 2 ? "drag-over-top" : "drag-over-bottom");
+    } else {
+      target?.closest?.(".date-group")?.classList.add("drag-over-empty");
+    }
+  }
+
+  timeline.addEventListener("touchstart", event => {
+    if (event.touches.length !== 1 || !canEditTrip(activeTrip())) return;
+    if (event.target.closest("button, input, select, textarea, a")) return;
+    const row = event.target.closest(".row");
+    if (!row) return;
+    sourceRow = row;
+    startX = lastX = event.touches[0].clientX;
+    startY = lastY = event.touches[0].clientY;
+    pressTimer = setTimeout(() => {
+      active = true;
+      draggedId = row.dataset.id;
+      row.classList.add("dragging");
+      document.body.classList.add("touch-reordering");
+      ghost = row.cloneNode(true);
+      ghost.classList.remove("dragging");
+      ghost.classList.add("touch-drag-ghost");
+      ghost.removeAttribute("draggable");
+      document.body.appendChild(ghost);
+      positionGhost(lastX, lastY);
+      if (navigator.vibrate) navigator.vibrate(30);
+    }, 450);
+  }, { passive:true });
+
+  timeline.addEventListener("touchmove", event => {
+    if (!sourceRow || event.touches.length !== 1) return;
+    lastX = event.touches[0].clientX;
+    lastY = event.touches[0].clientY;
+    if (!active && Math.hypot(lastX - startX, lastY - startY) > 10) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+      sourceRow = null;
+      return;
+    }
+    if (!active) return;
+    event.preventDefault();
+    positionGhost(lastX, lastY);
+    markTarget(lastX, lastY);
+  }, { passive:false });
+
+  timeline.addEventListener("touchend", event => {
+    if (!active || !draggedId) { cancelTouchDrag(); return; }
+    event.preventDefault();
+    ghost.style.display = "none";
+    const target = document.elementFromPoint(lastX, lastY);
+    ghost.style.display = "";
+    const draggedItem = state.items.find(item => item.id === draggedId);
+    const targetRow = target?.closest?.(".row");
+    let targetDate = null, previousItem = null, nextItem = null;
+
+    if (draggedItem && targetRow && targetRow.dataset.id !== draggedId) {
+      targetDate = targetRow.dataset.date;
+      const rect = targetRow.getBoundingClientRect();
+      const before = lastY < rect.top + rect.height / 2;
+      const dayItems = tripItemsForDate(targetDate).filter(item => item.id !== draggedId);
+      const targetIndex = dayItems.findIndex(item => item.id === targetRow.dataset.id);
+      if (before) { previousItem = dayItems[targetIndex - 1] || null; nextItem = dayItems[targetIndex] || null; }
+      else { previousItem = dayItems[targetIndex] || null; nextItem = dayItems[targetIndex + 1] || null; }
+    } else if (draggedItem) {
+      const group = target?.closest?.(".date-group");
+      if (group) {
+        targetDate = group.dataset.date;
+        const dayItems = tripItemsForDate(targetDate).filter(item => item.id !== draggedId);
+        previousItem = dayItems[dayItems.length - 1] || null;
+      }
+    }
+
+    if (draggedItem && targetDate) applyDragReposition(draggedItem, targetDate, previousItem, nextItem);
+    cancelTouchDrag();
+    renderAll();
+  }, { passive:false });
+
+  timeline.addEventListener("touchcancel", cancelTouchDrag, { passive:true });
+}
+
+// ---------------------------------------------------------------------------
 // Sidebar trip drag to reorder
 // ---------------------------------------------------------------------------
 let draggedTripId = null;
@@ -2329,6 +2515,7 @@ function applySharedDocument(remoteId, documentData, role, version, updatedAt = 
     remoteUpdatedAt: updatedAt || existing?.remoteUpdatedAt || "",
   };
   incomingTrip.customCategories = Array.isArray(incomingTrip.customCategories) ? incomingTrip.customCategories : [];
+  incomingTrip.pendingInvites = Array.isArray(incomingTrip.pendingInvites) ? incomingTrip.pendingInvites : [];
   incomingTrip.defaultCurrency = incomingTrip.defaultCurrency || "USD";
   incomingTrip.color = incomingTrip.color || TRIP_PALETTE[0];
   incomingTrip.order = existing?.order ?? incomingTrip.order ?? orderedTrips().length;
@@ -2439,6 +2626,22 @@ async function acceptInvite(token) {
   setCollabMessage(ct("inviteAccepted"));
   return true;
 }
+function pendingInvitesForTrip(trip) {
+  trip.pendingInvites = Array.isArray(trip.pendingInvites) ? trip.pendingInvites : [];
+  return trip.pendingInvites;
+}
+
+async function updatePendingInviteRole(trip, invite, role) {
+  const { data, error } = await supabaseClient.rpc("create_voyage_invite", { p_trip_id: trip.remoteId, p_email: invite.email, p_role: role });
+  if (error) return setCollabMessage(error.message, true);
+  const token = typeof data === "string" ? data : data?.token || data;
+  invite.role = role;
+  invite.link = tripInviteUrl(token);
+  invite.updatedAt = new Date().toISOString();
+  scheduleRemoteSave();
+  await listMembers();
+}
+
 async function listMembers() {
   const trip = activeTrip();
   const list = document.getElementById("member-list");
@@ -2446,7 +2649,18 @@ async function listMembers() {
   list.innerHTML = `<div class="field-help">${esc(ct("loading"))}</div>`;
   const { data, error } = await supabaseClient.rpc("list_voyage_members", { p_trip_id: trip.remoteId });
   if (error) { list.innerHTML = `<div class="collab-message error">${esc(error.message)}</div>`; return; }
-  list.innerHTML = (data || []).map(member => {
+  const members = data || [];
+  const memberEmails = new Set(members.map(member => String(member.email || "").toLowerCase()));
+  trip.pendingInvites = pendingInvitesForTrip(trip).filter(invite => !memberEmails.has(String(invite.email || "").toLowerCase()));
+  const pendingHtml = trip.pendingInvites.map(invite => {
+    const roles = tripRole(trip) === "owner" ? ["admin", "editor", "viewer"] : ["editor", "viewer"];
+    return `<div class="member-row pending-member-row" data-pending-email="${esc(invite.email)}">
+      <span class="member-email" title="${esc(invite.email)}">${esc(invite.email)} <span class="role-badge">Pending</span></span>
+      <select class="field-input" data-pending-role>${roles.map(role => `<option value="${role}" ${invite.role === role ? "selected" : ""}>${esc(roleText(role))}</option>`).join("")}</select>
+      <button class="icon-btn" data-copy-pending title="Copy invitation link">⧉</button>
+    </div>`;
+  }).join("");
+  list.innerHTML = pendingHtml + members.map(member => {
     const isOwner = member.role === "owner";
     const canTouch = tripRole(trip) === "owner" ? !isOwner : ["viewer", "editor"].includes(member.role) && member.user_id !== collabUser.id;
     const roleOptions = tripRole(trip) === "owner"
@@ -2458,6 +2672,16 @@ async function listMembers() {
       ${canTouch ? `<button class="icon-btn danger" data-remove-member title="${esc(ct("removeMember"))}">✕</button>` : ""}
     </div>`;
   }).join("");
+  list.querySelectorAll("[data-pending-role]").forEach(select => select.addEventListener("change", async () => {
+    const row = select.closest("[data-pending-email]");
+    const invite = pendingInvitesForTrip(trip).find(item => item.email === row.dataset.pendingEmail);
+    if (invite) await updatePendingInviteRole(trip, invite, select.value);
+  }));
+  list.querySelectorAll("[data-copy-pending]").forEach(button => button.addEventListener("click", async () => {
+    const email = button.closest("[data-pending-email]").dataset.pendingEmail;
+    const invite = pendingInvitesForTrip(trip).find(item => item.email === email);
+    if (invite?.link) { await navigator.clipboard.writeText(invite.link); setCollabMessage(ct("copied")); }
+  }));
   list.querySelectorAll("[data-member-role]").forEach(select => select.addEventListener("change", async () => {
     const row = select.closest("[data-member]");
     const { error } = await supabaseClient.rpc("set_voyage_member_role", { p_trip_id: trip.remoteId, p_user_id: row.dataset.member, p_role: select.value });
@@ -2579,9 +2803,16 @@ document.getElementById("create-invite-btn").addEventListener("click", async () 
   const token = typeof data === "string" ? data : data?.token || data;
   const link = tripInviteUrl(token);
   lastInvite = { email, role, link, tripName: trip.name };
+  const pending = pendingInvitesForTrip(trip);
+  const existingPending = pending.find(invite => invite.email === email);
+  if (existingPending) Object.assign(existingPending, { role, link, updatedAt: new Date().toISOString() });
+  else pending.push({ email, role, link, createdAt: new Date().toISOString() });
+  scheduleRemoteSave();
   document.getElementById("invite-link").value = link;
   document.getElementById("invite-result").style.display = "block";
+  document.getElementById("invite-email").value = "";
   setCollabMessage(ct("inviteCreated"), false, "invite-message");
+  await listMembers();
 });
 document.getElementById("email-invite-btn").addEventListener("click", () => {
   if (!lastInvite) return;
@@ -2591,10 +2822,24 @@ document.getElementById("email-invite-btn").addEventListener("click", () => {
 });
 
 
+const MOBILE_SPEND_VISIBILITY_KEY = "voyage-board-mobile-spend-open";
+function setMobileSpendOpen(open) {
+  const panel = document.getElementById("mobile-spend-panel");
+  const button = document.getElementById("mobile-spend-toggle");
+  panel.classList.toggle("is-collapsed", !open);
+  button.setAttribute("aria-expanded", String(open));
+  try { localStorage.setItem(MOBILE_SPEND_VISIBILITY_KEY, open ? "1" : "0"); } catch {}
+}
+document.getElementById("mobile-spend-toggle").addEventListener("click", () => {
+  setMobileSpendOpen(document.getElementById("mobile-spend-panel").classList.contains("is-collapsed"));
+});
+try { setMobileSpendOpen(localStorage.getItem(MOBILE_SPEND_VISIBILITY_KEY) !== "0"); } catch { setMobileSpendOpen(true); }
+
 // ---------------------------------------------------------------------------
 // Init
 // ---------------------------------------------------------------------------
 initDragHandlers();
+initTouchDragHandlers();
 initTripDragHandlers();
 renderAll();
 initCollaboration();
