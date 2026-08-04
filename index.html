@@ -128,9 +128,10 @@
   .toolbar-hint { font-size: 12.5px; color: var(--text-lo); }
   .toolbar-settings { border: 1px solid var(--border); background: var(--panel-2); }
   .toolbar-settings:hover { color: var(--text-hi); border-color: var(--text-lo); }
+  .mobile-only-btn { display: none; }
 
   /* Timeline */
-  #timeline { flex: 1; overflow-y: auto; padding: 26px 32px; }
+  #timeline { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 26px 32px; }
   .date-group { margin-top: 28px; }
   .date-group:first-child { margin-top: 0; }
   .date-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
@@ -154,6 +155,7 @@
   .row.drag-over-bottom .event-card,
   .row.drag-over-bottom .transport-chip { box-shadow: inset 0 -2px 0 var(--amber); }
   .date-group.drag-over-empty { outline: 1.5px dashed var(--amber); outline-offset: 6px; border-radius: 10px; }
+  .drag-ghost { position: fixed; z-index: 999; pointer-events: none; opacity: 0.94; box-shadow: 0 14px 34px rgba(0,0,0,0.5); border-radius: 12px; }
   .row-time { width: 64px; flex-shrink: 0; text-align: right; font-family: var(--font-ui); font-size: 12px; color: var(--text-lo); padding-top: 8px; }
   .spine { width: 24px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; }
   .spine-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; box-shadow: 0 0 0 4px var(--panel); }
@@ -164,6 +166,8 @@
     background: var(--panel); padding: 12px 16px; transition: transform 0.1s, border-color 0.15s;
   }
   .event-card:hover { transform: translateY(-1px); }
+  .event-continuation { opacity: 0.72; }
+  .event-continuation:hover { transform: none; }
   .event-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .kind-pill { display: inline-flex; align-items: center; gap: 5px; height: 20px; border-radius: 999px; padding: 0 8px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.03em; }
   .event-until { font-family: var(--font-ui); font-size: 11px; color: var(--text-lo); margin-left: 8px; }
@@ -228,6 +232,20 @@
   .field-row .field-input { flex: 1; min-width: 0; }
   .field-action { flex-shrink: 0; border: 1px solid var(--border); background: var(--panel-2); color: var(--text-lo); border-radius: 8px; padding: 0 12px; cursor: pointer; font-family: inherit; font-size: 12px; }
   .field-action:hover { color: var(--text-hi); border-color: var(--text-lo); }
+  .suggest-wrap { position: relative; }
+  .suggest-list {
+    position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 40;
+    max-height: 220px; overflow-y: auto; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--panel-2);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35); display: none;
+  }
+  .suggest-list.show { display: block; }
+  .suggest-item {
+    display: block; width: 100%; text-align: left; border: none; background: transparent;
+    color: var(--text-hi); font-family: inherit; font-size: 13px; padding: 10px 12px; cursor: pointer;
+    min-height: 40px;
+  }
+  .suggest-item:hover, .suggest-item.active { background: var(--hover); }
   .field-help { margin-top: 5px; color: var(--text-lo); font-size: 11px; line-height: 1.4; }
   .custom-category-row { display: none; grid-template-columns: 64px 1fr auto; gap: 8px; margin-top: 8px; }
   .custom-category-row.show { display: grid; }
@@ -299,6 +317,7 @@
     #sidebar { display: none; }
     #mobile-trip-select { display: block; }
     #toolbar, #timeline { padding-left: 16px; padding-right: 16px; }
+    .mobile-only-btn { display: inline-flex; }
   }
 
 
@@ -416,50 +435,10 @@
     .member-row select { width: auto; flex: 1 1 150px; }
     .custom-category-row { grid-template-columns: 56px minmax(0, 1fr); }
     .custom-category-row > :last-child { grid-column: 1 / -1; }
-  }
 
-
-  /* Mobile spending summary and touch controls */
-  #mobile-spend-panel { display:none; }
-  #mobile-spend-toggle { display:none; }
-  .spend-panel-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-  .spend-toggle-icon { display:inline-block; transition:transform .18s ease; }
-  #mobile-spend-panel.is-collapsed .spend-toggle-icon { transform:rotate(-90deg); }
-  #mobile-spend-panel.is-collapsed .mobile-spend-content { display:none; }
-  .mobile-spend-content { margin-top:10px; }
-  .touch-drag-ghost {
-    position:fixed; z-index:1000; pointer-events:none; opacity:.9; transform:scale(.98);
-    box-shadow:0 16px 42px rgba(0,0,0,.42); border-radius:12px;
-  }
-  body.touch-reordering { user-select:none; -webkit-user-select:none; }
-  body.touch-reordering #timeline { overflow:hidden; }
-
-  @media (max-width:720px) {
-    #mobile-spend-panel {
-      display:block; flex:0 0 auto; margin:0 10px; padding:10px 12px;
-      border:1px solid var(--border); border-top:0; border-radius:0 0 12px 12px;
-      background:var(--panel); max-width:calc(100vw - 20px); overflow:hidden;
-    }
-    #mobile-spend-toggle {
-      display:flex; width:100%; min-height:44px; padding:4px 0; align-items:center;
-      justify-content:space-between; border:0; background:transparent; color:var(--text-hi);
-      font:inherit; cursor:pointer; text-align:left;
-    }
-    #mobile-spend-values { font-size:18px; color:var(--amber); }
-    #mobile-spend-values .empty { font-size:12px; color:var(--text-lo); }
-    #mobile-spend-breakdown { margin-top:9px; display:flex; flex-direction:column; gap:7px; }
-    .icon-btn,
-    .transport-actions .icon-btn,
-    .event-actions .icon-btn,
-    .member-row .icon-btn {
-      width:44px !important; height:44px !important; min-width:44px; min-height:44px;
-      border-radius:10px; font-size:17px;
-    }
-    .event-actions, .transport-actions { gap:6px; }
-    .transport-chip, .event-card, .modal, .modal-body, .modal-foot,
-    .collab-section, .invite-grid, .member-list, .member-row { max-width:100%; min-width:0; }
-    .modal-foot > div { min-width:0; max-width:100%; flex-wrap:wrap; }
-    .modal-foot .btn { min-height:44px; }
+    /* Inline 20px sizing on edit/delete/map buttons is too small to tap reliably; force bigger targets on touch */
+    .icon-btn { width: 34px !important; height: 34px !important; font-size: 15px; }
+    .transport-actions { gap: 4px; }
   }
 
 </style>
@@ -487,22 +466,13 @@
       <div class="toolbar-row">
         <button id="add-entry-btn">+ Add entry</button>
         <button id="trip-settings-btn" class="btn btn-ghost toolbar-settings">⚙ Trip settings</button>
+        <button id="spend-summary-btn" class="btn btn-ghost toolbar-settings mobile-only-btn">💰 Spending</button>
         <button id="app-settings-btn" class="btn btn-ghost toolbar-settings">◐ App settings</button>
         <button id="share-trip-btn" class="btn btn-ghost toolbar-settings">↗ Share</button>
         <span id="sync-status" class="sync-status" data-state="local">Local only</span>
         <span class="toolbar-hint" id="toolbar-hint">Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.</span>
       </div>
     </div>
-    <section id="mobile-spend-panel" aria-label="Trip spending summary">
-      <button id="mobile-spend-toggle" type="button" aria-expanded="true">
-        <span class="font-display" id="mobile-trip-spend-label">TRIP SPEND</span>
-        <span class="spend-toggle-icon" aria-hidden="true">▾</span>
-      </button>
-      <div class="mobile-spend-content">
-        <div id="mobile-spend-values"></div>
-        <div id="mobile-spend-breakdown"></div>
-      </div>
-    </section>
     <div id="readonly-banner" class="readonly-banner">View-only access — changes are disabled.</div>
     <div id="timeline" class="scroll"></div>
   </main>
@@ -516,8 +486,9 @@
       <div class="kind-grid" id="kind-grid"></div>
 
       <label class="field-label" data-i18n="titleLabel">Title</label>
-      <input class="field-input" id="f-title" list="title-options" placeholder="e.g. Flight to Tokyo">
-      <datalist id="title-options"></datalist>
+      <div class="suggest-wrap">
+        <input class="field-input" id="f-title" autocomplete="off" placeholder="e.g. Flight to Tokyo">
+      </div>
 
       <label class="field-label" data-i18n="entryColor">Entry color</label>
       <div class="color-row">
@@ -528,19 +499,24 @@
 
       <div id="single-place-fields">
         <label class="field-label" id="loc-label">Location</label>
-        <input class="field-input" id="f-location" list="place-options" placeholder="Hotel Ginza Six">
+        <div class="suggest-wrap">
+          <input class="field-input" id="f-location" autocomplete="off" placeholder="Hotel Ginza Six">
+        </div>
       </div>
       <div id="route-place-fields" class="grid-2" style="display:none;">
         <div>
           <label class="field-label" id="from-label">From</label>
-          <input class="field-input" id="f-from" list="place-options" placeholder="Origin">
+          <div class="suggest-wrap">
+            <input class="field-input" id="f-from" autocomplete="off" placeholder="Origin">
+          </div>
         </div>
         <div>
           <label class="field-label" id="to-label">To</label>
-          <input class="field-input" id="f-to" list="place-options" placeholder="Destination">
+          <div class="suggest-wrap">
+            <input class="field-input" id="f-to" autocomplete="off" placeholder="Destination">
+          </div>
         </div>
       </div>
-      <datalist id="place-options"></datalist>
 
       <label class="field-label" data-i18n="googleMapsLink">Google Maps link</label>
       <div class="field-row">
@@ -552,8 +528,16 @@
       <div class="grid-3">
         <div><label class="field-label" data-i18n="date">Date</label><input type="date" class="field-input" id="f-date"></div>
         <div><label class="field-label" data-i18n="start">Start</label><input type="time" class="field-input" id="f-start"></div>
+        <div><label class="field-label" data-i18n="duration">Duration</label><input type="text" class="field-input" id="f-duration" placeholder="1h 30m"></div>
+      </div>
+      <div class="grid-2" id="hotel-nights-row" style="display:none;">
+        <div><label class="field-label" data-i18n="nights">Nights</label><input type="number" min="1" step="1" class="field-input" id="f-nights" placeholder="1"></div>
+      </div>
+      <div class="grid-2">
+        <div><label class="field-label" data-i18n="endDate">End date</label><input type="date" class="field-input" id="f-end-date"></div>
         <div><label class="field-label" data-i18n="end">End</label><input type="time" class="field-input" id="f-end"></div>
       </div>
+      <div class="field-help" data-i18n="overnightHelp">Leave end date blank if it's the same day. Set it (or fill in Duration) for anything that runs past midnight.</div>
       <div class="grid-2">
         <div><label class="field-label" data-i18n="price">Price</label><input type="number" min="0" step="any" class="field-input" id="f-price" placeholder="0"></div>
         <div>
@@ -621,6 +605,16 @@
         <button class="btn btn-ghost" id="trip-cancel">Cancel</button>
         <button class="btn btn-primary" id="trip-save">Create trip</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="spend-overlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-head"><h3 id="spend-modal-title">Trip spend</h3><button class="modal-close" id="spend-modal-close">✕</button></div>
+    <div class="modal-body">
+      <div id="spend-values-modal" style="font-size:20px; color:var(--amber);"></div>
+      <div id="spend-breakdown-modal" style="margin-top:12px; display:flex; flex-direction:column; gap:7px;"></div>
     </div>
   </div>
 </div>
@@ -758,8 +752,8 @@ const COLLAB_CONFIG = window.VOYAGE_BOARD_CONFIG || {
   // Fill these two values after creating the Supabase project described in
   // voyage-board-collaboration-setup.md. The publishable/anon key is safe to
   // expose in a browser only when the supplied Row Level Security policies are installed.
-	supabaseUrl: "https://ssqdatwuoefjzpmseyhm.supabase.co",
-	supabasePublishableKey: "sb_publishable_d1cBXwtzJIgzDAbX1FU3-A_RFk42Clt",
+  supabaseUrl: "https://ssqdatwuoefjzpmseyhm.supabase.co",
+  supabasePublishableKey: "sb_publishable_d1cBXwtzJIgzDAbX1FU3-A_RFk42Clt",
 };
 const CLIENT_ID = (crypto.randomUUID ? crypto.randomUUID() : uid());
 
@@ -786,7 +780,7 @@ const OLD_TRIP_COLOR_MAP = {
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "TWD", "CNY", "HKD", "KRW", "SGD", "THB", "AUD", "CAD", "CHF", "NZD", "MYR", "IDR", "PHP", "VND", "INR", "AED"];
 const I18N = {
   en: {
-    trips:"TRIPS", tripSpend:"TRIP SPEND", newTrip:"+ New trip", addEntry:"+ Add entry", tripSettings:"⚙ Trip settings", appSettings:"◐ App settings",
+    trips:"TRIPS", tripSpend:"TRIP SPEND", newTrip:"+ New trip", addEntry:"+ Add entry", tripSettings:"⚙ Trip settings", appSettings:"◐ App settings", spending:"💰 Spending",
     toolbarHint:"Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.", type:"Type", titleLabel:"Title", entryColor:"Entry color",
     useTypeDefault:"Use type default", colorDefaultHelp:"Uses the selected type's default color unless you choose a custom color.", colorCustomHelp:"Custom color override is active for this entry.",
     location:"Location", propertyLocation:"Property / location", from:"From", to:"To", departureAirport:"Departure airport", arrivalAirport:"Arrival airport",
@@ -806,10 +800,12 @@ const I18N = {
     foodPlaceholder:"Restaurant, café, or market", activityPlaceholder:"Venue or meeting point", sightseeingPlaceholder:"Landmark or area", meetingPlaceholder:"Office or meeting venue",
     confirmDelete:'Delete "{label}"?', cannotUndo:"This can't be undone.", deleteAction:"Delete",
     kind_flight:"Flight", kind_train:"Train", kind_bus:"Bus", kind_car:"Car / Taxi", kind_ferry:"Ferry", kind_walk:"Walk", kind_hotel:"Hotel", kind_food:"Food", kind_activity:"Activity", kind_sightseeing:"Sightseeing", kind_meeting:"Meeting", kind_other:"Other",
-    cat_flight:"Flights", cat_transport:"Transportation", cat_hotel:"Lodging", cat_food:"Food", cat_activity:"Activities", cat_shopping:"Shopping", cat_meeting:"Meetings", cat_other:"Other"
+    cat_flight:"Flights", cat_transport:"Transportation", cat_hotel:"Lodging", cat_food:"Food", cat_activity:"Activities", cat_shopping:"Shopping", cat_meeting:"Meetings", cat_other:"Other",
+    duration:"Duration", endDate:"End date", nights:"Nights", overnightHelp:"Leave end date blank if it's the same day. Set it (or fill in Duration) for anything that runs past midnight.",
+    nightsCount:"{n} nights", nightOf:"Night {n} of {total}", invalidDuration:"Enter a duration like “1h 30m” or “90m”."
   },
   "zh-TW": {
-    trips:"旅程", tripSpend:"旅程支出", newTrip:"＋ 新增旅程", addEntry:"＋ 新增項目", tripSettings:"⚙ 旅程設定", appSettings:"◐ App 設定",
+    trips:"旅程", tripSpend:"旅程支出", newTrip:"＋ 新增旅程", addEntry:"＋ 新增項目", tripSettings:"⚙ 旅程設定", appSettings:"◐ App 設定", spending:"💰 支出",
     toolbarHint:"拖曳時間軸項目可重新排序；拖曳左側旅程可調整旅程順序。", type:"類型", titleLabel:"標題", entryColor:"項目顏色",
     useTypeDefault:"使用類型預設色", colorDefaultHelp:"除非選擇自訂顏色，否則會使用所選類型的預設色。", colorCustomHelp:"此項目已啟用自訂顏色。",
     location:"地點", propertyLocation:"住宿／地點", from:"出發地", to:"目的地", departureAirport:"出發機場", arrivalAirport:"抵達機場",
@@ -829,10 +825,12 @@ const I18N = {
     foodPlaceholder:"餐廳、咖啡廳或市場", activityPlaceholder:"場地或集合點", sightseeingPlaceholder:"景點或區域", meetingPlaceholder:"辦公室或會議地點",
     confirmDelete:'刪除「{label}」？', cannotUndo:"此動作無法復原。", deleteAction:"刪除",
     kind_flight:"航班", kind_train:"火車", kind_bus:"巴士", kind_car:"汽車／計程車", kind_ferry:"渡輪", kind_walk:"步行", kind_hotel:"住宿", kind_food:"餐飲", kind_activity:"活動", kind_sightseeing:"觀光", kind_meeting:"會議", kind_other:"其他",
-    cat_flight:"航班", cat_transport:"交通", cat_hotel:"住宿", cat_food:"餐飲", cat_activity:"活動", cat_shopping:"購物", cat_meeting:"會議", cat_other:"其他"
+    cat_flight:"航班", cat_transport:"交通", cat_hotel:"住宿", cat_food:"餐飲", cat_activity:"活動", cat_shopping:"購物", cat_meeting:"會議", cat_other:"其他",
+    duration:"時長", endDate:"結束日期", nights:"住宿晚數", overnightHelp:"若當天結束請留空結束日期；跨夜的行程請設定結束日期（或填寫時長）。",
+    nightsCount:"{n} 晚", nightOf:"第 {n} 晚（共 {total} 晚）", invalidDuration:"請輸入如「1h 30m」或「90m」的時長格式。"
   },
   ja: {
-    trips:"旅行", tripSpend:"旅行支出", newTrip:"＋ 新しい旅行", addEntry:"＋ 予定を追加", tripSettings:"⚙ 旅行設定", appSettings:"◐ アプリ設定",
+    trips:"旅行", tripSpend:"旅行支出", newTrip:"＋ 新しい旅行", addEntry:"＋ 予定を追加", tripSettings:"⚙ 旅行設定", appSettings:"◐ アプリ設定", spending:"💰 支出",
     toolbarHint:"タイムライン項目をドラッグして並べ替えます。左側の旅行もドラッグできます。", type:"種類", titleLabel:"タイトル", entryColor:"項目の色",
     useTypeDefault:"種類の既定色", colorDefaultHelp:"カスタム色を選ばない場合、種類の既定色を使用します。", colorCustomHelp:"この項目にはカスタム色が設定されています。",
     location:"場所", propertyLocation:"宿泊施設／場所", from:"出発地", to:"目的地", departureAirport:"出発空港", arrivalAirport:"到着空港",
@@ -852,7 +850,9 @@ const I18N = {
     foodPlaceholder:"レストラン、カフェ、市場", activityPlaceholder:"会場または集合場所", sightseeingPlaceholder:"観光地またはエリア", meetingPlaceholder:"オフィスまたは会議場所",
     confirmDelete:'「{label}」を削除しますか？', cannotUndo:"この操作は元に戻せません。", deleteAction:"削除",
     kind_flight:"フライト", kind_train:"列車", kind_bus:"バス", kind_car:"車／タクシー", kind_ferry:"フェリー", kind_walk:"徒歩", kind_hotel:"ホテル", kind_food:"食事", kind_activity:"アクティビティ", kind_sightseeing:"観光", kind_meeting:"会議", kind_other:"その他",
-    cat_flight:"フライト", cat_transport:"交通", cat_hotel:"宿泊", cat_food:"食事", cat_activity:"アクティビティ", cat_shopping:"買い物", cat_meeting:"会議", cat_other:"その他"
+    cat_flight:"フライト", cat_transport:"交通", cat_hotel:"宿泊", cat_food:"食事", cat_activity:"アクティビティ", cat_shopping:"買い物", cat_meeting:"会議", cat_other:"その他",
+    duration:"所要時間", endDate:"終了日", nights:"宿泊数", overnightHelp:"同日中に終わる場合は終了日を空欄のままにしてください。日をまたぐ場合は終了日（または所要時間）を設定してください。",
+    nightsCount:"{n}泊", nightOf:"{n}泊目 / 全{total}泊", invalidDuration:"「1h 30m」や「90m」のような形式で入力してください。"
   }
 };
 
@@ -1078,8 +1078,9 @@ function applyStaticTranslations() {
     element.textContent = t(element.dataset.i18n);
   });
   const textMap = {
-    "trips-label":"trips", "trip-spend-label":"tripSpend", "mobile-trip-spend-label":"tripSpend", "new-trip-btn":"newTrip", "add-entry-btn":"addEntry",
+    "trips-label":"trips", "trip-spend-label":"tripSpend", "new-trip-btn":"newTrip", "add-entry-btn":"addEntry",
     "trip-settings-btn":"tripSettings", "app-settings-btn":"appSettings", "toolbar-hint":"toolbarHint", "map-search-btn":"openMaps",
+    "spend-summary-btn":"spending", "spend-modal-title":"tripSpend",
     "item-cancel":"cancel", "item-save":"save", "trip-cancel":"cancel", "app-cancel":"cancel", "app-save":"save",
     "currency-default-note":"currencyDefaultNote", "trip-color-help":"tripColorHelp", "appearance-help":"appearanceHelp"
   };
@@ -1129,10 +1130,16 @@ function fmtTime(time) {
   return date.toLocaleTimeString(currentLocale(), { hour: "2-digit", minute: "2-digit", hour12: currentLanguage() === "en" });
 }
 
-function fmtDuration(start, end) {
+function fmtDuration(start, end, days = null) {
   if (!start || !end) return null;
-  let minutes = timeToMinutes(end) - timeToMinutes(start);
-  if (minutes < 0) minutes += 24 * 60;
+  let minutes;
+  if (days !== null) {
+    minutes = days * 24 * 60 + (timeToMinutes(end) - timeToMinutes(start));
+    if (minutes <= 0) return null;
+  } else {
+    minutes = timeToMinutes(end) - timeToMinutes(start);
+    if (minutes < 0) minutes += 24 * 60;
+  }
   const hours = Math.floor(minutes / 60);
   const remainder = minutes % 60;
   if (currentLanguage() === "zh-TW") return `${hours ? `${hours} 小時` : ""}${hours && remainder ? " " : ""}${remainder ? `${remainder} 分` : ""}`;
@@ -1140,6 +1147,56 @@ function fmtDuration(start, end) {
   if (hours && remainder) return `${hours}h ${remainder}m`;
   if (hours) return `${hours}h`;
   return `${remainder}m`;
+}
+
+function addDaysToDateStr(dateStr, days) {
+  if (!dateStr) return dateStr;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + days);
+  const pad = n => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+function diffDaysDateStr(fromStr, toStr) {
+  if (!fromStr || !toStr) return 0;
+  const [y1, m1, d1] = fromStr.split("-").map(Number);
+  const [y2, m2, d2] = toStr.split("-").map(Number);
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return Math.round((new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1)) / msPerDay);
+}
+// Total elapsed minutes between (date,start) and (endDate||date,end), across midnight if needed.
+function elapsedMinutes(date, start, endDate, end) {
+  if (!start || !end) return null;
+  const days = endDate && endDate !== date ? diffDaysDateStr(date, endDate) : 0;
+  const minutes = days * 24 * 60 + (timeToMinutes(end) - timeToMinutes(start));
+  return minutes > 0 ? minutes : null;
+}
+function parseDurationToMinutes(text) {
+  if (!text) return null;
+  const trimmed = text.trim().toLowerCase();
+  if (!trimmed) return null;
+  if (/^\d+$/.test(trimmed)) return Number(trimmed); // bare number = minutes
+  const colonMatch = trimmed.match(/^(\d+):([0-5]?\d)$/);
+  if (colonMatch) return Number(colonMatch[1]) * 60 + Number(colonMatch[2]);
+  const hourMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*h/);
+  const minMatch = trimmed.match(/(\d+)\s*m/);
+  if (!hourMatch && !minMatch) return null;
+  const hours = hourMatch ? Number(hourMatch[1]) : 0;
+  const mins = minMatch ? Number(minMatch[1]) : 0;
+  const total = Math.round(hours * 60) + mins;
+  return total > 0 ? total : null;
+}
+function minutesToDurationText(minutes) {
+  if (minutes === null || minutes === undefined || minutes <= 0) return "";
+  const hours = Math.floor(minutes / 60);
+  const remainder = Math.round(minutes % 60);
+  if (hours && remainder) return `${hours}h ${remainder}m`;
+  if (hours) return `${hours}h`;
+  return `${remainder}m`;
+}
+function fmtShortDate(dateStr) {
+  if (!dateStr) return "";
+  return new Date(dateStr + "T00:00:00").toLocaleDateString(currentLocale(), { month: "short", day: "numeric" });
 }
 
 function fmtDateHeader(dateString) {
@@ -1273,8 +1330,17 @@ function groupedItems() {
   tripItems().forEach(item => {
     if (!groups.has(item.date)) groups.set(item.date, []);
     groups.get(item.date).push(item);
+
+    const nights = item.kind === "hotel" ? Math.max(1, Number(item.nights) || 1) : 1;
+    for (let n = 1; n < nights; n++) {
+      const continuedDate = addDaysToDateStr(item.date, n);
+      if (!groups.has(continuedDate)) groups.set(continuedDate, []);
+      groups.get(continuedDate).push({ ...item, __hotelNight: n + 1, __hotelNights: nights });
+    }
   });
-  return Array.from(groups.entries()).map(([date, items]) => ({ date, items }));
+  return Array.from(groups.entries())
+    .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+    .map(([date, items]) => ({ date, items }));
 }
 
 function categoryMeta(trip, categoryId) {
@@ -1308,35 +1374,6 @@ function tripSpendByCategory() {
 // ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
-function renderSpendSummary(valuesId, breakdownId) {
-  const values = document.getElementById(valuesId);
-  const breakdown = document.getElementById(breakdownId);
-  if (!values || !breakdown) return;
-
-  const spend = tripSpend();
-  const currencies = Object.keys(spend);
-  values.innerHTML = currencies.length === 0
-    ? `<span class="empty">${esc(t("noCosts"))}</span>`
-    : currencies.map(currency => `<div class="font-mono">${money(spend[currency], currency)}</div>`).join("");
-
-  const trip = activeTrip();
-  const byCategory = tripSpendByCategory();
-  const customOrder = trip?.customCategories?.map(category => category.id) || [];
-  const categoryIds = [...CATEGORY_ORDER, ...customOrder].filter(categoryId => byCategory[categoryId]);
-  Object.keys(byCategory).forEach(categoryId => {
-    if (!categoryIds.includes(categoryId)) categoryIds.push(categoryId);
-  });
-  breakdown.innerHTML = categoryIds.map(categoryId => {
-    const meta = categoryMeta(trip, categoryId);
-    const amounts = Object.entries(byCategory[categoryId])
-      .map(([currency, amount]) => money(amount, currency)).join(" · ");
-    return `<div class="spend-row">
-      <span class="spend-row-label"><span>${esc(meta.icon)}</span><span class="cat-name">${esc(meta.label)}</span></span>
-      <span class="spend-row-amt">${amounts}</span>
-    </div>`;
-  }).join("");
-}
-
 function renderAll() {
   applyTheme();
   applyStaticTranslations();
@@ -1383,9 +1420,58 @@ function renderSidebar() {
     });
   });
 
-  renderSpendSummary("spend-values", "spend-breakdown");
-  renderSpendSummary("mobile-spend-values", "mobile-spend-breakdown");
+  renderSpendSummary();
 }
+
+function renderSpendSummary() {
+  const spend = tripSpend();
+  const currencies = Object.keys(spend);
+  const valuesHtml = currencies.length === 0
+    ? `<span class="empty">${esc(t("noCosts"))}</span>`
+    : currencies.map(currency => `<div class="font-mono">${money(spend[currency], currency)}</div>`).join("");
+
+  const trip = activeTrip();
+  const byCategory = tripSpendByCategory();
+  const customOrder = trip?.customCategories?.map(category => category.id) || [];
+  const categoryIds = [...CATEGORY_ORDER, ...customOrder].filter(categoryId => byCategory[categoryId]);
+  Object.keys(byCategory).forEach(categoryId => {
+    if (!categoryIds.includes(categoryId)) categoryIds.push(categoryId);
+  });
+
+  const breakdownHtml = categoryIds.map(categoryId => {
+    const meta = categoryMeta(trip, categoryId);
+    const amounts = Object.entries(byCategory[categoryId])
+      .map(([currency, amount]) => money(amount, currency))
+      .join(" · ");
+    return `
+      <div class="spend-row">
+        <span class="spend-row-label"><span>${esc(meta.icon)}</span><span class="cat-name">${esc(meta.label)}</span></span>
+        <span class="spend-row-amt">${amounts}</span>
+      </div>`;
+  }).join("");
+
+  ["spend-values", "spend-values-modal"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = valuesHtml;
+  });
+  ["spend-breakdown", "spend-breakdown-modal"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = breakdownHtml;
+  });
+}
+
+function openSpendSummary() {
+  renderSpendSummary();
+  document.getElementById("spend-overlay").classList.add("show");
+}
+function closeSpendSummary() {
+  document.getElementById("spend-overlay").classList.remove("show");
+}
+document.getElementById("spend-summary-btn").addEventListener("click", openSpendSummary);
+document.getElementById("spend-modal-close").addEventListener("click", closeSpendSummary);
+document.getElementById("spend-overlay").addEventListener("click", event => {
+  if (event.target.id === "spend-overlay") closeSpendSummary();
+});
 
 function renderToolbarSelect() {
   const select = document.getElementById("mobile-trip-select");
@@ -1465,6 +1551,35 @@ function locationHtml(item) {
 function eventRowHtml(item, config, isLast) {
   const price = money(item.price, effectiveCurrency(item));
   const displayColor = item.color || config.color;
+
+  if (item.__hotelNight) {
+    return `
+      <div class="row" data-date="${item.date}">
+        <div class="row-time"></div>
+        <div class="spine">
+          <span class="spine-dot" style="background:${displayColor}; opacity:0.5;"></span>
+          ${isLast ? "" : `<span class="spine-line"></span>`}
+        </div>
+        <div class="event-card event-continuation" style="border-left:3px dashed ${rgba(displayColor, 0.6)};">
+          <div class="event-top">
+            <div style="min-width:0;">
+              <span class="kind-pill" style="background:${rgba(displayColor, 0.15)}; color:${displayColor};">${config.icon} ${esc(kindLabel(item.kind).toUpperCase())}</span>
+              <div class="event-title">${esc(item.title)}</div>
+              <div class="event-notes">${esc(t("nightOf", { n: item.__hotelNight, total: item.__hotelNights }))}</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  let untilLabel = "";
+  if (item.kind === "hotel" && item.nights > 1) {
+    untilLabel = `${esc(t("nightsCount", { n: item.nights }))} · ${esc(t("until"))} ${esc(fmtShortDate(item.endDate || item.date))}`;
+  } else if (item.endTime) {
+    const crossesDay = item.endDate && item.endDate !== item.date;
+    untilLabel = `${esc(t("until"))} ${esc(fmtTime(item.endTime))}${crossesDay ? ` · ${esc(fmtShortDate(item.endDate))}` : ""}`;
+  }
+
   return `
     <div class="row" draggable="${canEditTrip(tripById(item.tripId)) ? "true" : "false"}" data-id="${item.id}" data-date="${item.date}">
       <div class="row-time">${fmtTime(item.startTime)}</div>
@@ -1476,7 +1591,7 @@ function eventRowHtml(item, config, isLast) {
         <div class="event-top">
           <div style="min-width:0;">
             <span class="kind-pill" style="background:${rgba(displayColor, 0.15)}; color:${displayColor};">${config.icon} ${esc(kindLabel(item.kind).toUpperCase())}</span>
-            ${item.endTime ? `<span class="event-until">${esc(t("until"))} ${fmtTime(item.endTime)}</span>` : ""}
+            ${untilLabel ? `<span class="event-until">${untilLabel}</span>` : ""}
             <div class="event-title">${esc(item.title)}</div>
             ${locationHtml(item)}
             ${item.notes ? `<div class="event-notes">${esc(item.notes)}</div>` : ""}
@@ -1494,7 +1609,8 @@ function eventRowHtml(item, config, isLast) {
 }
 
 function transportRowHtml(item, config, isLast) {
-  const duration = fmtDuration(item.startTime, item.endTime);
+  const dayDiff = item.endDate && item.endDate !== item.date ? diffDaysDateStr(item.date, item.endDate) : null;
+  const duration = fmtDuration(item.startTime, item.endTime, dayDiff);
   const displayColor = item.color || config.color;
   const price = money(item.price, effectiveCurrency(item));
   const mapUrl = safeHttpUrl(item.mapUrl);
@@ -1534,8 +1650,41 @@ function formTrip() {
   return tripById(document.getElementById("f-trip").value) || activeTrip();
 }
 
-function setDatalist(id, values) {
-  document.getElementById(id).innerHTML = values.map(value => `<option value="${esc(value)}"></option>`).join("");
+function attachAutocomplete(inputId, getOptions) {
+  const input = document.getElementById(inputId);
+  const wrap = input.closest(".suggest-wrap");
+  if (!input || !wrap) return;
+  const list = document.createElement("div");
+  list.className = "suggest-list";
+  wrap.appendChild(list);
+
+  function render() {
+    const query = input.value.trim().toLowerCase();
+    const options = getOptions() || [];
+    const matches = (query ? options.filter(option => option.toLowerCase().includes(query)) : options).slice(0, 8);
+    if (!matches.length) {
+      list.classList.remove("show");
+      list.innerHTML = "";
+      return;
+    }
+    list.innerHTML = matches.map(option => `<button type="button" class="suggest-item">${esc(option)}</button>`).join("");
+    list.classList.add("show");
+  }
+
+  input.addEventListener("focus", render);
+  input.addEventListener("input", render);
+  input.addEventListener("keydown", event => {
+    if (event.key === "Escape") list.classList.remove("show");
+  });
+  input.addEventListener("blur", () => setTimeout(() => list.classList.remove("show"), 150));
+  list.addEventListener("pointerdown", event => {
+    const item = event.target.closest(".suggest-item");
+    if (!item) return;
+    event.preventDefault();
+    input.value = item.textContent;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    list.classList.remove("show");
+  });
 }
 
 function updateKindSpecificFields(kind, preserveCategory = true) {
@@ -1544,6 +1693,13 @@ function updateKindSpecificFields(kind, preserveCategory = true) {
 
   document.getElementById("single-place-fields").style.display = isTransport ? "none" : "block";
   document.getElementById("route-place-fields").style.display = isTransport ? "grid" : "none";
+  document.getElementById("hotel-nights-row").style.display = kind === "hotel" ? "grid" : "none";
+  document.getElementById("f-end-date").disabled = kind === "hotel";
+  if (kind === "hotel") {
+    const nightsInput = document.getElementById("f-nights");
+    if (!nightsInput.value) nightsInput.value = "1";
+    document.getElementById("f-end-date").value = addDaysToDateStr(document.getElementById("f-date").value || TODAY, Number(nightsInput.value) || 1);
+  }
   document.getElementById("loc-label").textContent = kind === "hotel" ? t("propertyLocation") : t("location");
 
   if (kind === "flight") {
@@ -1557,10 +1713,6 @@ function updateKindSpecificFields(kind, preserveCategory = true) {
     document.getElementById("f-from").placeholder = t("origin");
     document.getElementById("f-to").placeholder = t("destination");
   }
-
-  const placeSuggestions = PLACE_SUGGESTIONS[kind] || PLACE_SUGGESTIONS.other;
-  setDatalist("place-options", placeSuggestions);
-  setDatalist("title-options", TITLE_SUGGESTIONS[kind] || TITLE_SUGGESTIONS.other);
 
   const placeholderByKind = {
     hotel: t("hotelPlaceholder"), food: t("foodPlaceholder"), activity: t("activityPlaceholder"),
@@ -1685,6 +1837,9 @@ function openItemModal(itemId) {
   document.getElementById("f-date").value = item?.date || TODAY;
   document.getElementById("f-start").value = item?.startTime || "";
   document.getElementById("f-end").value = item?.endTime || "";
+  document.getElementById("f-end-date").value = item?.endDate || "";
+  document.getElementById("f-nights").value = item?.kind === "hotel" ? (item?.nights || 1) : "";
+  document.getElementById("f-duration").value = minutesToDurationText(elapsedMinutes(item?.date || TODAY, item?.startTime, item?.endDate, item?.endTime));
   document.getElementById("f-price").value = item?.price != null ? item.price : "";
   document.getElementById("f-notes").value = item?.notes || "";
 
@@ -1756,6 +1911,50 @@ document.getElementById("map-search-btn").addEventListener("click", () => {
   window.open(url, "_blank", "noopener,noreferrer");
 });
 
+// ---------------------------------------------------------------------------
+// Duration / end-date / nights field sync in the item modal.
+// ---------------------------------------------------------------------------
+let syncingDurationFields = false;
+function refreshDurationDisplay() {
+  if (syncingDurationFields) return;
+  syncingDurationFields = true;
+  const date = document.getElementById("f-date").value || TODAY;
+  const start = document.getElementById("f-start").value;
+  const endDate = document.getElementById("f-end-date").value;
+  const end = document.getElementById("f-end").value;
+  document.getElementById("f-duration").value = minutesToDurationText(elapsedMinutes(date, start, endDate, end));
+  syncingDurationFields = false;
+}
+document.getElementById("f-duration").addEventListener("change", () => {
+  if (syncingDurationFields) return;
+  const raw = document.getElementById("f-duration").value.trim();
+  if (!raw) return;
+  const minutes = parseDurationToMinutes(raw);
+  if (minutes === null) { alert(t("invalidDuration")); return; }
+  const date = document.getElementById("f-date").value || TODAY;
+  const start = document.getElementById("f-start").value || "00:00";
+  document.getElementById("f-start").value = start;
+  const endTotal = timeToMinutes(start) + minutes;
+  const daySpan = Math.floor(endTotal / (24 * 60));
+  syncingDurationFields = true;
+  document.getElementById("f-end").value = minutesToTime(endTotal % (24 * 60));
+  document.getElementById("f-end-date").value = daySpan > 0 ? addDaysToDateStr(date, daySpan) : "";
+  syncingDurationFields = false;
+});
+["f-date", "f-start", "f-end", "f-end-date"].forEach(id => {
+  document.getElementById(id).addEventListener("change", refreshDurationDisplay);
+});
+document.getElementById("f-nights").addEventListener("input", () => {
+  const nights = Math.max(1, Number(document.getElementById("f-nights").value) || 1);
+  const date = document.getElementById("f-date").value || TODAY;
+  document.getElementById("f-end-date").value = addDaysToDateStr(date, nights);
+});
+document.getElementById("f-date").addEventListener("change", () => {
+  if (selectedKind() !== "hotel") return;
+  const nights = Math.max(1, Number(document.getElementById("f-nights").value) || 1);
+  document.getElementById("f-end-date").value = addDaysToDateStr(document.getElementById("f-date").value || TODAY, nights);
+});
+
 document.getElementById("item-save").addEventListener("click", () => {
   const targetTrip = tripById(document.getElementById("f-trip").value);
   if (!canEditTrip(targetTrip)) return;
@@ -1785,6 +1984,15 @@ document.getElementById("item-save").addEventListener("click", () => {
   let categoryId = document.getElementById("f-category").value;
   if (!categoryId || categoryId === "__add__") categoryId = kindToCategory(kind);
 
+  const dateVal = document.getElementById("f-date").value || TODAY;
+  let nights = null;
+  let endDateVal = document.getElementById("f-end-date").value || "";
+  if (kind === "hotel") {
+    nights = Math.max(1, Number(document.getElementById("f-nights").value) || 1);
+    endDateVal = addDaysToDateStr(dateVal, nights);
+  }
+  if (endDateVal === dateVal) endDateVal = "";
+
   const form = {
     tripId: document.getElementById("f-trip").value,
     kind,
@@ -1793,7 +2001,9 @@ document.getElementById("item-save").addEventListener("click", () => {
     fromPlace: config.transport ? fromPlace : "",
     toPlace: config.transport ? toPlace : "",
     mapUrl,
-    date: document.getElementById("f-date").value || TODAY,
+    date: dateVal,
+    endDate: endDateVal,
+    nights,
     startTime: document.getElementById("f-start").value,
     endTime: document.getElementById("f-end").value,
     price: priceRaw === "" ? null : Number(priceRaw),
@@ -2157,134 +2367,6 @@ function initDragHandlers() {
 }
 
 // ---------------------------------------------------------------------------
-// Touch / long-press drag to reorder timeline entries
-// ---------------------------------------------------------------------------
-function initTouchDragHandlers() {
-  const timeline = document.getElementById("timeline");
-  let pressTimer = null;
-  let sourceRow = null;
-  let ghost = null;
-  let active = false;
-  let startX = 0;
-  let startY = 0;
-  let lastX = 0;
-  let lastY = 0;
-
-  function clearTargetMarks() {
-    timeline.querySelectorAll(".row").forEach(row => row.classList.remove("drag-over-top", "drag-over-bottom"));
-    timeline.querySelectorAll(".date-group").forEach(group => group.classList.remove("drag-over-empty"));
-  }
-
-  function cancelTouchDrag() {
-    clearTimeout(pressTimer);
-    pressTimer = null;
-    active = false;
-    draggedId = null;
-    sourceRow?.classList.remove("dragging");
-    ghost?.remove();
-    ghost = null;
-    sourceRow = null;
-    clearTargetMarks();
-    document.body.classList.remove("touch-reordering");
-  }
-
-  function positionGhost(x, y) {
-    if (!ghost) return;
-    const width = Math.min(sourceRow.getBoundingClientRect().width, window.innerWidth - 24);
-    ghost.style.width = `${width}px`;
-    ghost.style.left = `${Math.max(12, Math.min(window.innerWidth - width - 12, x - width / 2))}px`;
-    ghost.style.top = `${Math.max(8, Math.min(window.innerHeight - 72, y - 28))}px`;
-  }
-
-  function markTarget(x, y) {
-    clearTargetMarks();
-    ghost.style.display = "none";
-    const target = document.elementFromPoint(x, y);
-    ghost.style.display = "";
-    const row = target?.closest?.(".row");
-    if (row && row.dataset.id !== draggedId) {
-      const rect = row.getBoundingClientRect();
-      row.classList.add(y < rect.top + rect.height / 2 ? "drag-over-top" : "drag-over-bottom");
-    } else {
-      target?.closest?.(".date-group")?.classList.add("drag-over-empty");
-    }
-  }
-
-  timeline.addEventListener("touchstart", event => {
-    if (event.touches.length !== 1 || !canEditTrip(activeTrip())) return;
-    if (event.target.closest("button, input, select, textarea, a")) return;
-    const row = event.target.closest(".row");
-    if (!row) return;
-    sourceRow = row;
-    startX = lastX = event.touches[0].clientX;
-    startY = lastY = event.touches[0].clientY;
-    pressTimer = setTimeout(() => {
-      active = true;
-      draggedId = row.dataset.id;
-      row.classList.add("dragging");
-      document.body.classList.add("touch-reordering");
-      ghost = row.cloneNode(true);
-      ghost.classList.remove("dragging");
-      ghost.classList.add("touch-drag-ghost");
-      ghost.removeAttribute("draggable");
-      document.body.appendChild(ghost);
-      positionGhost(lastX, lastY);
-      if (navigator.vibrate) navigator.vibrate(30);
-    }, 450);
-  }, { passive:true });
-
-  timeline.addEventListener("touchmove", event => {
-    if (!sourceRow || event.touches.length !== 1) return;
-    lastX = event.touches[0].clientX;
-    lastY = event.touches[0].clientY;
-    if (!active && Math.hypot(lastX - startX, lastY - startY) > 10) {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-      sourceRow = null;
-      return;
-    }
-    if (!active) return;
-    event.preventDefault();
-    positionGhost(lastX, lastY);
-    markTarget(lastX, lastY);
-  }, { passive:false });
-
-  timeline.addEventListener("touchend", event => {
-    if (!active || !draggedId) { cancelTouchDrag(); return; }
-    event.preventDefault();
-    ghost.style.display = "none";
-    const target = document.elementFromPoint(lastX, lastY);
-    ghost.style.display = "";
-    const draggedItem = state.items.find(item => item.id === draggedId);
-    const targetRow = target?.closest?.(".row");
-    let targetDate = null, previousItem = null, nextItem = null;
-
-    if (draggedItem && targetRow && targetRow.dataset.id !== draggedId) {
-      targetDate = targetRow.dataset.date;
-      const rect = targetRow.getBoundingClientRect();
-      const before = lastY < rect.top + rect.height / 2;
-      const dayItems = tripItemsForDate(targetDate).filter(item => item.id !== draggedId);
-      const targetIndex = dayItems.findIndex(item => item.id === targetRow.dataset.id);
-      if (before) { previousItem = dayItems[targetIndex - 1] || null; nextItem = dayItems[targetIndex] || null; }
-      else { previousItem = dayItems[targetIndex] || null; nextItem = dayItems[targetIndex + 1] || null; }
-    } else if (draggedItem) {
-      const group = target?.closest?.(".date-group");
-      if (group) {
-        targetDate = group.dataset.date;
-        const dayItems = tripItemsForDate(targetDate).filter(item => item.id !== draggedId);
-        previousItem = dayItems[dayItems.length - 1] || null;
-      }
-    }
-
-    if (draggedItem && targetDate) applyDragReposition(draggedItem, targetDate, previousItem, nextItem);
-    cancelTouchDrag();
-    renderAll();
-  }, { passive:false });
-
-  timeline.addEventListener("touchcancel", cancelTouchDrag, { passive:true });
-}
-
-// ---------------------------------------------------------------------------
 // Sidebar trip drag to reorder
 // ---------------------------------------------------------------------------
 let draggedTripId = null;
@@ -2361,6 +2443,177 @@ function initTripDragHandlers() {
     }
     draggedTripId = null;
     clearTripDragVisuals();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Touch drag-to-reorder. Native HTML5 drag-and-drop (above) never fires from
+// touch input on phones/tablets, so this is a parallel, touch-only
+// implementation using Pointer Events: long-press a block, then drag it.
+// Mouse/trackpad users keep using the native drag-and-drop above — this
+// only activates when event.pointerType === "touch".
+// ---------------------------------------------------------------------------
+const TOUCH_LONG_PRESS_MS = 260;
+const TOUCH_MOVE_CANCEL_PX = 10;
+
+function initTouchReorder(container, itemSelector, handlers) {
+  let pressTimer = null;
+  let dragEl = null;
+  let ghost = null;
+  let startX = 0, startY = 0, startTop = 0;
+  let active = false;
+
+  function endDrag() {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+    if (ghost) { ghost.remove(); ghost = null; }
+    if (dragEl) dragEl.classList.remove(handlers.draggingClass);
+    handlers.clearVisuals();
+    container.style.touchAction = "";
+    dragEl = null;
+    active = false;
+  }
+
+  container.addEventListener("pointerdown", event => {
+    if (event.pointerType !== "touch") return;
+    if (event.target.closest("button, a, input, select, textarea")) return;
+    const el = event.target.closest(itemSelector);
+    if (!el || (handlers.canDrag && !handlers.canDrag(el))) return;
+
+    dragEl = el;
+    startX = event.clientX;
+    startY = event.clientY;
+    pressTimer = setTimeout(() => {
+      active = true;
+      const rect = dragEl.getBoundingClientRect();
+      startTop = rect.top;
+      dragEl.classList.add(handlers.draggingClass);
+      ghost = dragEl.cloneNode(true);
+      ghost.classList.add("drag-ghost");
+      ghost.style.width = rect.width + "px";
+      ghost.style.left = rect.left + "px";
+      ghost.style.top = rect.top + "px";
+      document.body.appendChild(ghost);
+      container.style.touchAction = "none";
+      if (navigator.vibrate) navigator.vibrate(10);
+    }, TOUCH_LONG_PRESS_MS);
+  }, { passive: true });
+
+  container.addEventListener("pointermove", event => {
+    if (event.pointerType !== "touch" || !dragEl) return;
+    if (!active) {
+      if (Math.abs(event.clientX - startX) > TOUCH_MOVE_CANCEL_PX || Math.abs(event.clientY - startY) > TOUCH_MOVE_CANCEL_PX) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+        dragEl = null;
+      }
+      return;
+    }
+    event.preventDefault();
+    ghost.style.top = (startTop + (event.clientY - startY)) + "px";
+    const overEl = document.elementFromPoint(event.clientX, event.clientY)?.closest(itemSelector);
+    handlers.onHover(dragEl, overEl, event.clientY);
+  }, { passive: false });
+
+  container.addEventListener("pointerup", event => {
+    if (event.pointerType !== "touch") return;
+    clearTimeout(pressTimer);
+    if (active && dragEl) {
+      event.preventDefault();
+      const overEl = document.elementFromPoint(event.clientX, event.clientY)?.closest(itemSelector);
+      handlers.onDrop(dragEl, overEl, event.clientX, event.clientY);
+    }
+    endDrag();
+  });
+
+  container.addEventListener("pointercancel", endDrag);
+}
+
+function initTimelineTouchReorder() {
+  const timeline = document.getElementById("timeline");
+  initTouchReorder(timeline, ".row", {
+    draggingClass: "dragging",
+    canDrag: () => canEditTrip(activeTrip()),
+    clearVisuals: clearDragVisuals,
+    onHover(dragEl, overEl, clientY) {
+      clearDragVisuals();
+      dragEl.classList.add("dragging");
+      if (overEl && overEl !== dragEl) {
+        const rect = overEl.getBoundingClientRect();
+        const before = clientY < rect.top + rect.height / 2;
+        overEl.classList.add(before ? "drag-over-top" : "drag-over-bottom");
+      } else {
+        dragEl.closest(".date-group")?.classList.add("drag-over-empty");
+      }
+    },
+    onDrop(dragEl, overEl, clientX, clientY) {
+      const draggedId = dragEl.dataset.id;
+      const draggedItem = state.items.find(item => item.id === draggedId);
+      if (!draggedItem) return;
+
+      let targetDate;
+      let previousItem = null;
+      let nextItem = null;
+
+      if (overEl && overEl.dataset.id !== draggedId) {
+        targetDate = overEl.dataset.date;
+        const rect = overEl.getBoundingClientRect();
+        const before = clientY < rect.top + rect.height / 2;
+        const dayItems = tripItemsForDate(targetDate).filter(item => item.id !== draggedId);
+        const targetIndex = dayItems.findIndex(item => item.id === overEl.dataset.id);
+        if (before) {
+          previousItem = dayItems[targetIndex - 1] || null;
+          nextItem = dayItems[targetIndex] || null;
+        } else {
+          previousItem = dayItems[targetIndex] || null;
+          nextItem = dayItems[targetIndex + 1] || null;
+        }
+      } else {
+        const group = document.elementFromPoint(clientX, clientY)?.closest(".date-group") || dragEl.closest(".date-group");
+        if (!group) return;
+        targetDate = group.dataset.date;
+        const dayItems = tripItemsForDate(targetDate).filter(item => item.id !== draggedId);
+        previousItem = dayItems[dayItems.length - 1] || null;
+      }
+
+      applyDragReposition(draggedItem, targetDate, previousItem, nextItem);
+      renderAll();
+    },
+  });
+}
+
+function initTripListTouchReorder() {
+  const list = document.getElementById("trip-list");
+  initTouchReorder(list, ".ticket-stub", {
+    draggingClass: "trip-dragging",
+    clearVisuals: clearTripDragVisuals,
+    onHover(dragEl, overEl, clientY) {
+      clearTripDragVisuals();
+      dragEl.classList.add("trip-dragging");
+      if (overEl && overEl !== dragEl) {
+        const rect = overEl.getBoundingClientRect();
+        const before = clientY < rect.top + rect.height / 2;
+        overEl.classList.add(before ? "trip-drag-over-top" : "trip-drag-over-bottom");
+      }
+    },
+    onDrop(dragEl, overEl, clientX, clientY) {
+      const draggedTripId = dragEl.dataset.trip;
+      const trips = orderedTrips();
+      const draggedIndex = trips.findIndex(trip => trip.id === draggedTripId);
+      if (draggedIndex < 0) return;
+      const [draggedTrip] = trips.splice(draggedIndex, 1);
+
+      if (overEl && overEl.dataset.trip !== draggedTripId) {
+        const targetIndex = trips.findIndex(trip => trip.id === overEl.dataset.trip);
+        const rect = overEl.getBoundingClientRect();
+        const before = clientY < rect.top + rect.height / 2;
+        trips.splice(Math.max(0, targetIndex + (before ? 0 : 1)), 0, draggedTrip);
+      } else {
+        trips.push(draggedTrip);
+      }
+      trips.forEach((trip, index) => { trip.order = index; });
+      renderAll();
+    },
   });
 }
 
@@ -2515,7 +2768,6 @@ function applySharedDocument(remoteId, documentData, role, version, updatedAt = 
     remoteUpdatedAt: updatedAt || existing?.remoteUpdatedAt || "",
   };
   incomingTrip.customCategories = Array.isArray(incomingTrip.customCategories) ? incomingTrip.customCategories : [];
-  incomingTrip.pendingInvites = Array.isArray(incomingTrip.pendingInvites) ? incomingTrip.pendingInvites : [];
   incomingTrip.defaultCurrency = incomingTrip.defaultCurrency || "USD";
   incomingTrip.color = incomingTrip.color || TRIP_PALETTE[0];
   incomingTrip.order = existing?.order ?? incomingTrip.order ?? orderedTrips().length;
@@ -2540,6 +2792,20 @@ async function fetchRole(remoteId) {
 async function loadRemoteTrip(remoteId, silent = false) {
   if (!supabaseClient || !collabUser) return false;
   if (!silent) setCollabMessage(ct("loading"));
+
+  // If we already know this trip locally and it has edits that haven't
+  // reached the server yet (the 450ms autosave debounce hadn't fired before
+  // the tab was closed or this route ran again), push that edit first
+  // instead of silently overwriting it with the stale server copy below.
+  const existing = state.trips.find(trip => trip.remoteId === remoteId);
+  if (existing && canEditTrip(existing) && existing.remoteSnapshot) {
+    const fingerprint = JSON.stringify(sharedDocument(existing));
+    if (existing.remoteSnapshot !== fingerprint) {
+      clearTimeout(remoteSaveTimer);
+      await saveRemoteTrip(existing);
+    }
+  }
+
   const role = await fetchRole(remoteId);
   if (!role) { setCollabMessage(ct("accessDenied"), true); return false; }
   const { data, error } = await supabaseClient.from("voyage_trips").select("id,name,document,version,updated_at").eq("id", remoteId).single();
@@ -2557,20 +2823,24 @@ function scheduleRemoteSave() {
   clearTimeout(remoteSaveTimer);
   remoteSaveTimer = setTimeout(saveActiveRemoteTrip, 450);
 }
-async function saveActiveRemoteTrip() {
-  const trip = activeTrip();
-  if (!trip?.remoteId || !canEditTrip(trip) || !supabaseClient || remoteSaveInFlight) return;
+async function saveRemoteTrip(trip) {
+  if (!trip?.remoteId || !canEditTrip(trip) || !supabaseClient || remoteSaveInFlight) return false;
+  const isActive = trip === activeTrip();
   remoteSaveInFlight = true;
-  updateSyncStatus("saving");
+  if (isActive) updateSyncStatus("saving");
   const payload = { name: trip.name, document: sharedDocument(trip), last_client_id: CLIENT_ID };
   const { data, error } = await supabaseClient.from("voyage_trips").update(payload).eq("id", trip.remoteId).select("version,updated_at").single();
   remoteSaveInFlight = false;
-  if (error) { updateSyncStatus("error"); setCollabMessage(error.message, true); return; }
+  if (error) { if (isActive) { updateSyncStatus("error"); setCollabMessage(error.message, true); } return false; }
   trip.remoteVersion = data.version;
   trip.remoteUpdatedAt = data.updated_at;
   trip.remoteSnapshot = JSON.stringify(sharedDocument(trip));
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
-  updateSyncStatus("synced");
+  if (isActive) updateSyncStatus("synced");
+  return true;
+}
+async function saveActiveRemoteTrip() {
+  await saveRemoteTrip(activeTrip());
 }
 async function ensureRealtimeForActiveTrip() {
   if (!supabaseClient || !collabUser) return;
@@ -2626,22 +2896,6 @@ async function acceptInvite(token) {
   setCollabMessage(ct("inviteAccepted"));
   return true;
 }
-function pendingInvitesForTrip(trip) {
-  trip.pendingInvites = Array.isArray(trip.pendingInvites) ? trip.pendingInvites : [];
-  return trip.pendingInvites;
-}
-
-async function updatePendingInviteRole(trip, invite, role) {
-  const { data, error } = await supabaseClient.rpc("create_voyage_invite", { p_trip_id: trip.remoteId, p_email: invite.email, p_role: role });
-  if (error) return setCollabMessage(error.message, true);
-  const token = typeof data === "string" ? data : data?.token || data;
-  invite.role = role;
-  invite.link = tripInviteUrl(token);
-  invite.updatedAt = new Date().toISOString();
-  scheduleRemoteSave();
-  await listMembers();
-}
-
 async function listMembers() {
   const trip = activeTrip();
   const list = document.getElementById("member-list");
@@ -2649,18 +2903,7 @@ async function listMembers() {
   list.innerHTML = `<div class="field-help">${esc(ct("loading"))}</div>`;
   const { data, error } = await supabaseClient.rpc("list_voyage_members", { p_trip_id: trip.remoteId });
   if (error) { list.innerHTML = `<div class="collab-message error">${esc(error.message)}</div>`; return; }
-  const members = data || [];
-  const memberEmails = new Set(members.map(member => String(member.email || "").toLowerCase()));
-  trip.pendingInvites = pendingInvitesForTrip(trip).filter(invite => !memberEmails.has(String(invite.email || "").toLowerCase()));
-  const pendingHtml = trip.pendingInvites.map(invite => {
-    const roles = tripRole(trip) === "owner" ? ["admin", "editor", "viewer"] : ["editor", "viewer"];
-    return `<div class="member-row pending-member-row" data-pending-email="${esc(invite.email)}">
-      <span class="member-email" title="${esc(invite.email)}">${esc(invite.email)} <span class="role-badge">Pending</span></span>
-      <select class="field-input" data-pending-role>${roles.map(role => `<option value="${role}" ${invite.role === role ? "selected" : ""}>${esc(roleText(role))}</option>`).join("")}</select>
-      <button class="icon-btn" data-copy-pending title="Copy invitation link">⧉</button>
-    </div>`;
-  }).join("");
-  list.innerHTML = pendingHtml + members.map(member => {
+  list.innerHTML = (data || []).map(member => {
     const isOwner = member.role === "owner";
     const canTouch = tripRole(trip) === "owner" ? !isOwner : ["viewer", "editor"].includes(member.role) && member.user_id !== collabUser.id;
     const roleOptions = tripRole(trip) === "owner"
@@ -2672,16 +2915,6 @@ async function listMembers() {
       ${canTouch ? `<button class="icon-btn danger" data-remove-member title="${esc(ct("removeMember"))}">✕</button>` : ""}
     </div>`;
   }).join("");
-  list.querySelectorAll("[data-pending-role]").forEach(select => select.addEventListener("change", async () => {
-    const row = select.closest("[data-pending-email]");
-    const invite = pendingInvitesForTrip(trip).find(item => item.email === row.dataset.pendingEmail);
-    if (invite) await updatePendingInviteRole(trip, invite, select.value);
-  }));
-  list.querySelectorAll("[data-copy-pending]").forEach(button => button.addEventListener("click", async () => {
-    const email = button.closest("[data-pending-email]").dataset.pendingEmail;
-    const invite = pendingInvitesForTrip(trip).find(item => item.email === email);
-    if (invite?.link) { await navigator.clipboard.writeText(invite.link); setCollabMessage(ct("copied")); }
-  }));
   list.querySelectorAll("[data-member-role]").forEach(select => select.addEventListener("change", async () => {
     const row = select.closest("[data-member]");
     const { error } = await supabaseClient.rpc("set_voyage_member_role", { p_trip_id: trip.remoteId, p_user_id: row.dataset.member, p_role: select.value });
@@ -2734,6 +2967,19 @@ async function processCollabRoute() {
     if (cachedRemote && collabUser) await loadRemoteTrip(cachedRemote, true).catch(() => false);
   }
 }
+let collabRouteInFlight = null;
+function runCollabRoute() {
+  // Dedupe: if a route pass is already in flight, don't start a second,
+  // overlapping one — two concurrent loadRemoteTrip() calls for the same
+  // trip can resolve out of order and leave the UI showing whichever
+  // response happened to land last.
+  if (collabRouteInFlight) return collabRouteInFlight;
+  collabRouteInFlight = (async () => {
+    await processCollabRoute();
+    refreshSharePanel();
+  })().finally(() => { collabRouteInFlight = null; });
+  return collabRouteInFlight;
+}
 async function initCollaboration() {
   if (!collabConfigured()) { updateSyncStatus(); return; }
   supabaseClient = window.supabase.createClient(COLLAB_CONFIG.supabaseUrl, COLLAB_CONFIG.supabasePublishableKey, {
@@ -2741,12 +2987,15 @@ async function initCollaboration() {
   });
   const { data } = await supabaseClient.auth.getSession();
   collabUser = data.session?.user || null;
-  supabaseClient.auth.onAuthStateChange((_event, session) => {
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    // The INITIAL_SESSION event fires immediately on subscribing and just
+    // reports the same session getSession() already gave us above; acting
+    // on it again is what was causing the duplicate/racing route pass.
+    if (event === "INITIAL_SESSION") return;
     collabUser = session?.user || null;
-    setTimeout(async () => { await processCollabRoute(); refreshSharePanel(); }, 0);
+    runCollabRoute();
   });
-  await processCollabRoute();
-  refreshSharePanel();
+  await runCollabRoute();
 }
 
 document.getElementById("share-trip-btn").addEventListener("click", openShareModal);
@@ -2803,16 +3052,9 @@ document.getElementById("create-invite-btn").addEventListener("click", async () 
   const token = typeof data === "string" ? data : data?.token || data;
   const link = tripInviteUrl(token);
   lastInvite = { email, role, link, tripName: trip.name };
-  const pending = pendingInvitesForTrip(trip);
-  const existingPending = pending.find(invite => invite.email === email);
-  if (existingPending) Object.assign(existingPending, { role, link, updatedAt: new Date().toISOString() });
-  else pending.push({ email, role, link, createdAt: new Date().toISOString() });
-  scheduleRemoteSave();
   document.getElementById("invite-link").value = link;
   document.getElementById("invite-result").style.display = "block";
-  document.getElementById("invite-email").value = "";
   setCollabMessage(ct("inviteCreated"), false, "invite-message");
-  await listMembers();
 });
 document.getElementById("email-invite-btn").addEventListener("click", () => {
   if (!lastInvite) return;
@@ -2822,25 +3064,17 @@ document.getElementById("email-invite-btn").addEventListener("click", () => {
 });
 
 
-const MOBILE_SPEND_VISIBILITY_KEY = "voyage-board-mobile-spend-open";
-function setMobileSpendOpen(open) {
-  const panel = document.getElementById("mobile-spend-panel");
-  const button = document.getElementById("mobile-spend-toggle");
-  panel.classList.toggle("is-collapsed", !open);
-  button.setAttribute("aria-expanded", String(open));
-  try { localStorage.setItem(MOBILE_SPEND_VISIBILITY_KEY, open ? "1" : "0"); } catch {}
-}
-document.getElementById("mobile-spend-toggle").addEventListener("click", () => {
-  setMobileSpendOpen(document.getElementById("mobile-spend-panel").classList.contains("is-collapsed"));
-});
-try { setMobileSpendOpen(localStorage.getItem(MOBILE_SPEND_VISIBILITY_KEY) !== "0"); } catch { setMobileSpendOpen(true); }
-
 // ---------------------------------------------------------------------------
 // Init
 // ---------------------------------------------------------------------------
 initDragHandlers();
-initTouchDragHandlers();
 initTripDragHandlers();
+initTimelineTouchReorder();
+initTripListTouchReorder();
+attachAutocomplete("f-title", () => TITLE_SUGGESTIONS[selectedKind()] || TITLE_SUGGESTIONS.other);
+attachAutocomplete("f-location", () => PLACE_SUGGESTIONS[selectedKind()] || PLACE_SUGGESTIONS.other);
+attachAutocomplete("f-from", () => PLACE_SUGGESTIONS[selectedKind()] || PLACE_SUGGESTIONS.other);
+attachAutocomplete("f-to", () => PLACE_SUGGESTIONS[selectedKind()] || PLACE_SUGGESTIONS.other);
 renderAll();
 initCollaboration();
 </script>
