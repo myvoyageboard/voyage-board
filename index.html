@@ -116,13 +116,7 @@
   /* Main */
   #main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   #toolbar { border-bottom: 1px solid var(--border); padding: 20px 32px; }
-  #mobile-trip-select { display: block; flex: 1; min-width: 0; width: 100%; background: var(--panel-2); border: 1px solid var(--border); color: var(--text-hi); border-radius: 8px; padding: 8px; font-family: inherit; font-size: 13px; }
-  .mobile-trip-row { display: none; gap: 8px; align-items: stretch; margin-bottom: 12px; }
-  #mobile-new-trip-btn {
-    flex: 0 0 44px; min-width: 44px; border-radius: 8px; border: 1px solid var(--border);
-    background: var(--panel-2); color: var(--text-hi); font-size: 20px; line-height: 1; cursor: pointer;
-  }
-  #mobile-new-trip-btn:hover { background: var(--hover); }
+  #mobile-trip-select { display: none; width: 100%; margin-bottom: 12px; background: var(--panel-2); border: 1px solid var(--border); color: var(--text-hi); border-radius: 8px; padding: 8px; font-family: inherit; font-size: 13px; }
 
   .toolbar-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   #add-entry-btn {
@@ -135,7 +129,6 @@
   .toolbar-settings { border: 1px solid var(--border); background: var(--panel-2); }
   .toolbar-settings:hover { color: var(--text-hi); border-color: var(--text-lo); }
   .mobile-only-btn { display: none; }
-  .trip-menu-bar { display: none; }
 
   /* Timeline */
   #timeline { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 26px 32px; }
@@ -188,18 +181,6 @@
   .event-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
   .event-card:hover .event-actions { opacity: 1; }
   .icon-btn { width: 24px; height: 24px; border-radius: 6px; border: none; background: transparent; color: var(--text-lo); cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .icon-btn svg { display: block; }
-  .duration-picker-row { display: flex; gap: 6px; margin-top: 6px; }
-  .duration-unit {
-    display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0;
-    background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px;
-  }
-  .duration-unit input {
-    width: 100%; min-width: 0; border: none; background: transparent; color: var(--text-hi);
-    font-family: inherit; font-size: 13px;
-  }
-  .duration-unit input:focus { outline: none; }
-  .duration-unit span { color: var(--text-lo); font-size: 11px; flex-shrink: 0; }
   .icon-btn:hover { background: var(--hover); }
   .icon-btn.danger:hover { color: var(--danger); }
 
@@ -334,7 +315,7 @@
 
   @media (max-width: 720px) {
     #sidebar { display: none; }
-    .mobile-trip-row { display: flex; }
+    #mobile-trip-select { display: block; }
     #toolbar, #timeline { padding-left: 16px; padding-right: 16px; }
     .mobile-only-btn { display: inline-flex; }
   }
@@ -357,45 +338,25 @@
     #app { touch-action: pan-y; }
     #main { width: 100vw; height: 100dvh; overflow: hidden; }
     #toolbar { padding: 12px; flex-shrink: 0; }
-    .mobile-trip-row { margin-bottom: 10px; }
+    #mobile-trip-select { margin-bottom: 10px; }
     .toolbar-row {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
       width: 100%;
     }
-    #add-entry-btn {
+    #add-entry-btn, .toolbar-settings {
       width: 100%;
       min-width: 0;
-      min-height: 44px;
+      min-height: 42px;
       justify-content: center;
       padding: 9px 7px;
-      font-size: 12.5px;
+      font-size: 11.5px;
       white-space: normal;
       line-height: 1.2;
       text-align: center;
     }
-    .toolbar-settings, .mobile-only-btn { display: none !important; }
-    .trip-menu-bar {
-      display: block; margin-top: 2px; border: 1px solid var(--border); border-radius: 12px;
-      background: var(--panel-2); overflow: hidden;
-    }
-    .trip-menu-toggle {
-      width: 100%; min-height: 34px; display: flex; align-items: center; justify-content: center;
-      background: transparent; border: none; color: var(--text-lo); cursor: pointer; padding: 4px 0;
-    }
-    .trip-menu-chevron { display: inline-block; transition: transform .18s ease; font-size: 13px; }
-    .trip-menu-bar.open .trip-menu-chevron { transform: rotate(180deg); }
-    .trip-menu-list { display: none; flex-direction: column; border-top: 1px solid var(--border); }
-    .trip-menu-bar.open .trip-menu-list { display: flex; }
-    .trip-menu-item {
-      display: flex; align-items: center; gap: 10px; width: 100%; min-height: 46px;
-      padding: 0 14px; background: transparent; border: none; border-bottom: 1px solid var(--border);
-      color: var(--text-hi); font-family: inherit; font-size: 13px; text-align: left; cursor: pointer;
-    }
-    .trip-menu-item:last-child { border-bottom: none; }
-    .trip-menu-item:active { background: var(--hover); }
-    .toolbar-hint { font-size: 10.5px; line-height: 1.45; }
+    .toolbar-hint { grid-column: 1 / -1; font-size: 10.5px; line-height: 1.45; }
     #timeline {
       width: 100%;
       padding: 18px 10px 28px;
@@ -480,6 +441,77 @@
     .transport-actions { gap: 4px; }
   }
 
+
+  /* Compact mobile navigation and refined controls */
+  .mobile-trip-row { display: contents; }
+  .mobile-new-trip-btn, .mobile-nav-shell { display: none; }
+  .ui-icon { width: 17px; height: 17px; display: block; flex: 0 0 auto; }
+  .icon-btn {
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid transparent;
+    background: color-mix(in srgb, var(--panel-2) 82%, transparent); color: var(--text-lo);
+    transition: color .15s, background .15s, border-color .15s, transform .12s;
+  }
+  .icon-btn:hover { color: var(--text-hi); border-color: var(--border); transform: translateY(-1px); }
+  .icon-btn.danger:hover { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); }
+
+  .duration-picker { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+  .duration-unit { display: grid; grid-template-rows: auto auto; border: 1px solid var(--border); background: var(--panel-2); border-radius: 10px; overflow: hidden; }
+  .duration-unit:focus-within { border-color: var(--amber); }
+  .duration-unit input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text-hi); padding: 9px 8px 4px; text-align: center; font: 600 14px var(--font-ui); }
+  .duration-unit span { padding: 0 4px 7px; text-align: center; color: var(--text-lo); font-size: 9px; letter-spacing: .06em; }
+
+  .hotel-card { position: relative; background: linear-gradient(110deg, color-mix(in srgb, var(--hotel-color) 13%, var(--panel)), var(--panel) 66%); border-color: color-mix(in srgb, var(--hotel-color) 50%, var(--border)); box-shadow: 0 7px 22px color-mix(in srgb, var(--hotel-color) 9%, transparent); }
+  .hotel-continuation-card { opacity: .9; background: linear-gradient(110deg, color-mix(in srgb, var(--hotel-color) 10%, var(--panel)), var(--panel) 72%); }
+  .staying-badge { display: inline-flex; align-items: center; min-height: 20px; margin-left: 6px; padding: 0 8px; border-radius: 999px; background: color-mix(in srgb, var(--hotel-color) 22%, transparent); color: color-mix(in srgb, var(--hotel-color) 76%, var(--text-hi)); font-size: 9.5px; font-weight: 700; letter-spacing: .04em; vertical-align: top; }
+
+  .hotel-menu-intro { color: var(--text-lo); font-size: 11.5px; line-height: 1.55; margin-bottom: 12px; }
+  .hotel-menu-list { display: flex; flex-direction: column; gap: 10px; }
+  .hotel-empty { min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--text-lo); text-align: center; border: 1px dashed var(--border); border-radius: 12px; padding: 20px; }
+  .hotel-empty .ui-icon { width: 28px; height: 28px; }
+  .hotel-menu-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; border: 1px solid color-mix(in srgb, #D78BFF 45%, var(--border)); background: linear-gradient(110deg, color-mix(in srgb, #D78BFF 12%, var(--panel)), var(--panel)); border-radius: 13px; padding: 12px; }
+  .hotel-menu-card-icon { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; color: #D78BFF; background: color-mix(in srgb, #D78BFF 14%, var(--panel-2)); }
+  .hotel-menu-card-main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .hotel-menu-card-main strong, .hotel-menu-card-main span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hotel-menu-card-main strong { font-size: 13px; }
+  .hotel-menu-card-main span, .hotel-menu-card-main small { color: var(--text-lo); font-size: 10.5px; }
+  .hotel-menu-card-side { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+  .hotel-menu-actions { display: flex; gap: 5px; }
+  .hotel-add-btn { width: 100%; min-height: 44px; margin-top: 12px; }
+
+  @media (max-width: 720px) {
+    #toolbar { padding: 10px 12px 8px; }
+    .mobile-trip-row { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 8px; align-items: stretch; }
+    #mobile-trip-select { display: block; width: 100%; margin: 0; min-height: 44px; }
+    .mobile-new-trip-btn { display: grid; place-items: center; width: 44px; min-width: 44px; min-height: 44px; padding: 0; border: 1px solid var(--border); background: var(--panel-2); color: var(--text-hi); font-size: 22px; }
+    .mobile-nav-shell { display: block; margin-top: 8px; border: 1px solid var(--border); border-radius: 11px; background: var(--panel); overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+    .modal-mobile-nav { flex: 0 0 auto; margin: 10px 12px 0; }
+    .mobile-nav-toggle { width: 100%; min-height: 38px; border: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--panel-2) 76%, var(--panel)), var(--panel)); color: var(--text-hi); display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; padding: 6px 10px; font: 11px var(--font-ui); cursor: pointer; }
+    .mobile-nav-current { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 700; }
+    .mobile-nav-current span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mobile-nav-spend { max-width: 42vw; color: var(--amber); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mobile-nav-chevron { font-size: 18px; line-height: 1; color: var(--text-lo); transition: transform .18s ease; }
+    .mobile-nav-shell.is-open .mobile-nav-chevron { transform: rotate(180deg); }
+    .mobile-nav-menu { display: grid; grid-template-columns: 1fr; border-top: 1px solid var(--border); padding: 4px; }
+    .mobile-nav-menu[hidden] { display: none; }
+    .mobile-nav-option { min-height: 42px; width: 100%; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 8px; padding: 8px 10px; color: var(--text-lo); background: transparent; font: 11px var(--font-ui); text-align: left; cursor: pointer; }
+    .mobile-nav-option:hover, .mobile-nav-option:active { color: var(--text-hi); background: var(--hover); }
+
+    .toolbar-row { display: block; margin-top: 8px; }
+    #add-entry-btn { width: 100%; min-height: 44px; }
+    .toolbar-row .toolbar-settings, .toolbar-hint, .toolbar-row .sync-status { display: none !important; }
+    .duration-picker { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+    .duration-unit input { padding-left: 3px; padding-right: 3px; }
+    .duration-unit span { font-size: 8px; letter-spacing: 0; }
+    .icon-btn, .transport-actions .icon-btn, .event-actions .icon-btn, .member-row .icon-btn { width: 40px !important; height: 40px !important; min-width: 40px; min-height: 40px; border-radius: 10px; }
+    .icon-btn .ui-icon { width: 18px; height: 18px; }
+    .event-actions, .transport-actions { gap: 6px; }
+    .staying-badge { margin: 5px 0 0; }
+    .hotel-menu-card { grid-template-columns: auto minmax(0, 1fr); }
+    .hotel-menu-card-side { grid-column: 1 / -1; width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
+    #item-overlay[data-hotel-editor="true"] .kind-grid { grid-template-columns: 1fr; }
+    #item-overlay[data-hotel-editor="true"] .kind-opt:not([data-kind="hotel"]) { display: none; }
+  }
+
 </style>
 </head>
 <body>
@@ -501,36 +533,40 @@
 
   <main id="main">
     <div id="toolbar">
-      <div class="mobile-trip-row" id="mobile-trip-row">
+      <div class="mobile-trip-row">
         <select id="mobile-trip-select"></select>
-        <button id="mobile-new-trip-btn" type="button">+</button>
+        <button id="mobile-new-trip-btn" class="btn mobile-new-trip-btn" type="button" aria-label="New trip" title="New trip">＋</button>
       </div>
+      <div id="mobile-nav-shell" class="mobile-nav-shell" data-active-view="schedule"></div>
       <div class="toolbar-row">
         <button id="add-entry-btn">+ Add entry</button>
         <button id="trip-settings-btn" class="btn btn-ghost toolbar-settings">⚙ Trip settings</button>
         <button id="spend-summary-btn" class="btn btn-ghost toolbar-settings mobile-only-btn">💰 Spending</button>
-        <button id="hotel-btn" class="btn btn-ghost toolbar-settings">🏨 Hotel</button>
+        <button id="hotel-menu-btn" class="btn btn-ghost toolbar-settings">🛏 Hotels</button>
         <button id="app-settings-btn" class="btn btn-ghost toolbar-settings">◐ App settings</button>
         <button id="share-trip-btn" class="btn btn-ghost toolbar-settings">↗ Share</button>
         <span id="sync-status" class="sync-status" data-state="local">Local only</span>
         <span class="toolbar-hint" id="toolbar-hint">Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.</span>
       </div>
-      <div class="trip-menu-bar" id="trip-menu-bar">
-        <button type="button" id="trip-menu-toggle" class="trip-menu-toggle" aria-expanded="false">
-          <span class="trip-menu-chevron" aria-hidden="true">▾</span>
-        </button>
-        <div class="trip-menu-list" id="trip-menu-list">
-          <button type="button" class="trip-menu-item" data-open-btn="spend-summary-btn"><span data-i18n="spending">Spending</span></button>
-          <button type="button" class="trip-menu-item" data-open-btn="trip-settings-btn"><span data-i18n="tripSettings">Trip settings</span></button>
-          <button type="button" class="trip-menu-item" data-open-btn="hotel-btn"><span data-i18n="hotelMenu">Hotel</span></button>
-          <button type="button" class="trip-menu-item" data-open-btn="share-trip-btn"><span data-i18n="share">Share</span></button>
-          <button type="button" class="trip-menu-item" data-open-btn="app-settings-btn"><span data-i18n="appSettings">App settings</span></button>
-        </div>
-      </div>
     </div>
     <div id="readonly-banner" class="readonly-banner">View-only access — changes are disabled.</div>
     <div id="timeline" class="scroll"></div>
   </main>
+</div>
+
+
+<div class="overlay" id="hotel-overlay">
+  <div class="modal hotel-menu-modal" style="max-width:620px;">
+    <div class="modal-head"><h3 id="hotel-modal-title">Hotels</h3><button class="modal-close" id="hotel-close">✕</button></div>
+    <div class="modal-body">
+      <div class="hotel-menu-intro" id="hotel-menu-intro">Hotels saved here are automatically shown at the top of every applicable schedule day.</div>
+      <div id="hotel-menu-list" class="hotel-menu-list"></div>
+      <button id="hotel-add-btn" class="btn btn-primary hotel-add-btn" type="button">＋ Add hotel</button>
+    </div>
+    <div class="modal-foot" style="justify-content:flex-end;">
+      <button class="btn btn-ghost" id="hotel-done">Done</button>
+    </div>
+  </div>
 </div>
 
 <div class="overlay" id="item-overlay">
@@ -582,24 +618,22 @@
 
       <div class="grid-3">
         <div><label class="field-label" data-i18n="date">Date</label><input type="date" class="field-input" id="f-date"></div>
-        <div><label class="field-label" data-i18n="start">Start</label><input type="time" class="field-input" id="f-start"></div>
-        <div id="duration-field-wrap">
-          <label class="field-label" data-i18n="duration">Duration</label>
-          <input type="text" class="field-input" id="f-duration" placeholder="1h 30m">
-          <div class="duration-picker-row" id="duration-picker-row">
-            <div class="duration-unit"><input type="number" min="0" id="f-dur-d"><span>d</span></div>
-            <div class="duration-unit"><input type="number" min="0" id="f-dur-h"><span>h</span></div>
-            <div class="duration-unit"><input type="number" min="0" id="f-dur-m"><span>m</span></div>
-            <div class="duration-unit"><input type="number" min="0" id="f-dur-s"><span>s</span></div>
-          </div>
-        </div>
+        <div><label class="field-label" data-i18n="start">Start</label><input type="time" step="1" class="field-input" id="f-start"></div>
+        <div><label class="field-label" data-i18n="duration">Duration</label><input type="text" class="field-input" id="f-duration" placeholder="1d 2h 30m 15s"></div>
       </div>
+      <div class="duration-picker" id="duration-picker" aria-label="Duration selector">
+        <label class="duration-unit"><input type="number" id="f-duration-days" min="0" step="1" inputmode="numeric" value="0"><span data-i18n="daysUnit">DAY</span></label>
+        <label class="duration-unit"><input type="number" id="f-duration-hours" min="0" max="23" step="1" inputmode="numeric" value="0"><span data-i18n="hoursUnit">HOUR</span></label>
+        <label class="duration-unit"><input type="number" id="f-duration-minutes" min="0" max="59" step="1" inputmode="numeric" value="0"><span data-i18n="minutesUnit">MIN</span></label>
+        <label class="duration-unit"><input type="number" id="f-duration-seconds" min="0" max="59" step="1" inputmode="numeric" value="0"><span data-i18n="secondsUnit">SEC</span></label>
+      </div>
+      <div class="field-help" data-i18n="durationPickerHelp">Use the four selectors or type the duration manually above.</div>
       <div class="grid-2" id="hotel-nights-row" style="display:none;">
         <div><label class="field-label" data-i18n="nights">Nights</label><input type="number" min="1" step="1" class="field-input" id="f-nights" placeholder="1"></div>
       </div>
       <div class="grid-2">
         <div><label class="field-label" data-i18n="endDate">End date</label><input type="date" class="field-input" id="f-end-date"></div>
-        <div><label class="field-label" data-i18n="end">End</label><input type="time" class="field-input" id="f-end"></div>
+        <div><label class="field-label" data-i18n="end">End</label><input type="time" step="1" class="field-input" id="f-end"></div>
       </div>
       <div class="field-help" data-i18n="overnightHelp">Leave end date blank if it's the same day. Set it (or fill in Duration) for anything that runs past midnight.</div>
       <div class="grid-2">
@@ -821,8 +855,6 @@ const COLLAB_CONFIG = window.VOYAGE_BOARD_CONFIG || {
 };
 const CLIENT_ID = (crypto.randomUUID ? crypto.randomUUID() : uid());
 
-const ICON_EDIT = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
-const ICON_DELETE = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>`;
 const KIND_CONFIG = {
   flight:      { label: "Flight",      icon: "✈️", color: "#63C7FF", transport: true  },
   train:       { label: "Train",       icon: "🚆", color: "#55E08A", transport: true  },
@@ -846,7 +878,7 @@ const OLD_TRIP_COLOR_MAP = {
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "TWD", "CNY", "HKD", "KRW", "SGD", "THB", "AUD", "CAD", "CHF", "NZD", "MYR", "IDR", "PHP", "VND", "INR", "AED"];
 const I18N = {
   en: {
-    trips:"TRIPS", tripSpend:"TRIP SPEND", newTrip:"+ New trip", addEntry:"+ Add entry", tripSettings:"⚙ Trip settings", appSettings:"◐ App settings", spending:"💰 Spending", hotelMenu:"🏨 Hotel", share:"↗ Share",
+    trips:"TRIPS", tripSpend:"TRIP SPEND", newTrip:"+ New trip", addEntry:"+ Add entry", tripSettings:"⚙ Trip settings", appSettings:"◐ App settings", spending:"💰 Spending", schedule:"Schedule", share:"Share", hotelMenu:"Hotels", mobileMenu:"Menu",
     toolbarHint:"Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.", type:"Type", titleLabel:"Title", entryColor:"Entry color",
     useTypeDefault:"Use type default", colorDefaultHelp:"Uses the selected type's default color unless you choose a custom color.", colorCustomHelp:"Custom color override is active for this entry.",
     location:"Location", propertyLocation:"Property / location", from:"From", to:"To", departureAirport:"Departure airport", arrivalAirport:"Arrival airport",
@@ -868,10 +900,10 @@ const I18N = {
     kind_flight:"Flight", kind_train:"Train", kind_bus:"Bus", kind_car:"Car / Taxi", kind_ferry:"Ferry", kind_walk:"Walk", kind_hotel:"Hotel", kind_food:"Food", kind_activity:"Activity", kind_sightseeing:"Sightseeing", kind_meeting:"Meeting", kind_other:"Other",
     cat_flight:"Flights", cat_transport:"Transportation", cat_hotel:"Lodging", cat_food:"Food", cat_activity:"Activities", cat_shopping:"Shopping", cat_meeting:"Meetings", cat_other:"Other",
     duration:"Duration", endDate:"End date", nights:"Nights", overnightHelp:"Leave end date blank if it's the same day. Set it (or fill in Duration) for anything that runs past midnight.",
-    nightsCount:"{n} nights", nightOf:"Night {n} of {total}", invalidDuration:"Enter a duration like “1h 30m” or “90m”.", stayingHere:"Staying here"
+    nightsCount:"{n} nights", nightOf:"Night {n} of {total}", invalidDuration:"Enter a duration like “1d 2h 30m 15s”, “90m”, or “1:30:00”.", stayingHere:"Staying here", addHotel:"＋ Add hotel", noHotels:"No hotels saved for this trip yet.", hotelMenuIntro:"Hotels saved here are automatically shown at the top of every applicable schedule day.", edit:"Edit", daysUnit:"DAY", hoursUnit:"HOUR", minutesUnit:"MIN", secondsUnit:"SEC", durationPickerHelp:"Use the four selectors or type the duration manually above."
   },
   "zh-TW": {
-    trips:"旅程", tripSpend:"旅程支出", newTrip:"＋ 新增旅程", addEntry:"＋ 新增項目", tripSettings:"⚙ 旅程設定", appSettings:"◐ App 設定", spending:"💰 支出", hotelMenu:"🏨 住宿", share:"↗ 分享",
+    trips:"旅程", tripSpend:"旅程支出", newTrip:"＋ 新增旅程", addEntry:"＋ 新增項目", tripSettings:"⚙ 旅程設定", appSettings:"◐ App 設定", spending:"💰 支出", schedule:"行程", share:"分享", hotelMenu:"住宿", mobileMenu:"選單",
     toolbarHint:"拖曳時間軸項目可重新排序；拖曳左側旅程可調整旅程順序。", type:"類型", titleLabel:"標題", entryColor:"項目顏色",
     useTypeDefault:"使用類型預設色", colorDefaultHelp:"除非選擇自訂顏色，否則會使用所選類型的預設色。", colorCustomHelp:"此項目已啟用自訂顏色。",
     location:"地點", propertyLocation:"住宿／地點", from:"出發地", to:"目的地", departureAirport:"出發機場", arrivalAirport:"抵達機場",
@@ -893,10 +925,10 @@ const I18N = {
     kind_flight:"航班", kind_train:"火車", kind_bus:"巴士", kind_car:"汽車／計程車", kind_ferry:"渡輪", kind_walk:"步行", kind_hotel:"住宿", kind_food:"餐飲", kind_activity:"活動", kind_sightseeing:"觀光", kind_meeting:"會議", kind_other:"其他",
     cat_flight:"航班", cat_transport:"交通", cat_hotel:"住宿", cat_food:"餐飲", cat_activity:"活動", cat_shopping:"購物", cat_meeting:"會議", cat_other:"其他",
     duration:"時長", endDate:"結束日期", nights:"住宿晚數", overnightHelp:"若當天結束請留空結束日期；跨夜的行程請設定結束日期（或填寫時長）。",
-    nightsCount:"{n} 晚", nightOf:"第 {n} 晚（共 {total} 晚）", invalidDuration:"請輸入如「1h 30m」或「90m」的時長格式。", stayingHere:"入住地點"
+    nightsCount:"{n} 晚", nightOf:"第 {n} 晚（共 {total} 晚）", invalidDuration:"請輸入如「1d 2h 30m 15s」、「90m」或「1:30:00」的時長格式。", stayingHere:"本日住宿", addHotel:"＋ 新增住宿", noHotels:"此旅程尚未設定住宿。", hotelMenuIntro:"在此設定的住宿會自動顯示於適用日期的行程最上方。", edit:"編輯", daysUnit:"天", hoursUnit:"小時", minutesUnit:"分", secondsUnit:"秒", durationPickerHelp:"可使用下方四個欄位選擇，或直接在上方手動輸入時長。"
   },
   ja: {
-    trips:"旅行", tripSpend:"旅行支出", newTrip:"＋ 新しい旅行", addEntry:"＋ 予定を追加", tripSettings:"⚙ 旅行設定", appSettings:"◐ アプリ設定", spending:"💰 支出", hotelMenu:"🏨 宿泊先", share:"↗ 共有",
+    trips:"旅行", tripSpend:"旅行支出", newTrip:"＋ 新しい旅行", addEntry:"＋ 予定を追加", tripSettings:"⚙ 旅行設定", appSettings:"◐ アプリ設定", spending:"💰 支出", schedule:"予定", share:"共有", hotelMenu:"ホテル", mobileMenu:"メニュー",
     toolbarHint:"タイムライン項目をドラッグして並べ替えます。左側の旅行もドラッグできます。", type:"種類", titleLabel:"タイトル", entryColor:"項目の色",
     useTypeDefault:"種類の既定色", colorDefaultHelp:"カスタム色を選ばない場合、種類の既定色を使用します。", colorCustomHelp:"この項目にはカスタム色が設定されています。",
     location:"場所", propertyLocation:"宿泊施設／場所", from:"出発地", to:"目的地", departureAirport:"出発空港", arrivalAirport:"到着空港",
@@ -918,7 +950,7 @@ const I18N = {
     kind_flight:"フライト", kind_train:"列車", kind_bus:"バス", kind_car:"車／タクシー", kind_ferry:"フェリー", kind_walk:"徒歩", kind_hotel:"ホテル", kind_food:"食事", kind_activity:"アクティビティ", kind_sightseeing:"観光", kind_meeting:"会議", kind_other:"その他",
     cat_flight:"フライト", cat_transport:"交通", cat_hotel:"宿泊", cat_food:"食事", cat_activity:"アクティビティ", cat_shopping:"買い物", cat_meeting:"会議", cat_other:"その他",
     duration:"所要時間", endDate:"終了日", nights:"宿泊数", overnightHelp:"同日中に終わる場合は終了日を空欄のままにしてください。日をまたぐ場合は終了日（または所要時間）を設定してください。",
-    nightsCount:"{n}泊", nightOf:"{n}泊目 / 全{total}泊", invalidDuration:"「1h 30m」や「90m」のような形式で入力してください。", stayingHere:"宿泊先"
+    nightsCount:"{n}泊", nightOf:"{n}泊目 / 全{total}泊", invalidDuration:"「1d 2h 30m 15s」「90m」「1:30:00」のような形式で入力してください。", stayingHere:"本日の宿泊先", addHotel:"＋ ホテルを追加", noHotels:"この旅行にはホテルがまだ登録されていません。", hotelMenuIntro:"ここで登録したホテルは、該当日の予定の先頭に自動表示されます。", edit:"編集", daysUnit:"日", hoursUnit:"時間", minutesUnit:"分", secondsUnit:"秒", durationPickerHelp:"下の4項目から選ぶか、上の欄に直接入力できます。"
   }
 };
 
@@ -1144,9 +1176,9 @@ function applyStaticTranslations() {
     element.textContent = t(element.dataset.i18n);
   });
   const textMap = {
-    "trips-label":"trips", "trip-spend-label":"tripSpend", "new-trip-btn":"newTrip", "add-entry-btn":"addEntry",
-    "trip-settings-btn":"tripSettings", "app-settings-btn":"appSettings", "toolbar-hint":"toolbarHint", "map-search-btn":"openMaps",
-    "spend-summary-btn":"spending", "spend-modal-title":"tripSpend", "hotel-btn":"hotelMenu",
+    "trips-label":"trips", "trip-spend-label":"tripSpend", "new-trip-btn":"newTrip", "add-entry-btn":"addEntry", "hotel-modal-title":"hotelMenu", "hotel-menu-intro":"hotelMenuIntro", "hotel-add-btn":"addHotel",
+    "trip-settings-btn":"tripSettings", "hotel-menu-btn":"hotelMenu", "app-settings-btn":"appSettings", "toolbar-hint":"toolbarHint", "map-search-btn":"openMaps",
+    "spend-summary-btn":"spending", "spend-modal-title":"tripSpend",
     "item-cancel":"cancel", "item-save":"save", "trip-cancel":"cancel", "app-cancel":"cancel", "app-save":"save",
     "currency-default-note":"currencyDefaultNote", "trip-color-help":"tripColorHelp", "appearance-help":"appearanceHelp"
   };
@@ -1158,6 +1190,10 @@ function applyStaticTranslations() {
   document.getElementById("t-name").placeholder = t("tripNamePlaceholder");
   document.getElementById("f-color-default").textContent = t("useTypeDefault");
   document.getElementById("item-delete-btn").textContent = t("delete");
+  const mobileNewTrip = document.getElementById("mobile-new-trip-btn");
+  if (mobileNewTrip) { mobileNewTrip.setAttribute("aria-label", t("newTrip")); mobileNewTrip.title = t("newTrip"); }
+  const hotelDone = document.getElementById("hotel-done");
+  if (hotelDone) hotelDone.textContent = t("cancel");
   applyCollabTranslations();
 }
 
@@ -1183,36 +1219,59 @@ function esc(value) {
   }[char]));
 }
 
+function timeToSeconds(time) {
+  if (!time) return 24 * 60 * 60 + 1;
+  const [hours = 0, minutes = 0, seconds = 0] = time.split(":").map(Number);
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
 function timeToMinutes(time) {
-  if (!time) return 24 * 60 + 1;
-  const [hours, minutes] = time.split(":").map(Number);
-  return hours * 60 + (minutes || 0);
+  return timeToSeconds(time) / 60;
 }
 
 function fmtTime(time) {
   if (!time) return "—";
-  const [hours, minutes] = time.split(":").map(Number);
-  const date = new Date(2000, 0, 1, hours, minutes);
-  return date.toLocaleTimeString(currentLocale(), { hour: "2-digit", minute: "2-digit", hour12: currentLanguage() === "en" });
+  const [hours = 0, minutes = 0, seconds = 0] = time.split(":").map(Number);
+  const date = new Date(2000, 0, 1, hours, minutes, seconds);
+  const options = { hour: "2-digit", minute: "2-digit", hour12: currentLanguage() === "en" };
+  if (seconds) options.second = "2-digit";
+  return date.toLocaleTimeString(currentLocale(), options);
+}
+
+function durationParts(totalSeconds) {
+  const safe = Math.max(0, Math.round(Number(totalSeconds) || 0));
+  return {
+    days: Math.floor(safe / 86400),
+    hours: Math.floor((safe % 86400) / 3600),
+    minutes: Math.floor((safe % 3600) / 60),
+    seconds: safe % 60,
+  };
+}
+
+function formatDurationSeconds(totalSeconds) {
+  if (!totalSeconds || totalSeconds <= 0) return null;
+  const { days, hours, minutes, seconds } = durationParts(totalSeconds);
+  const parts = [];
+  if (currentLanguage() === "zh-TW") {
+    if (days) parts.push(`${days} 天`); if (hours) parts.push(`${hours} 小時`); if (minutes) parts.push(`${minutes} 分`); if (seconds) parts.push(`${seconds} 秒`);
+  } else if (currentLanguage() === "ja") {
+    if (days) parts.push(`${days}日`); if (hours) parts.push(`${hours}時間`); if (minutes) parts.push(`${minutes}分`); if (seconds) parts.push(`${seconds}秒`);
+  } else {
+    if (days) parts.push(`${days}d`); if (hours) parts.push(`${hours}h`); if (minutes) parts.push(`${minutes}m`); if (seconds) parts.push(`${seconds}s`);
+  }
+  return parts.join(" ") || "0s";
 }
 
 function fmtDuration(start, end, days = null) {
   if (!start || !end) return null;
-  let minutes;
+  let seconds;
   if (days !== null) {
-    minutes = days * 24 * 60 + (timeToMinutes(end) - timeToMinutes(start));
-    if (minutes <= 0) return null;
+    seconds = days * 86400 + (timeToSeconds(end) - timeToSeconds(start));
   } else {
-    minutes = timeToMinutes(end) - timeToMinutes(start);
-    if (minutes < 0) minutes += 24 * 60;
+    seconds = timeToSeconds(end) - timeToSeconds(start);
+    if (seconds < 0) seconds += 86400;
   }
-  const hours = Math.floor(minutes / 60);
-  const remainder = minutes % 60;
-  if (currentLanguage() === "zh-TW") return `${hours ? `${hours} 小時` : ""}${hours && remainder ? " " : ""}${remainder ? `${remainder} 分` : ""}`;
-  if (currentLanguage() === "ja") return `${hours ? `${hours}時間` : ""}${remainder ? `${remainder}分` : ""}`;
-  if (hours && remainder) return `${hours}h ${remainder}m`;
-  if (hours) return `${hours}h`;
-  return `${remainder}m`;
+  return seconds > 0 ? formatDurationSeconds(seconds) : null;
 }
 
 function addDaysToDateStr(dateStr, days) {
@@ -1230,42 +1289,36 @@ function diffDaysDateStr(fromStr, toStr) {
   const msPerDay = 24 * 60 * 60 * 1000;
   return Math.round((new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1)) / msPerDay);
 }
-// Total elapsed minutes between (date,start) and (endDate||date,end), across midnight if needed.
-function elapsedMinutes(date, start, endDate, end) {
+function elapsedSeconds(date, start, endDate, end) {
   if (!start || !end) return null;
   const days = endDate && endDate !== date ? diffDaysDateStr(date, endDate) : 0;
-  const minutes = days * 24 * 60 + (timeToMinutes(end) - timeToMinutes(start));
-  return minutes > 0 ? minutes : null;
+  const seconds = days * 86400 + (timeToSeconds(end) - timeToSeconds(start));
+  return seconds > 0 ? seconds : null;
 }
-function parseDurationToMinutes(text) {
+function parseDurationToSeconds(text) {
   if (!text) return null;
   const trimmed = text.trim().toLowerCase();
   if (!trimmed) return null;
-  if (/^\d+$/.test(trimmed)) return Number(trimmed); // bare number = minutes
-  const colonMatch = trimmed.match(/^(\d+):([0-5]?\d)$/);
-  if (colonMatch) return Number(colonMatch[1]) * 60 + Number(colonMatch[2]);
+  if (/^\d+$/.test(trimmed)) return Number(trimmed) * 60; // backward compatible: bare number = minutes
+  const colonMatch = trimmed.match(/^(?:(\d+):)?([0-5]?\d):([0-5]?\d)$/);
+  if (colonMatch) return (Number(colonMatch[1] || 0) * 3600) + Number(colonMatch[2]) * 60 + Number(colonMatch[3]);
+  const shortColon = trimmed.match(/^(\d+):([0-5]?\d)$/);
+  if (shortColon) return Number(shortColon[1]) * 3600 + Number(shortColon[2]) * 60;
   const dayMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*d/);
   const hourMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*h/);
-  const minMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*m(?!s)/);
+  const minMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*m/);
   const secMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*s/);
   if (!dayMatch && !hourMatch && !minMatch && !secMatch) return null;
-  const days = dayMatch ? Number(dayMatch[1]) : 0;
-  const hours = hourMatch ? Number(hourMatch[1]) : 0;
-  const mins = minMatch ? Number(minMatch[1]) : 0;
-  const secs = secMatch ? Number(secMatch[1]) : 0;
-  const total = Math.round(days * 1440 + hours * 60 + mins + secs / 60);
+  const total = Math.round(
+    Number(dayMatch?.[1] || 0) * 86400 +
+    Number(hourMatch?.[1] || 0) * 3600 +
+    Number(minMatch?.[1] || 0) * 60 +
+    Number(secMatch?.[1] || 0)
+  );
   return total > 0 ? total : null;
 }
-function minutesToDurationText(minutes) {
-  if (minutes === null || minutes === undefined || minutes <= 0) return "";
-  const days = Math.floor(minutes / 1440);
-  const hours = Math.floor((minutes % 1440) / 60);
-  const remainder = Math.round(minutes % 60);
-  const parts = [];
-  if (days) parts.push(`${days}d`);
-  if (hours) parts.push(`${hours}h`);
-  if (remainder || !parts.length) parts.push(`${remainder}m`);
-  return parts.join(" ");
+function secondsToDurationText(seconds) {
+  return formatDurationSeconds(seconds) || "";
 }
 function fmtShortDate(dateStr) {
   if (!dateStr) return "";
@@ -1314,6 +1367,14 @@ function minutesToTime(minutes) {
   const hours = Math.floor(bounded / 60);
   const remainder = bounded % 60;
   return `${String(hours).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+}
+function secondsToTime(seconds) {
+  const bounded = ((Math.round(seconds) % 86400) + 86400) % 86400;
+  const hours = Math.floor(bounded / 3600);
+  const minutes = Math.floor((bounded % 3600) / 60);
+  const remainder = bounded % 60;
+  const base = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  return remainder ? `${base}:${String(remainder).padStart(2, "0")}` : base;
 }
 
 function safeHttpUrl(raw) {
@@ -1408,16 +1469,24 @@ function groupedItems() {
     for (let n = 1; n < nights; n++) {
       const continuedDate = addDaysToDateStr(item.date, n);
       if (!groups.has(continuedDate)) groups.set(continuedDate, []);
-      groups.get(continuedDate).push({ ...item, __hotelNight: n + 1, __hotelNights: nights });
+      groups.get(continuedDate).push({ ...item, date: continuedDate, __sourceDate: item.date, __hotelNight: n + 1, __hotelNights: nights });
     }
   });
   return Array.from(groups.entries())
     .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
     .map(([date, items]) => ({
       date,
-      // The hotel the user is staying at that night always leads the day,
-      // ahead of regular activities, so it's visible at a glance.
-      items: items.slice().sort((a, b) => (b.kind === "hotel" ? 1 : 0) - (a.kind === "hotel" ? 1 : 0)),
+      items: items.slice().sort((a, b) => {
+        const aHotel = a.kind === "hotel" ? 0 : 1;
+        const bHotel = b.kind === "hotel" ? 0 : 1;
+        if (aHotel !== bHotel) return aHotel - bHotel;
+        if (a.kind === "hotel" && b.kind === "hotel") {
+          const aNight = a.__hotelNight || 1;
+          const bNight = b.__hotelNight || 1;
+          if (aNight !== bNight) return aNight - bNight;
+        }
+        return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+      }),
     }));
 }
 
@@ -1449,6 +1518,150 @@ function tripSpendByCategory() {
   return byCategory;
 }
 
+const ICON_PATHS = {
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  delete: '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/>',
+  map: '<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
+  hotel: '<path d="M3 20V9l9-5 9 5v11"/><path d="M8 20v-6h8v6"/><path d="M9 10h.01"/><path d="M15 10h.01"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>',
+  wallet: '<path d="M20 7V5a2 2 0 0 0-2-2H5a3 3 0 0 0 0 6h15v10H5a3 3 0 0 1-3-3V6"/><path d="M16 13h2"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.55V20h-3v-.09a1.7 1.7 0 0 0-1.03-1.55 1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 7 14.7a1.7 1.7 0 0 0-1.55-1.03H5v-3h.09A1.7 1.7 0 0 0 6.64 9.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.12-2.12.06.06A1.7 1.7 0 0 0 10.3 6a1.7 1.7 0 0 0 1.03-1.55V4h3v.09A1.7 1.7 0 0 0 15.36 5.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.12 2.12-.06.06A1.7 1.7 0 0 0 19 9.3a1.7 1.7 0 0 0 1.55 1.03H21v3h-.09A1.7 1.7 0 0 0 19.4 15Z"/>',
+  share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/>',
+  app: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z"/>',
+};
+function iconSvg(name, extraClass = "") {
+  return `<svg class="ui-icon ${extraClass}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ""}</svg>`;
+}
+
+const MOBILE_VIEWS = ["schedule", "spending", "tripSettings", "hotel", "share", "appSettings"];
+const MOBILE_VIEW_META = {
+  schedule: { label: "schedule", icon: "calendar" },
+  spending: { label: "spending", icon: "wallet" },
+  tripSettings: { label: "tripSettings", icon: "settings" },
+  hotel: { label: "hotelMenu", icon: "hotel" },
+  share: { label: "share", icon: "share" },
+  appSettings: { label: "appSettings", icon: "app" },
+};
+function isMobileLayout() { return window.matchMedia("(max-width: 720px)").matches; }
+function mobileNavLabel(key) {
+  return t(key).replace(/^[^\p{L}\p{N}]+/u, "").trim();
+}
+function compactSpendText() {
+  const entries = Object.entries(tripSpend());
+  if (!entries.length) return t("noCosts");
+  return entries.slice(0, 2).map(([currency, amount]) => money(amount, currency)).join(" · ");
+}
+function mobileNavMarkup(activeView = "schedule") {
+  const active = MOBILE_VIEW_META[activeView] || MOBILE_VIEW_META.schedule;
+  const options = MOBILE_VIEWS.filter(view => view !== activeView && !(activeView === "schedule" && view === "schedule"));
+  return `<button class="mobile-nav-toggle" type="button" aria-expanded="false">
+      <span class="mobile-nav-current">${iconSvg(active.icon)}<span>${esc(mobileNavLabel(active.label))}</span></span>
+      <span class="mobile-nav-spend">${esc(compactSpendText())}</span>
+      <span class="mobile-nav-chevron" aria-hidden="true">⌄</span>
+    </button>
+    <div class="mobile-nav-menu" hidden>${options.map(view => {
+      const meta = MOBILE_VIEW_META[view];
+      return `<button class="mobile-nav-option" type="button" data-mobile-view="${view}">${iconSvg(meta.icon)}<span>${esc(mobileNavLabel(meta.label))}</span></button>`;
+    }).join("")}</div>`;
+}
+function bindMobileNav(root, activeView) {
+  if (!root) return;
+  root.dataset.activeView = activeView;
+  root.innerHTML = mobileNavMarkup(activeView);
+  const toggle = root.querySelector(".mobile-nav-toggle");
+  const menu = root.querySelector(".mobile-nav-menu");
+  toggle?.addEventListener("click", () => {
+    const open = !root.classList.contains("is-open");
+    root.classList.toggle("is-open", open);
+    toggle.setAttribute("aria-expanded", String(open));
+    menu.hidden = !open;
+  });
+  root.querySelectorAll("[data-mobile-view]").forEach(button => button.addEventListener("click", () => navigateMobileView(button.dataset.mobileView)));
+}
+function renderMobileScheduleNav() {
+  bindMobileNav(document.getElementById("mobile-nav-shell"), "schedule");
+}
+function attachMobileNavToOverlay(overlayId, activeView) {
+  if (!isMobileLayout()) return;
+  const modal = document.querySelector(`#${overlayId} .modal`);
+  if (!modal) return;
+  let root = modal.querySelector(":scope > .mobile-nav-shell.modal-mobile-nav");
+  if (!root) {
+    root = document.createElement("div");
+    root.className = "mobile-nav-shell modal-mobile-nav";
+    modal.prepend(root);
+  }
+  bindMobileNav(root, activeView);
+}
+function closeMobileSectionOverlays() {
+  ["spend-overlay", "trip-overlay", "app-overlay", "share-overlay", "hotel-overlay", "item-overlay"].forEach(id => document.getElementById(id)?.classList.remove("show"));
+  document.getElementById("f-trip")?.removeAttribute("disabled");
+  editingItemId = null;
+  editingTripId = null;
+}
+function navigateMobileView(view) {
+  closeMobileSectionOverlays();
+  if (view === "schedule") { renderMobileScheduleNav(); return; }
+  if (view === "spending") { openSpendSummary(); attachMobileNavToOverlay("spend-overlay", view); return; }
+  if (view === "tripSettings") {
+    const trip = activeTrip();
+    if (trip && canEditTrip(trip)) { openTripModal(trip.id); attachMobileNavToOverlay("trip-overlay", view); }
+    return;
+  }
+  if (view === "hotel") { openHotelMenu(); attachMobileNavToOverlay("hotel-overlay", view); return; }
+  if (view === "share") { openShareModal(); attachMobileNavToOverlay("share-overlay", view); return; }
+  if (view === "appSettings") { openAppSettings(); attachMobileNavToOverlay("app-overlay", view); }
+}
+
+function activeTripHotels() {
+  const trip = activeTrip();
+  if (!trip) return [];
+  return state.items.filter(item => item.tripId === trip.id && item.kind === "hotel").slice().sort((a, b) => (a.date || "").localeCompare(b.date || "") || timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+}
+function renderHotelMenu() {
+  const list = document.getElementById("hotel-menu-list");
+  if (!list) return;
+  const hotels = activeTripHotels();
+  document.getElementById("hotel-add-btn").disabled = !canEditTrip(activeTrip());
+  if (!hotels.length) {
+    list.innerHTML = `<div class="hotel-empty">${iconSvg("hotel")}<span>${esc(t("noHotels"))}</span></div>`;
+    return;
+  }
+  list.innerHTML = hotels.map(item => {
+    const nights = Math.max(1, Number(item.nights) || 1);
+    const range = `${fmtShortDate(item.date)} → ${fmtShortDate(item.endDate || addDaysToDateStr(item.date, nights))}`;
+    const price = money(item.price, effectiveCurrency(item));
+    return `<article class="hotel-menu-card" data-hotel-id="${item.id}">
+      <div class="hotel-menu-card-icon">${iconSvg("hotel")}</div>
+      <div class="hotel-menu-card-main"><strong>${esc(item.title)}</strong><span>${esc(item.location || "")}</span><small>${esc(range)} · ${esc(t("nightsCount", { n: nights }))}</small></div>
+      <div class="hotel-menu-card-side">${price ? `<span class="event-price">${price}</span>` : ""}<div class="hotel-menu-actions">
+        <button class="icon-btn" type="button" data-hotel-edit="${item.id}" title="${esc(t("edit"))}" aria-label="${esc(t("edit"))}">${iconSvg("edit")}</button>
+        <button class="icon-btn danger" type="button" data-hotel-delete="${item.id}" title="${esc(t("deleteAction"))}" aria-label="${esc(t("deleteAction"))}">${iconSvg("delete")}</button>
+      </div></div>
+    </article>`;
+  }).join("");
+  list.querySelectorAll("[data-hotel-edit]").forEach(button => button.addEventListener("click", () => openHotelEditor(button.dataset.hotelEdit)));
+  list.querySelectorAll("[data-hotel-delete]").forEach(button => button.addEventListener("click", () => {
+    const item = state.items.find(candidate => candidate.id === button.dataset.hotelDelete);
+    if (item) openConfirm("item", item.id, item.title);
+  }));
+}
+function openHotelMenu() {
+  renderHotelMenu();
+  document.getElementById("hotel-modal-title").textContent = t("hotelMenu");
+  document.getElementById("hotel-menu-intro").textContent = t("hotelMenuIntro");
+  document.getElementById("hotel-add-btn").textContent = t("addHotel");
+  document.getElementById("hotel-done").textContent = t("cancel");
+  document.getElementById("hotel-overlay").classList.add("show");
+}
+function closeHotelMenu() { document.getElementById("hotel-overlay").classList.remove("show"); }
+function openHotelEditor(itemId = null) {
+  openItemModal(itemId);
+  document.getElementById("item-overlay").dataset.hotelEditor = "true";
+  if (!itemId) document.querySelector('.kind-opt[data-kind="hotel"]')?.click();
+  attachMobileNavToOverlay("item-overlay", "hotel");
+}
+
 // ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
@@ -1458,6 +1671,8 @@ function renderAll() {
   renderSidebar();
   renderToolbarSelect();
   renderTimeline();
+  renderMobileScheduleNav();
+  renderHotelMenu();
   const trip = activeTrip();
   const editable = canEditTrip(trip);
   document.getElementById("add-entry-btn").disabled = !trip || !editable;
@@ -1546,29 +1761,6 @@ function closeSpendSummary() {
   document.getElementById("spend-overlay").classList.remove("show");
 }
 document.getElementById("spend-summary-btn").addEventListener("click", openSpendSummary);
-document.getElementById("hotel-btn").addEventListener("click", () => {
-  const trip = activeTrip();
-  if (!canEditTrip(trip)) return;
-  const existingHotel = state.items.find(item => item.tripId === trip?.id && item.kind === "hotel");
-  openItemModal(existingHotel ? existingHotel.id : null, "hotel");
-});
-
-// ---------------------------------------------------------------------------
-// Mobile trip menu bar: a collapsible list (styled like the spend-panel
-// chevron bar) that stands in for the individual settings buttons, which are
-// hidden on narrow screens to keep the toolbar slim. Each row just delegates
-// to the real button's own click handler, so Spending/Trip settings/Share/
-// Hotel/App settings behave exactly as they already do (their own modal is
-// the "sub-page", and closing it returns to the schedule).
-document.getElementById("trip-menu-toggle").addEventListener("click", () => {
-  document.getElementById("trip-menu-bar").classList.toggle("open");
-});
-document.querySelectorAll(".trip-menu-item").forEach(button => {
-  button.addEventListener("click", () => {
-    document.getElementById("trip-menu-bar").classList.remove("open");
-    document.getElementById(button.dataset.openBtn)?.click();
-  });
-});
 document.getElementById("spend-modal-close").addEventListener("click", closeSpendSummary);
 document.getElementById("spend-overlay").addEventListener("click", event => {
   if (event.target.id === "spend-overlay") closeSpendSummary();
@@ -1661,10 +1853,11 @@ function eventRowHtml(item, config, isLast) {
           <span class="spine-dot" style="background:${displayColor}; opacity:0.5;"></span>
           ${isLast ? "" : `<span class="spine-line"></span>`}
         </div>
-        <div class="event-card event-continuation event-stay" style="border-left:3px dashed ${rgba(displayColor, 0.6)}; background:${rgba(displayColor, 0.08)};">
+        <div class="event-card event-continuation hotel-card hotel-continuation-card" style="--hotel-color:${displayColor}; border-left:3px dashed ${rgba(displayColor, 0.78)};">
           <div class="event-top">
             <div style="min-width:0;">
-              <span class="kind-pill stay-pill" style="background:${rgba(displayColor, 0.2)}; color:${displayColor};">🏨 ${esc(t("stayingHere"))}</span>
+              <span class="kind-pill" style="background:${rgba(displayColor, 0.15)}; color:${displayColor};">${config.icon} ${esc(kindLabel(item.kind).toUpperCase())}</span>
+              <span class="staying-badge">${esc(t("stayingHere"))}</span>
               <div class="event-title">${esc(item.title)}</div>
               <div class="event-notes">${esc(t("nightOf", { n: item.__hotelNight, total: item.__hotelNights }))}</div>
             </div>
@@ -1688,10 +1881,11 @@ function eventRowHtml(item, config, isLast) {
         <span class="spine-dot" style="background:${displayColor};"></span>
         ${isLast ? "" : `<span class="spine-line"></span>`}
       </div>
-      <div class="event-card${item.kind === "hotel" ? " event-stay" : ""}" style="border-left:3px solid ${displayColor};${item.kind === "hotel" ? ` background:${rgba(displayColor, 0.08)};` : ""}">
+      <div class="event-card ${item.kind === "hotel" ? "hotel-card" : ""}" style="--hotel-color:${displayColor}; border-left:3px solid ${displayColor};">
         <div class="event-top">
           <div style="min-width:0;">
-            ${item.kind === "hotel" ? `<span class="kind-pill stay-pill" style="background:${rgba(displayColor, 0.2)}; color:${displayColor};">🏨 ${esc(t("stayingHere"))}</span>` : `<span class="kind-pill" style="background:${rgba(displayColor, 0.15)}; color:${displayColor};">${config.icon} ${esc(kindLabel(item.kind).toUpperCase())}</span>`}
+            <span class="kind-pill" style="background:${rgba(displayColor, 0.15)}; color:${displayColor};">${config.icon} ${esc(kindLabel(item.kind).toUpperCase())}</span>
+            ${item.kind === "hotel" ? `<span class="staying-badge">${esc(t("stayingHere"))}</span>` : ""}
             ${untilLabel ? `<span class="event-until">${untilLabel}</span>` : ""}
             <div class="event-title">${esc(item.title)}</div>
             ${locationHtml(item)}
@@ -1700,8 +1894,8 @@ function eventRowHtml(item, config, isLast) {
           <div class="event-side">
             ${price ? `<span class="event-price">${price}</span>` : ""}
             ${canEditTrip(tripById(item.tripId)) ? `<div class="event-actions">
-              <button class="icon-btn" data-edit="${item.id}">${ICON_EDIT}</button>
-              <button class="icon-btn danger" data-del="${item.id}">${ICON_DELETE}</button>
+              <button class="icon-btn" data-edit="${item.id}" title="${esc(t("edit"))}" aria-label="${esc(t("edit"))}">${iconSvg("edit")}</button>
+              <button class="icon-btn danger" data-del="${item.id}" title="${esc(t("deleteAction"))}" aria-label="${esc(t("deleteAction"))}">${iconSvg("delete")}</button>
             </div>` : ""}
           </div>
         </div>
@@ -1729,10 +1923,10 @@ function transportRowHtml(item, config, isLast) {
           <span class="transport-title" title="${esc(item.location || item.title)}">${esc(item.title)}</span>
           ${duration ? `<span class="transport-meta">· ${duration}</span>` : ""}
           ${price ? `<span class="transport-price">· ${price}</span>` : ""}
-          ${mapUrl ? `<a href="${esc(mapUrl)}" target="_blank" rel="noopener noreferrer" class="icon-btn" style="width:20px;height:20px;text-decoration:none;" title="${esc(item.location || "Open map")}">📍</a>` : ""}
+          ${mapUrl ? `<a href="${esc(mapUrl)}" target="_blank" rel="noopener noreferrer" class="icon-btn" title="${esc(item.location || "Open map")}" aria-label="${esc(item.location || "Open map")}">${iconSvg("map")}</a>` : ""}
           ${canEditTrip(tripById(item.tripId)) ? `<span class="transport-actions">
-            <button class="icon-btn" data-edit="${item.id}">${ICON_EDIT}</button>
-            <button class="icon-btn danger" data-del="${item.id}">${ICON_DELETE}</button>
+            <button class="icon-btn" data-edit="${item.id}" title="${esc(t("edit"))}" aria-label="${esc(t("edit"))}">${iconSvg("edit")}</button>
+            <button class="icon-btn danger" data-del="${item.id}" title="${esc(t("deleteAction"))}" aria-label="${esc(t("deleteAction"))}">${iconSvg("delete")}</button>
           </span>` : ""}
         </div>
         <div class="transport-line" style="--dash-color:${rgba(displayColor, 0.62)};"></div>
@@ -1795,7 +1989,6 @@ function updateKindSpecificFields(kind, preserveCategory = true) {
   document.getElementById("single-place-fields").style.display = isTransport ? "none" : "block";
   document.getElementById("route-place-fields").style.display = isTransport ? "grid" : "none";
   document.getElementById("hotel-nights-row").style.display = kind === "hotel" ? "grid" : "none";
-  document.getElementById("duration-field-wrap").style.display = kind === "hotel" ? "none" : "block";
   document.getElementById("f-end-date").disabled = kind === "hotel";
   if (kind === "hotel") {
     const nightsInput = document.getElementById("f-nights");
@@ -1908,12 +2101,13 @@ function addCustomCategory() {
   persist();
 }
 
-function openItemModal(itemId, defaultKind = "activity") {
+function openItemModal(itemId) {
+  document.getElementById("item-overlay").dataset.hotelEditor = "false";
   editingItemId = itemId || null;
   const item = itemId ? state.items.find(candidate => candidate.id === itemId) : null;
   const targetTrip = item ? tripById(item.tripId) : activeTrip();
   if (!canEditTrip(targetTrip)) { editingItemId = null; return; }
-  const kind = item?.kind || defaultKind;
+  const kind = item?.kind || "activity";
 
   document.getElementById("item-modal-title").textContent = item ? t("editEntryTitle") : t("addEntryTitle");
   document.getElementById("item-delete-btn").style.display = item ? "flex" : "none";
@@ -1941,9 +2135,9 @@ function openItemModal(itemId, defaultKind = "activity") {
   document.getElementById("f-end").value = item?.endTime || "";
   document.getElementById("f-end-date").value = item?.endDate || "";
   document.getElementById("f-nights").value = item?.kind === "hotel" ? (item?.nights || 1) : "";
-  const openMinutes = elapsedMinutes(item?.date || TODAY, item?.startTime, item?.endDate, item?.endTime);
-  document.getElementById("f-duration").value = minutesToDurationText(openMinutes);
-  spinnersFromMinutes(openMinutes);
+  const initialDurationSeconds = elapsedSeconds(item?.date || TODAY, item?.startTime, item?.endDate, item?.endTime);
+  document.getElementById("f-duration").value = secondsToDurationText(initialDurationSeconds);
+  setDurationPickerFromSeconds(initialDurationSeconds || 0);
   document.getElementById("f-price").value = item?.price != null ? item.price : "";
   document.getElementById("f-notes").value = item?.notes || "";
 
@@ -1959,6 +2153,7 @@ function openItemModal(itemId, defaultKind = "activity") {
 function closeItemModal() {
   document.getElementById("item-overlay").classList.remove("show");
   document.getElementById("f-trip").disabled = false;
+  document.getElementById("item-overlay").dataset.hotelEditor = "false";
   editingItemId = null;
 }
 
@@ -2019,27 +2214,33 @@ document.getElementById("map-search-btn").addEventListener("click", () => {
 // Duration / end-date / nights field sync in the item modal.
 // ---------------------------------------------------------------------------
 let syncingDurationFields = false;
-function setDurationSpinners(days, hours, minutes, seconds) {
-  document.getElementById("f-dur-d").value = days || "";
-  document.getElementById("f-dur-h").value = hours || "";
-  document.getElementById("f-dur-m").value = minutes || "";
-  document.getElementById("f-dur-s").value = seconds || "";
+const DURATION_PICKER_IDS = ["f-duration-days", "f-duration-hours", "f-duration-minutes", "f-duration-seconds"];
+function durationPickerSeconds() {
+  const days = Math.max(0, Number(document.getElementById("f-duration-days").value) || 0);
+  const hours = Math.max(0, Math.min(23, Number(document.getElementById("f-duration-hours").value) || 0));
+  const minutes = Math.max(0, Math.min(59, Number(document.getElementById("f-duration-minutes").value) || 0));
+  const seconds = Math.max(0, Math.min(59, Number(document.getElementById("f-duration-seconds").value) || 0));
+  return days * 86400 + hours * 3600 + minutes * 60 + seconds;
 }
-function spinnersFromMinutes(totalMinutes) {
-  if (totalMinutes === null || totalMinutes <= 0) { setDurationSpinners(0, 0, 0, 0); return; }
-  const days = Math.floor(totalMinutes / 1440);
-  const hours = Math.floor((totalMinutes % 1440) / 60);
-  const mins = Math.floor(totalMinutes % 60);
-  setDurationSpinners(days, hours, mins, 0);
+function setDurationPickerFromSeconds(totalSeconds) {
+  const parts = durationParts(totalSeconds);
+  document.getElementById("f-duration-days").value = parts.days;
+  document.getElementById("f-duration-hours").value = parts.hours;
+  document.getElementById("f-duration-minutes").value = parts.minutes;
+  document.getElementById("f-duration-seconds").value = parts.seconds;
 }
-function applyEndFromMinutes(minutes) {
+function applyDurationSeconds(totalSeconds) {
   const date = document.getElementById("f-date").value || TODAY;
   const start = document.getElementById("f-start").value || "00:00";
   document.getElementById("f-start").value = start;
-  const endTotal = timeToMinutes(start) + minutes;
-  const daySpan = Math.floor(endTotal / (24 * 60));
-  document.getElementById("f-end").value = minutesToTime(endTotal % (24 * 60));
-  document.getElementById("f-end-date").value = daySpan > 0 ? addDaysToDateStr(date, daySpan) : "";
+  const endTotal = timeToSeconds(start) + totalSeconds;
+  const daySpan = Math.floor(endTotal / 86400);
+  syncingDurationFields = true;
+  document.getElementById("f-end").value = secondsToTime(endTotal);
+  if (selectedKind() !== "hotel") document.getElementById("f-end-date").value = daySpan > 0 ? addDaysToDateStr(date, daySpan) : "";
+  document.getElementById("f-duration").value = secondsToDurationText(totalSeconds);
+  setDurationPickerFromSeconds(totalSeconds);
+  syncingDurationFields = false;
 }
 function refreshDurationDisplay() {
   if (syncingDurationFields) return;
@@ -2048,37 +2249,23 @@ function refreshDurationDisplay() {
   const start = document.getElementById("f-start").value;
   const endDate = document.getElementById("f-end-date").value;
   const end = document.getElementById("f-end").value;
-  const minutes = elapsedMinutes(date, start, endDate, end);
-  document.getElementById("f-duration").value = minutesToDurationText(minutes);
-  spinnersFromMinutes(minutes);
+  const totalSeconds = elapsedSeconds(date, start, endDate, end);
+  document.getElementById("f-duration").value = secondsToDurationText(totalSeconds);
+  setDurationPickerFromSeconds(totalSeconds || 0);
   syncingDurationFields = false;
 }
 document.getElementById("f-duration").addEventListener("change", () => {
   if (syncingDurationFields) return;
   const raw = document.getElementById("f-duration").value.trim();
-  if (!raw) return;
-  const minutes = parseDurationToMinutes(raw);
-  if (minutes === null) { alert(t("invalidDuration")); return; }
-  syncingDurationFields = true;
-  applyEndFromMinutes(minutes);
-  spinnersFromMinutes(minutes);
-  syncingDurationFields = false;
+  if (!raw) { setDurationPickerFromSeconds(0); return; }
+  const seconds = parseDurationToSeconds(raw);
+  if (seconds === null) { alert(t("invalidDuration")); return; }
+  applyDurationSeconds(seconds);
 });
-["f-dur-d", "f-dur-h", "f-dur-m", "f-dur-s"].forEach(id => {
-  document.getElementById(id).addEventListener("input", () => {
-    if (syncingDurationFields) return;
-    const days = Number(document.getElementById("f-dur-d").value) || 0;
-    const hours = Number(document.getElementById("f-dur-h").value) || 0;
-    const mins = Number(document.getElementById("f-dur-m").value) || 0;
-    const secs = Number(document.getElementById("f-dur-s").value) || 0;
-    const totalMinutes = days * 1440 + hours * 60 + mins + Math.round(secs / 60);
-    if (totalMinutes <= 0) return;
-    syncingDurationFields = true;
-    applyEndFromMinutes(totalMinutes);
-    document.getElementById("f-duration").value = minutesToDurationText(totalMinutes);
-    syncingDurationFields = false;
-  });
-});
+DURATION_PICKER_IDS.forEach(id => document.getElementById(id).addEventListener("input", () => {
+  if (syncingDurationFields) return;
+  applyDurationSeconds(durationPickerSeconds());
+}));
 ["f-date", "f-start", "f-end", "f-end-date"].forEach(id => {
   document.getElementById(id).addEventListener("change", refreshDurationDisplay);
 });
@@ -2242,7 +2429,10 @@ function closeTripModal() {
 }
 
 document.getElementById("new-trip-btn").addEventListener("click", () => openTripModal(null));
-document.getElementById("mobile-new-trip-btn").addEventListener("click", () => openTripModal(null));
+document.getElementById("mobile-new-trip-btn").addEventListener("click", () => {
+  openTripModal(null);
+  attachMobileNavToOverlay("trip-overlay", "tripSettings");
+});
 document.getElementById("trip-settings-btn").addEventListener("click", () => {
   const trip = activeTrip();
   if (trip && canEditTrip(trip)) openTripModal(trip.id);
@@ -2252,6 +2442,11 @@ document.getElementById("trip-cancel").addEventListener("click", closeTripModal)
 document.getElementById("trip-overlay").addEventListener("click", event => {
   if (event.target.id === "trip-overlay") closeTripModal();
 });
+document.getElementById("hotel-close").addEventListener("click", closeHotelMenu);
+document.getElementById("hotel-done").addEventListener("click", closeHotelMenu);
+document.getElementById("hotel-overlay").addEventListener("click", event => { if (event.target.id === "hotel-overlay") closeHotelMenu(); });
+document.getElementById("hotel-add-btn").addEventListener("click", () => openHotelEditor(null));
+document.getElementById("hotel-menu-btn").addEventListener("click", openHotelMenu);
 
 document.getElementById("trip-save").addEventListener("click", () => {
   if (editingTripId && !canEditTrip(tripById(editingTripId))) return;
