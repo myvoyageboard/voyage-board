@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Voyage Board update: undo/redo, global account, per-trip share, mobile menu fix -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -478,6 +479,14 @@
   .hotel-menu-actions { display: flex; gap: 5px; }
   .hotel-add-btn { width: 100%; min-height: 44px; margin-top: 12px; }
 
+  .toolbar-primary-actions { display: flex; align-items: center; gap: 7px; }
+  .history-btn { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text-lo); padding: 8px 10px; }
+  .history-btn:not(:disabled):hover { color: var(--text-hi); border-color: var(--text-lo); }
+  .history-btn:disabled { opacity: .34; cursor: not-allowed; }
+  .history-glyph { font-size: 19px; line-height: 1; }
+  .history-label { font-size: 11px; }
+  .account-required-actions { display: flex; justify-content: flex-start; margin-top: 10px; }
+
   @media (max-width: 720px) {
     #toolbar { padding: 10px 12px 8px; }
     .mobile-trip-row { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 8px; align-items: stretch; }
@@ -489,15 +498,18 @@
     .mobile-nav-current { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 700; }
     .mobile-nav-current span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .mobile-nav-spend { max-width: 42vw; color: var(--amber); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .mobile-nav-chevron { font-size: 18px; line-height: 1; color: var(--text-lo); transition: transform .18s ease; }
-    .mobile-nav-shell.is-open .mobile-nav-chevron { transform: rotate(180deg); }
+    .mobile-nav-chevron { min-width: 18px; font-size: 18px; line-height: 1; color: var(--text-lo); text-align: center; }
     .mobile-nav-menu { display: grid; grid-template-columns: 1fr; border-top: 1px solid var(--border); padding: 4px; }
     .mobile-nav-menu[hidden] { display: none; }
     .mobile-nav-option { min-height: 42px; width: 100%; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 8px; padding: 8px 10px; color: var(--text-lo); background: transparent; font: 11px var(--font-ui); text-align: left; cursor: pointer; }
     .mobile-nav-option:hover, .mobile-nav-option:active { color: var(--text-hi); background: var(--hover); }
 
     .toolbar-row { display: block; margin-top: 8px; }
+    .toolbar-primary-actions { display: grid; grid-template-columns: minmax(0, 1fr) 44px 44px; width: 100%; gap: 7px; }
     #add-entry-btn { width: 100%; min-height: 44px; }
+    .history-btn { width: 44px; min-width: 44px; min-height: 44px; padding: 0; border-radius: 10px; }
+    .history-label { display: none; }
+    .history-glyph { font-size: 22px; }
     .toolbar-row .toolbar-settings, .toolbar-hint, .toolbar-row .sync-status { display: none !important; }
     .duration-picker { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
     .duration-unit input { padding-left: 3px; padding-right: 3px; }
@@ -539,12 +551,17 @@
       </div>
       <div id="mobile-nav-shell" class="mobile-nav-shell" data-active-view="schedule"></div>
       <div class="toolbar-row">
-        <button id="add-entry-btn">+ Add entry</button>
+        <div class="toolbar-primary-actions">
+          <button id="add-entry-btn">+ Add entry</button>
+          <button id="undo-btn" class="btn btn-ghost history-btn" type="button" disabled aria-label="Undo" title="Undo (Ctrl/Cmd+Z)"><span class="history-glyph" aria-hidden="true">↶</span><span class="history-label">Undo</span></button>
+          <button id="redo-btn" class="btn btn-ghost history-btn" type="button" disabled aria-label="Redo" title="Redo (Ctrl/Cmd+Shift+Z or Ctrl+Y)"><span class="history-glyph" aria-hidden="true">↷</span><span class="history-label">Redo</span></button>
+        </div>
         <button id="trip-settings-btn" class="btn btn-ghost toolbar-settings">⚙ Trip settings</button>
         <button id="spend-summary-btn" class="btn btn-ghost toolbar-settings mobile-only-btn">💰 Spending</button>
         <button id="hotel-menu-btn" class="btn btn-ghost toolbar-settings">🛏 Hotels</button>
         <button id="app-settings-btn" class="btn btn-ghost toolbar-settings">◐ App settings</button>
         <button id="share-trip-btn" class="btn btn-ghost toolbar-settings">↗ Share</button>
+        <button id="account-btn" class="btn btn-ghost toolbar-settings" type="button">◎ Sign in</button>
         <span id="sync-status" class="sync-status" data-state="local">Local only</span>
         <span class="toolbar-hint" id="toolbar-hint">Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.</span>
       </div>
@@ -749,14 +766,14 @@
 </div>
 
 
-<div class="overlay" id="share-overlay">
-  <div class="modal" style="max-width:620px;">
-    <div class="modal-head"><h3 id="share-modal-title">Share & collaborate</h3><button class="modal-close" id="share-close">✕</button></div>
+<div class="overlay" id="account-overlay">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-head"><h3 id="account-modal-title">Sign in</h3><button class="modal-close" id="account-close">✕</button></div>
     <div class="modal-body">
       <div id="collab-config-warning" class="muted-box" style="display:none;"></div>
 
       <div id="collab-auth-panel" class="collab-panel" style="display:none;">
-        <div class="muted-box" id="collab-auth-help">Sign in by email before publishing or opening a shared trip.</div>
+        <div class="muted-box" id="collab-auth-help">Sign in once to access shared trips across the app.</div>
         <label class="field-label" id="collab-email-label">Email</label>
         <div class="collab-link-row">
           <input class="field-input" id="collab-login-email" type="email" autocomplete="email" placeholder="you@example.com">
@@ -766,20 +783,40 @@
         <div id="collab-session-note" class="field-help">Normal browsing keeps you signed in on this device. Private browsing forgets the session when its private tabs are closed.</div>
       </div>
 
-      <div id="collab-signed-panel" class="collab-panel" style="display:none;">
+      <div id="collab-account-signed-panel" class="collab-panel" style="display:none;">
         <div class="collab-user-row">
           <span id="collab-user-email"></span>
           <button class="btn btn-ghost" id="collab-logout-btn">Sign out</button>
         </div>
+        <div class="field-help" id="account-global-help">This sign-in is shared across every trip. Sharing permissions still remain separate for each trip.</div>
+      </div>
+    </div>
+    <div class="modal-foot" style="justify-content:flex-end;">
+      <button class="btn btn-ghost" id="account-done">Done</button>
+    </div>
+  </div>
+</div>
 
-        <div id="collab-unshared-panel" class="collab-section">
+<div class="overlay" id="share-overlay">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-head"><h3 id="share-modal-title">Share & collaborate</h3><button class="modal-close" id="share-close">✕</button></div>
+    <div class="modal-body">
+      <div id="share-config-warning" class="muted-box" style="display:none;"></div>
+
+      <div id="share-auth-required" class="collab-panel" style="display:none;">
+        <div class="muted-box" id="share-auth-help">Sign in first. Your account is global, while sharing remains configured separately for this trip.</div>
+        <div class="account-required-actions"><button class="btn btn-primary" id="share-open-account-btn" type="button">Sign in</button></div>
+      </div>
+
+      <div id="collab-signed-panel" class="collab-panel" style="display:none;">
+        <div id="collab-unshared-panel" class="collab-section" style="border-top:0; padding-top:0;">
           <div class="collab-section-title" id="publish-title">Publish this trip</div>
           <div class="field-help" id="publish-help">The trip is currently stored only in this browser. Publishing creates a cloud copy and a stable shared URL.</div>
           <button class="btn btn-primary" id="publish-trip-btn" style="margin-top:10px;">Create shared trip</button>
         </div>
 
         <div id="collab-shared-panel" style="display:none;">
-          <div class="collab-section">
+          <div class="collab-section" style="border-top:0; padding-top:0;">
             <div class="collab-user-row" style="margin-bottom:10px;">
               <span id="access-label">Your access</span>
               <span id="collab-role" class="role-badge">Owner</span>
@@ -878,7 +915,7 @@ const OLD_TRIP_COLOR_MAP = {
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "TWD", "CNY", "HKD", "KRW", "SGD", "THB", "AUD", "CAD", "CHF", "NZD", "MYR", "IDR", "PHP", "VND", "INR", "AED"];
 const I18N = {
   en: {
-    trips:"TRIPS", tripSpend:"TRIP SPEND", newTrip:"+ New trip", addEntry:"+ Add entry", tripSettings:"⚙ Trip settings", appSettings:"◐ App settings", spending:"💰 Spending", schedule:"Schedule", share:"Share", hotelMenu:"Hotels", mobileMenu:"Menu",
+    trips:"TRIPS", tripSpend:"TRIP SPEND", newTrip:"+ New trip", addEntry:"+ Add entry", tripSettings:"⚙ Trip settings", appSettings:"◐ App settings", spending:"💰 Spending", schedule:"Schedule", share:"Share", signIn:"Sign in", account:"Account", undo:"Undo", redo:"Redo", hotelMenu:"Hotels", mobileMenu:"Menu",
     toolbarHint:"Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.", type:"Type", titleLabel:"Title", entryColor:"Entry color",
     useTypeDefault:"Use type default", colorDefaultHelp:"Uses the selected type's default color unless you choose a custom color.", colorCustomHelp:"Custom color override is active for this entry.",
     location:"Location", propertyLocation:"Property / location", from:"From", to:"To", departureAirport:"Departure airport", arrivalAirport:"Arrival airport",
@@ -903,7 +940,7 @@ const I18N = {
     nightsCount:"{n} nights", nightOf:"Night {n} of {total}", invalidDuration:"Enter a duration like “1d 2h 30m 15s”, “90m”, or “1:30:00”.", stayingHere:"Staying here", addHotel:"＋ Add hotel", noHotels:"No hotels saved for this trip yet.", hotelMenuIntro:"Hotels saved here are automatically shown at the top of every applicable schedule day.", edit:"Edit", daysUnit:"DAY", hoursUnit:"HOUR", minutesUnit:"MIN", secondsUnit:"SEC", durationPickerHelp:"Use the four selectors or type the duration manually above."
   },
   "zh-TW": {
-    trips:"旅程", tripSpend:"旅程支出", newTrip:"＋ 新增旅程", addEntry:"＋ 新增項目", tripSettings:"⚙ 旅程設定", appSettings:"◐ App 設定", spending:"💰 支出", schedule:"行程", share:"分享", hotelMenu:"住宿", mobileMenu:"選單",
+    trips:"旅程", tripSpend:"旅程支出", newTrip:"＋ 新增旅程", addEntry:"＋ 新增項目", tripSettings:"⚙ 旅程設定", appSettings:"◐ App 設定", spending:"💰 支出", schedule:"行程", share:"分享", signIn:"登入", account:"帳號", undo:"復原", redo:"重做", hotelMenu:"住宿", mobileMenu:"選單",
     toolbarHint:"拖曳時間軸項目可重新排序；拖曳左側旅程可調整旅程順序。", type:"類型", titleLabel:"標題", entryColor:"項目顏色",
     useTypeDefault:"使用類型預設色", colorDefaultHelp:"除非選擇自訂顏色，否則會使用所選類型的預設色。", colorCustomHelp:"此項目已啟用自訂顏色。",
     location:"地點", propertyLocation:"住宿／地點", from:"出發地", to:"目的地", departureAirport:"出發機場", arrivalAirport:"抵達機場",
@@ -928,7 +965,7 @@ const I18N = {
     nightsCount:"{n} 晚", nightOf:"第 {n} 晚（共 {total} 晚）", invalidDuration:"請輸入如「1d 2h 30m 15s」、「90m」或「1:30:00」的時長格式。", stayingHere:"本日住宿", addHotel:"＋ 新增住宿", noHotels:"此旅程尚未設定住宿。", hotelMenuIntro:"在此設定的住宿會自動顯示於適用日期的行程最上方。", edit:"編輯", daysUnit:"天", hoursUnit:"小時", minutesUnit:"分", secondsUnit:"秒", durationPickerHelp:"可使用下方四個欄位選擇，或直接在上方手動輸入時長。"
   },
   ja: {
-    trips:"旅行", tripSpend:"旅行支出", newTrip:"＋ 新しい旅行", addEntry:"＋ 予定を追加", tripSettings:"⚙ 旅行設定", appSettings:"◐ アプリ設定", spending:"💰 支出", schedule:"予定", share:"共有", hotelMenu:"ホテル", mobileMenu:"メニュー",
+    trips:"旅行", tripSpend:"旅行支出", newTrip:"＋ 新しい旅行", addEntry:"＋ 予定を追加", tripSettings:"⚙ 旅行設定", appSettings:"◐ アプリ設定", spending:"💰 支出", schedule:"予定", share:"共有", signIn:"サインイン", account:"アカウント", undo:"元に戻す", redo:"やり直す", hotelMenu:"ホテル", mobileMenu:"メニュー",
     toolbarHint:"タイムライン項目をドラッグして並べ替えます。左側の旅行もドラッグできます。", type:"種類", titleLabel:"タイトル", entryColor:"項目の色",
     useTypeDefault:"種類の既定色", colorDefaultHelp:"カスタム色を選ばない場合、種類の既定色を使用します。", colorCustomHelp:"この項目にはカスタム色が設定されています。",
     location:"場所", propertyLocation:"宿泊施設／場所", from:"出発地", to:"目的地", departureAirport:"出発空港", arrivalAirport:"到着空港",
@@ -1150,6 +1187,102 @@ let editingTripId = null;
 let pendingDelete = null;
 let draftThemeChoice = null;
 
+const HISTORY_LIMIT = 100;
+const undoStack = [];
+const redoStack = [];
+let historyApplying = false;
+let historySuspended = false;
+let lastHistorySnapshot = null;
+let lastHistoryComparable = null;
+
+function deepClone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+function historySnapshot() {
+  return {
+    trips: deepClone(state.trips),
+    items: deepClone(state.items),
+    settings: deepClone(state.settings),
+    activeTripId: state.activeTripId,
+  };
+}
+function historyComparable(snapshot) {
+  const trips = snapshot.trips.map(trip => {
+    const copy = { ...trip };
+    delete copy.remoteId;
+    delete copy.remoteRole;
+    delete copy.remoteVersion;
+    delete copy.remoteUpdatedAt;
+    delete copy.remoteSnapshot;
+    return copy;
+  });
+  return JSON.stringify({ trips, items: snapshot.items, settings: snapshot.settings });
+}
+function updateHistoryButtons() {
+  const undoButton = document.getElementById("undo-btn");
+  const redoButton = document.getElementById("redo-btn");
+  if (undoButton) undoButton.disabled = undoStack.length === 0;
+  if (redoButton) redoButton.disabled = redoStack.length === 0;
+}
+function recordHistoryCheckpoint() {
+  const current = historySnapshot();
+  const comparable = historyComparable(current);
+  if (!lastHistorySnapshot) {
+    lastHistorySnapshot = current;
+    lastHistoryComparable = comparable;
+    updateHistoryButtons();
+    return;
+  }
+  if (historyApplying || historySuspended) {
+    lastHistorySnapshot = current;
+    lastHistoryComparable = comparable;
+    updateHistoryButtons();
+    return;
+  }
+  if (comparable !== lastHistoryComparable) {
+    undoStack.push(lastHistorySnapshot);
+    if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+    redoStack.length = 0;
+  }
+  lastHistorySnapshot = current;
+  lastHistoryComparable = comparable;
+  updateHistoryButtons();
+}
+function applyHistorySnapshot(snapshot) {
+  if (!snapshot) return;
+  historyApplying = true;
+  document.querySelectorAll(".overlay.show").forEach(overlay => overlay.classList.remove("show"));
+  editingItemId = null;
+  editingTripId = null;
+  pendingDelete = null;
+  document.getElementById("f-trip")?.removeAttribute("disabled");
+  state.trips = deepClone(snapshot.trips);
+  state.items = deepClone(snapshot.items);
+  state.settings = deepClone(snapshot.settings);
+  state.activeTripId = state.trips.some(trip => trip.id === snapshot.activeTripId)
+    ? snapshot.activeTripId
+    : (state.trips[0]?.id || null);
+  lastHistorySnapshot = historySnapshot();
+  lastHistoryComparable = historyComparable(lastHistorySnapshot);
+  renderAll();
+  historyApplying = false;
+  updateHistoryButtons();
+}
+function undoLastChange() {
+  if (!undoStack.length) return;
+  const target = undoStack.pop();
+  redoStack.push(historySnapshot());
+  if (redoStack.length > HISTORY_LIMIT) redoStack.shift();
+  applyHistorySnapshot(target);
+}
+function redoLastChange() {
+  if (!redoStack.length) return;
+  const target = redoStack.pop();
+  undoStack.push(historySnapshot());
+  if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+  applyHistorySnapshot(target);
+}
+
 function currentLanguage() {
   return state.settings?.language || "en";
 }
@@ -1194,11 +1327,24 @@ function applyStaticTranslations() {
   if (mobileNewTrip) { mobileNewTrip.setAttribute("aria-label", t("newTrip")); mobileNewTrip.title = t("newTrip"); }
   const hotelDone = document.getElementById("hotel-done");
   if (hotelDone) hotelDone.textContent = t("cancel");
+  const undoButton = document.getElementById("undo-btn");
+  const redoButton = document.getElementById("redo-btn");
+  if (undoButton) {
+    undoButton.querySelector(".history-label").textContent = t("undo");
+    undoButton.setAttribute("aria-label", t("undo"));
+    undoButton.title = `${t("undo")} (Ctrl/Cmd+Z)`;
+  }
+  if (redoButton) {
+    redoButton.querySelector(".history-label").textContent = t("redo");
+    redoButton.setAttribute("aria-label", t("redo"));
+    redoButton.title = `${t("redo")} (Ctrl/Cmd+Shift+Z / Ctrl+Y)`;
+  }
   applyCollabTranslations();
 }
 
 function persist() {
   try {
+    recordHistoryCheckpoint();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     scheduleRemoteSave();
   } catch (error) {
@@ -1528,12 +1674,13 @@ const ICON_PATHS = {
   settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.55V20h-3v-.09a1.7 1.7 0 0 0-1.03-1.55 1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 7 14.7a1.7 1.7 0 0 0-1.55-1.03H5v-3h.09A1.7 1.7 0 0 0 6.64 9.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.12-2.12.06.06A1.7 1.7 0 0 0 10.3 6a1.7 1.7 0 0 0 1.03-1.55V4h3v.09A1.7 1.7 0 0 0 15.36 5.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.12 2.12-.06.06A1.7 1.7 0 0 0 19 9.3a1.7 1.7 0 0 0 1.55 1.03H21v3h-.09A1.7 1.7 0 0 0 19.4 15Z"/>',
   share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/>',
   app: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z"/>',
+  account: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
 };
 function iconSvg(name, extraClass = "") {
   return `<svg class="ui-icon ${extraClass}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ""}</svg>`;
 }
 
-const MOBILE_VIEWS = ["schedule", "spending", "tripSettings", "hotel", "share", "appSettings"];
+const MOBILE_VIEWS = ["schedule", "spending", "tripSettings", "hotel", "share", "appSettings", "account"];
 const MOBILE_VIEW_META = {
   schedule: { label: "schedule", icon: "calendar" },
   spending: { label: "spending", icon: "wallet" },
@@ -1541,6 +1688,7 @@ const MOBILE_VIEW_META = {
   hotel: { label: "hotelMenu", icon: "hotel" },
   share: { label: "share", icon: "share" },
   appSettings: { label: "appSettings", icon: "app" },
+  account: { label: "signIn", icon: "account" },
 };
 function isMobileLayout() { return window.matchMedia("(max-width: 720px)").matches; }
 function mobileNavLabel(key) {
@@ -1551,32 +1699,45 @@ function compactSpendText() {
   if (!entries.length) return t("noCosts");
   return entries.slice(0, 2).map(([currency, amount]) => money(amount, currency)).join(" · ");
 }
+function mobileViewLabelKey(view) {
+  if (view === "account") return collabUser ? "account" : "signIn";
+  return MOBILE_VIEW_META[view]?.label || "schedule";
+}
 function mobileNavMarkup(activeView = "schedule") {
   const active = MOBILE_VIEW_META[activeView] || MOBILE_VIEW_META.schedule;
-  const options = MOBILE_VIEWS.filter(view => view !== activeView && !(activeView === "schedule" && view === "schedule"));
+  const options = MOBILE_VIEWS.filter(view => view !== activeView);
   return `<button class="mobile-nav-toggle" type="button" aria-expanded="false">
-      <span class="mobile-nav-current">${iconSvg(active.icon)}<span>${esc(mobileNavLabel(active.label))}</span></span>
+      <span class="mobile-nav-current">${iconSvg(active.icon)}<span>${esc(mobileNavLabel(mobileViewLabelKey(activeView)))}</span></span>
       <span class="mobile-nav-spend">${esc(compactSpendText())}</span>
       <span class="mobile-nav-chevron" aria-hidden="true">⌄</span>
     </button>
     <div class="mobile-nav-menu" hidden>${options.map(view => {
       const meta = MOBILE_VIEW_META[view];
-      return `<button class="mobile-nav-option" type="button" data-mobile-view="${view}">${iconSvg(meta.icon)}<span>${esc(mobileNavLabel(meta.label))}</span></button>`;
+      return `<button class="mobile-nav-option" type="button" data-mobile-view="${view}">${iconSvg(meta.icon)}<span>${esc(mobileNavLabel(mobileViewLabelKey(view)))}</span></button>`;
     }).join("")}</div>`;
+}
+function setMobileNavOpen(root, open) {
+  if (!root) return;
+  const toggle = root.querySelector(".mobile-nav-toggle");
+  const menu = root.querySelector(".mobile-nav-menu");
+  const chevron = root.querySelector(".mobile-nav-chevron");
+  root.classList.toggle("is-open", open);
+  if (toggle) toggle.setAttribute("aria-expanded", String(open));
+  if (menu) menu.hidden = !open;
+  if (chevron) chevron.textContent = open ? "⌃" : "⌄";
 }
 function bindMobileNav(root, activeView) {
   if (!root) return;
+  root.classList.remove("is-open");
   root.dataset.activeView = activeView;
   root.innerHTML = mobileNavMarkup(activeView);
+  setMobileNavOpen(root, false);
   const toggle = root.querySelector(".mobile-nav-toggle");
-  const menu = root.querySelector(".mobile-nav-menu");
-  toggle?.addEventListener("click", () => {
-    const open = !root.classList.contains("is-open");
-    root.classList.toggle("is-open", open);
-    toggle.setAttribute("aria-expanded", String(open));
-    menu.hidden = !open;
-  });
-  root.querySelectorAll("[data-mobile-view]").forEach(button => button.addEventListener("click", () => navigateMobileView(button.dataset.mobileView)));
+  toggle?.addEventListener("click", () => setMobileNavOpen(root, !root.classList.contains("is-open")));
+  root.querySelectorAll("[data-mobile-view]").forEach(button => button.addEventListener("click", () => {
+    setMobileNavOpen(root, false);
+    navigateMobileView(button.dataset.mobileView);
+  }));
 }
 function renderMobileScheduleNav() {
   bindMobileNav(document.getElementById("mobile-nav-shell"), "schedule");
@@ -1594,7 +1755,7 @@ function attachMobileNavToOverlay(overlayId, activeView) {
   bindMobileNav(root, activeView);
 }
 function closeMobileSectionOverlays() {
-  ["spend-overlay", "trip-overlay", "app-overlay", "share-overlay", "hotel-overlay", "item-overlay"].forEach(id => document.getElementById(id)?.classList.remove("show"));
+  ["spend-overlay", "trip-overlay", "app-overlay", "share-overlay", "account-overlay", "hotel-overlay", "item-overlay"].forEach(id => document.getElementById(id)?.classList.remove("show"));
   document.getElementById("f-trip")?.removeAttribute("disabled");
   editingItemId = null;
   editingTripId = null;
@@ -1610,7 +1771,8 @@ function navigateMobileView(view) {
   }
   if (view === "hotel") { openHotelMenu(); attachMobileNavToOverlay("hotel-overlay", view); return; }
   if (view === "share") { openShareModal(); attachMobileNavToOverlay("share-overlay", view); return; }
-  if (view === "appSettings") { openAppSettings(); attachMobileNavToOverlay("app-overlay", view); }
+  if (view === "appSettings") { openAppSettings(); attachMobileNavToOverlay("app-overlay", view); return; }
+  if (view === "account") { openAccountModal(); attachMobileNavToOverlay("account-overlay", view); }
 }
 
 function activeTripHotels() {
@@ -1678,6 +1840,7 @@ function renderAll() {
   document.getElementById("add-entry-btn").disabled = !trip || !editable;
   document.getElementById("trip-settings-btn").disabled = !trip || !editable;
   document.getElementById("share-trip-btn").disabled = !trip;
+  updateHistoryButtons();
   document.body.classList.toggle("is-viewer", Boolean(trip?.remoteId) && !editable);
   updateSyncStatus();
   persist();
@@ -2960,8 +3123,8 @@ function initTripListTouchReorder() {
 const COLLAB_I18N = {
   en: {
     share:"↗ Share", localOnly:"Local only", synced:"Synced", saving:"Saving…", syncError:"Sync error", viewOnlyStatus:"View only",
-    viewOnlyBanner:"View-only access — changes are disabled.", shareTitle:"Share & collaborate", done:"Done", email:"Email",
-    authHelp:"Sign in by email before publishing or opening a shared trip.", sendSignIn:"Send sign-in link", signOut:"Sign out",
+    viewOnlyBanner:"View-only access — changes are disabled.", shareTitle:"Share & collaborate", accountTitle:"Account & sign in", done:"Done", email:"Email",
+    authHelp:"Sign in once to access shared trips across the app.", shareAuthHelp:"Sign in first. Your account is global, while sharing remains configured separately for this trip.", globalAccountHelp:"This sign-in is shared across every trip. Sharing permissions still remain separate for each trip.", signIn:"Sign in", account:"Account", sendSignIn:"Send sign-in link", signOut:"Sign out",
     signInSent:"A sign-in link was sent. Open it in this same browser.", sessionNote:"Normal browsing keeps you signed in on this device. Private browsing forgets the session when all private tabs are closed.", resendIn:"Send again in {seconds}s", emailRateLimited:"Too many sign-in emails were requested. Wait for the email limit to reset, or configure custom SMTP in Supabase.", configMissing:"Cloud collaboration is not configured yet. Add the Supabase URL and publishable key to COLLAB_CONFIG, run the supplied SQL, and host this file over HTTPS.",
     publishTitle:"Publish this trip", publishHelp:"This trip is currently stored only in this browser. Publishing creates a cloud copy and a stable shared URL.", publish:"Create shared trip",
     yourAccess:"Your access", owner:"Owner", admin:"Administrator", editor:"Can edit", viewer:"View only",
@@ -2975,8 +3138,8 @@ const COLLAB_I18N = {
   },
   "zh-TW": {
     share:"↗ 分享", localOnly:"僅儲存於本機", synced:"已同步", saving:"儲存中…", syncError:"同步錯誤", viewOnlyStatus:"僅供檢視",
-    viewOnlyBanner:"目前為僅供檢視權限，無法修改內容。", shareTitle:"分享與共同編輯", done:"完成", email:"電子郵件",
-    authHelp:"發布或開啟共享旅程前，請先使用電子郵件登入。", sendSignIn:"傳送登入連結", signOut:"登出",
+    viewOnlyBanner:"目前為僅供檢視權限，無法修改內容。", shareTitle:"分享與共同編輯", accountTitle:"帳號與登入", done:"完成", email:"電子郵件",
+    authHelp:"登入一次，即可在整個 App 中存取共享旅程。", shareAuthHelp:"請先登入。帳號適用於所有旅程，但每個旅程的分享權限仍各自獨立。", globalAccountHelp:"登入狀態會套用至所有旅程；每個旅程的分享對象與權限仍互相獨立。", signIn:"登入", account:"帳號", sendSignIn:"傳送登入連結", signOut:"登出",
     signInSent:"登入連結已寄出；請在同一個瀏覽器中開啟。", sessionNote:"一般瀏覽會在此裝置保留登入狀態；關閉所有無痕分頁後，無痕瀏覽會清除登入狀態。", resendIn:"{seconds} 秒後可再次傳送", emailRateLimited:"登入郵件要求過多。請等待寄送限制重設，或在 Supabase 設定自訂 SMTP。", configMissing:"尚未設定雲端協作。請在 COLLAB_CONFIG 填入 Supabase URL 與 publishable key、執行隨附 SQL，並以 HTTPS 發布此檔案。",
     publishTitle:"發布此旅程", publishHelp:"此旅程目前只存在此瀏覽器。發布後會建立雲端副本與固定共享網址。", publish:"建立共享旅程",
     yourAccess:"您的權限", owner:"建立者", admin:"管理者", editor:"可編輯", viewer:"僅供檢視",
@@ -2990,8 +3153,8 @@ const COLLAB_I18N = {
   },
   ja: {
     share:"↗ 共有", localOnly:"ローカルのみ", synced:"同期済み", saving:"保存中…", syncError:"同期エラー", viewOnlyStatus:"閲覧のみ",
-    viewOnlyBanner:"閲覧専用です。変更はできません。", shareTitle:"共有と共同編集", done:"完了", email:"メール",
-    authHelp:"共有旅行を公開または開く前に、メールでサインインしてください。", sendSignIn:"サインインリンクを送信", signOut:"サインアウト",
+    viewOnlyBanner:"閲覧専用です。変更はできません。", shareTitle:"共有と共同編集", accountTitle:"アカウントとサインイン", done:"完了", email:"メール",
+    authHelp:"一度サインインすると、アプリ全体で共有旅行にアクセスできます。", shareAuthHelp:"先にサインインしてください。アカウントは全旅行共通ですが、共有権限は旅行ごとに独立しています。", globalAccountHelp:"サインイン状態はすべての旅行で共通です。共有相手と権限は旅行ごとに独立しています。", signIn:"サインイン", account:"アカウント", sendSignIn:"サインインリンクを送信", signOut:"サインアウト",
     signInSent:"サインインリンクを送信しました。同じブラウザで開いてください。", sessionNote:"通常のブラウズではこの端末にサインイン状態が保存されます。すべてのプライベートタブを閉じると状態は消去されます。", resendIn:"{seconds}秒後に再送信", emailRateLimited:"サインインメールの要求が多すぎます。制限の解除を待つか、Supabase でカスタム SMTP を設定してください。", configMissing:"クラウド共同編集は未設定です。COLLAB_CONFIG に Supabase URL と publishable key を入力し、付属 SQL を実行して、このファイルを HTTPS で公開してください。",
     publishTitle:"この旅行を公開", publishHelp:"現在、この旅行はこのブラウザだけに保存されています。公開するとクラウドコピーと固定共有 URL が作成されます。", publish:"共有旅行を作成",
     yourAccess:"あなたの権限", owner:"作成者", admin:"管理者", editor:"編集可能", viewer:"閲覧のみ",
@@ -3012,7 +3175,9 @@ function ct(key, variables = {}) {
 function applyCollabTranslations() {
   const set = (id, key) => { const element = document.getElementById(id); if (element) element.textContent = ct(key); };
   set("share-trip-btn", "share"); set("readonly-banner", "viewOnlyBanner"); set("share-modal-title", "shareTitle"); set("share-done", "done");
-  set("collab-email-label", "email"); set("collab-auth-help", "authHelp"); set("collab-session-note", "sessionNote"); set("collab-login-btn", "sendSignIn"); set("collab-logout-btn", "signOut");
+  set("account-modal-title", "accountTitle"); set("account-done", "done"); set("collab-email-label", "email"); set("collab-auth-help", "authHelp"); set("share-auth-help", "shareAuthHelp"); set("account-global-help", "globalAccountHelp"); set("share-open-account-btn", "signIn"); set("collab-session-note", "sessionNote"); set("collab-login-btn", "sendSignIn"); set("collab-logout-btn", "signOut");
+  const accountButton = document.getElementById("account-btn");
+  if (accountButton) accountButton.textContent = `◎ ${ct(collabUser ? "account" : "signIn")}`;
   set("publish-title", "publishTitle"); set("publish-help", "publishHelp"); set("publish-trip-btn", "publish"); set("access-label", "yourAccess");
   set("shared-link-label", "memberLink"); set("shared-link-help", "memberLinkHelp"); set("copy-share-link-btn", "copy"); set("invite-title", "inviteTitle");
   set("create-invite-btn", "createInvite"); set("invite-link-label", "invitationLink"); set("copy-invite-link-btn", "copy"); set("email-invite-btn", "emailInvite"); set("members-title", "members");
@@ -3107,15 +3272,20 @@ function applySharedDocument(remoteId, documentData, role, version, updatedAt = 
   incomingTrip.order = existing?.order ?? incomingTrip.order ?? orderedTrips().length;
 
   suppressRemoteSave = true;
-  if (existing) Object.assign(existing, incomingTrip);
-  else state.trips.push(incomingTrip);
-  state.items = state.items.filter(item => item.tripId !== localId);
-  state.items.push(...documentData.items.map(item => ({ ...item, tripId: localId })));
-  state.activeTripId = localId;
-  (existing || incomingTrip).remoteSnapshot = JSON.stringify(sharedDocument(existing || incomingTrip));
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
-  renderAll();
-  suppressRemoteSave = false;
+  historySuspended = true;
+  try {
+    if (existing) Object.assign(existing, incomingTrip);
+    else state.trips.push(incomingTrip);
+    state.items = state.items.filter(item => item.tripId !== localId);
+    state.items.push(...documentData.items.map(item => ({ ...item, tripId: localId })));
+    state.activeTripId = localId;
+    (existing || incomingTrip).remoteSnapshot = JSON.stringify(sharedDocument(existing || incomingTrip));
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+    renderAll();
+  } finally {
+    suppressRemoteSave = false;
+    historySuspended = false;
+  }
 }
 async function fetchRole(remoteId) {
   if (!supabaseClient || !collabUser) return null;
@@ -3195,10 +3365,12 @@ async function ensureRealtimeForActiveTrip() {
     .on("postgres_changes", { event: "DELETE", schema: "public", table: "voyage_trips", filter: `id=eq.${remoteId}` }, () => {
       const trip = state.trips.find(candidate => candidate.remoteId === remoteId);
       if (!trip) return;
+      historySuspended = true;
       state.items = state.items.filter(item => item.tripId !== trip.id);
       state.trips = state.trips.filter(candidate => candidate.id !== trip.id);
       state.activeTripId = orderedTrips()[0]?.id || null;
       renderAll();
+      historySuspended = false;
     })
     .subscribe();
 }
@@ -3262,10 +3434,18 @@ async function listMembers() {
 }
 async function refreshSharePanel() {
   const configured = collabConfigured();
-  document.getElementById("collab-config-warning").style.display = configured ? "none" : "block";
-  document.getElementById("collab-config-warning").textContent = configured ? "" : ct("configMissing");
+  const accountWarning = document.getElementById("collab-config-warning");
+  const shareWarning = document.getElementById("share-config-warning");
+  [accountWarning, shareWarning].forEach(element => {
+    if (!element) return;
+    element.style.display = configured ? "none" : "block";
+    element.textContent = configured ? "" : ct("configMissing");
+  });
   document.getElementById("collab-auth-panel").style.display = configured && !collabUser ? "flex" : "none";
+  document.getElementById("collab-account-signed-panel").style.display = configured && collabUser ? "flex" : "none";
+  document.getElementById("share-auth-required").style.display = configured && !collabUser ? "flex" : "none";
   document.getElementById("collab-signed-panel").style.display = configured && collabUser ? "flex" : "none";
+  applyCollabTranslations();
   if (!configured || !collabUser) return;
   document.getElementById("collab-user-email").textContent = collabUser.email || collabUser.id;
   const trip = activeTrip();
@@ -3282,6 +3462,13 @@ async function refreshSharePanel() {
   if (tripRole(trip) !== "owner" && document.getElementById("invite-role").value === "admin") document.getElementById("invite-role").value = "editor";
   if (manageable) await listMembers();
 }
+function openAccountModal() {
+  applyCollabTranslations();
+  setCollabMessage("", false, "collab-auth-message");
+  document.getElementById("account-overlay").classList.add("show");
+  refreshSharePanel();
+}
+function closeAccountModal() { document.getElementById("account-overlay").classList.remove("show"); }
 function openShareModal() {
   applyCollabTranslations();
   setCollabMessage("");
@@ -3293,7 +3480,7 @@ async function processCollabRoute() {
   const params = new URLSearchParams(location.search);
   const invite = params.get("invite");
   const tripId = params.get("trip");
-  if (!collabUser && (invite || tripId)) { openShareModal(); return; }
+  if (!collabUser && (invite || tripId)) { openAccountModal(); return; }
   if (invite && collabUser) { openShareModal(); await acceptInvite(invite); return; }
   if (tripId && collabUser) await loadRemoteTrip(tripId, true);
   else {
@@ -3327,11 +3514,38 @@ async function initCollaboration() {
     // on it again is what was causing the duplicate/racing route pass.
     if (event === "INITIAL_SESSION") return;
     collabUser = session?.user || null;
+    applyCollabTranslations();
+    renderMobileScheduleNav();
     runCollabRoute();
   });
   await runCollabRoute();
 }
 
+document.getElementById("undo-btn").addEventListener("click", undoLastChange);
+document.getElementById("redo-btn").addEventListener("click", redoLastChange);
+document.addEventListener("keydown", event => {
+  const target = event.target;
+  if (target instanceof HTMLElement && (target.matches("input, textarea, select") || target.isContentEditable)) return;
+  if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+  const key = event.key.toLowerCase();
+  if (key === "z" && !event.shiftKey) {
+    event.preventDefault();
+    undoLastChange();
+  } else if ((key === "z" && event.shiftKey) || (key === "y" && event.ctrlKey)) {
+    event.preventDefault();
+    redoLastChange();
+  }
+});
+
+document.getElementById("account-btn").addEventListener("click", openAccountModal);
+document.getElementById("account-close").addEventListener("click", closeAccountModal);
+document.getElementById("account-done").addEventListener("click", closeAccountModal);
+document.getElementById("account-overlay").addEventListener("click", event => { if (event.target.id === "account-overlay") closeAccountModal(); });
+document.getElementById("share-open-account-btn").addEventListener("click", () => {
+  closeShareModal();
+  openAccountModal();
+  attachMobileNavToOverlay("account-overlay", "account");
+});
 document.getElementById("share-trip-btn").addEventListener("click", openShareModal);
 document.getElementById("share-close").addEventListener("click", closeShareModal);
 document.getElementById("share-done").addEventListener("click", closeShareModal);
@@ -3372,7 +3586,12 @@ document.getElementById("collab-login-btn").addEventListener("click", async () =
   setCollabMessage(ct("signInSent"), false, "collab-auth-message");
   startSignInCooldown(60);
 });
-document.getElementById("collab-logout-btn").addEventListener("click", async () => { await supabaseClient.auth.signOut(); collabUser = null; refreshSharePanel(); });
+document.getElementById("collab-logout-btn").addEventListener("click", async () => {
+  await supabaseClient.auth.signOut();
+  collabUser = null;
+  refreshSharePanel();
+  renderMobileScheduleNav();
+});
 document.getElementById("publish-trip-btn").addEventListener("click", publishActiveTrip);
 document.getElementById("copy-share-link-btn").addEventListener("click", async () => { await navigator.clipboard.writeText(document.getElementById("collab-share-link").value); setCollabMessage(ct("copied")); });
 document.getElementById("copy-invite-link-btn").addEventListener("click", async () => { await navigator.clipboard.writeText(document.getElementById("invite-link").value); setCollabMessage(ct("copied"), false, "invite-message"); });
