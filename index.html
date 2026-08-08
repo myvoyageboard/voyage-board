@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- Voyage Board v9 — per-trip chat backups and font-size preferences -->
+<!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
 <html lang="en">
@@ -26,7 +28,11 @@
     --flip-bottom: #111824;
     --shadow: rgba(0,0,0,0.50);
     --font-ui: "JetBrains Mono", "FangSong", "STFangsong", "FangSong_GB2312", "Noto Serif TC", "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", monospace;
+    --app-font-scale: 1;
   }
+  html[data-font-size="small"] { --app-font-scale: 0.90; }
+  html[data-font-size="normal"] { --app-font-scale: 1; }
+  html[data-font-size="big"] { --app-font-scale: 1.12; }
   html[data-theme="light"] {
     color-scheme: light;
     --ink: #F2F6FB;
@@ -268,6 +274,25 @@
   .color-swatch { width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 2px solid var(--panel); outline: 1px solid var(--border); cursor: pointer; background: var(--swatch); box-shadow: 0 0 8px color-mix(in srgb, var(--swatch) 35%, transparent); }
   .color-swatch:hover, .color-swatch.active { outline: 2px solid var(--text-hi); transform: scale(1.06); }
   .appearance-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .font-size-grid { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
+  .font-size-opt {
+    min-height:48px; border:1px solid var(--border); border-radius:10px;
+    background:var(--panel-2); color:var(--text-lo); padding:8px 6px;
+    cursor:pointer; font-family:inherit; font-size:12px;
+  }
+  .font-size-opt.active {
+    color:var(--text-hi); border-color:var(--amber);
+    box-shadow:inset 0 0 0 1px var(--amber);
+  }
+  .font-size-preview { display:block; line-height:1; margin-bottom:5px; color:var(--text-hi); }
+  .font-size-preview.small { font-size:11px; }
+  .font-size-preview.normal { font-size:14px; }
+  .font-size-preview.big { font-size:17px; }
+  .app-settings-modal .modal-head h3 { font-size:15px; }
+  .app-settings-modal .modal-body { font-size:13px; }
+  .app-settings-modal .field-label { font-size:10.5px; margin-top:11px; }
+  .app-settings-modal .appearance-opt { font-size:11.5px; padding:9px; }
+  .app-settings-modal .field-help { font-size:10.5px; }
   .appearance-opt { border: 1px solid var(--border); border-radius: 10px; background: var(--panel-2); color: var(--text-lo); padding: 11px; cursor: pointer; font-family: inherit; }
   .appearance-opt.active { color: var(--text-hi); border-color: var(--amber); box-shadow: inset 0 0 0 1px var(--amber); }
   .appearance-preview { display: block; height: 42px; margin-bottom: 7px; border-radius: 7px; border: 1px solid var(--border); position: relative; overflow: hidden; }
@@ -616,6 +641,17 @@
   .backup-source-dot { width:8px; height:8px; border-radius:50%; background:#63C7FF; box-shadow:0 0 0 3px color-mix(in srgb, #63C7FF 12%, transparent); }
   .backup-source-dot.manual { background:var(--amber); box-shadow:0 0 0 3px color-mix(in srgb, var(--amber) 12%, transparent); }
   .backup-source-dot.restore { background:#D78BFF; box-shadow:0 0 0 3px color-mix(in srgb, #D78BFF 12%, transparent); }
+  .backup-scope-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .backup-scope-pill {
+    display:inline-flex; align-items:center; gap:4px; min-height:22px; padding:2px 7px;
+    border:1px solid var(--border); border-radius:999px; color:var(--text-lo);
+    background:var(--soft); font-size:9.5px;
+  }
+  .backup-scope-pill.chat {
+    border-color:color-mix(in srgb, #63C7FF 45%, var(--border));
+    color:color-mix(in srgb, #63C7FF 78%, var(--text-hi));
+  }
+  .backup-scope-pill.missing { opacity:.68; }
   .backup-auth-note { margin:16px 20px; }
 
   @media (max-width:720px) {
@@ -681,6 +717,146 @@
     input, select, textarea, .field-input { font-size:16px !important; }
     .chat-message-menu-btn { width:36px; height:36px; }
     .chat-message-menu { top:39px; }
+  }
+
+
+  /* v8: conversation/activity/album views, date navigation, and photo album */
+  .chat-modal { overflow:hidden; }
+  .chat-workspace-tabs {
+    display:flex; align-items:center; gap:6px; padding:0 20px 10px;
+    border-bottom:1px solid var(--border);
+  }
+  .chat-workspace-tab {
+    position:relative; min-height:36px; padding:7px 12px; border:1px solid transparent;
+    border-radius:9px; background:transparent; color:var(--text-lo); cursor:pointer;
+    font:600 11px var(--font-ui);
+  }
+  .chat-workspace-tab:hover { color:var(--text-hi); background:var(--hover); }
+  .chat-workspace-tab[aria-selected="true"] {
+    color:var(--text-hi); border-color:var(--border); background:var(--panel-2);
+  }
+  .chat-tab-count {
+    display:inline-grid; place-items:center; min-width:18px; height:18px; margin-left:5px;
+    padding:0 5px; border-radius:999px; background:var(--soft); color:var(--text-lo);
+    font-size:9px; vertical-align:middle;
+  }
+  .chat-toolbar-v8 { align-items:center; flex-wrap:wrap; }
+  .chat-toolbar-left { display:flex; align-items:center; gap:10px; min-width:0; flex:1 1 auto; }
+  .chat-date-jump { display:flex; align-items:center; gap:6px; flex:0 1 auto; }
+  .chat-date-jump label { color:var(--text-lo); font-size:10px; white-space:nowrap; }
+  .chat-date-input { width:auto; min-width:145px; padding:6px 8px; font-size:12px; }
+  .chat-date-go { min-height:32px; padding:6px 10px; font-size:10.5px; }
+  .chat-view-panel { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+  .chat-view-panel[hidden] { display:none; }
+  .chat-date-divider {
+    position:sticky; top:-1px; z-index:3; align-self:stretch; display:flex;
+    align-items:center; gap:9px; margin:5px 0 2px; color:var(--text-lo);
+    font-size:9.5px; letter-spacing:.05em;
+  }
+  .chat-date-divider::before, .chat-date-divider::after {
+    content:""; flex:1; height:1px; background:var(--border);
+  }
+  .chat-date-divider span {
+    padding:4px 8px; border:1px solid var(--border); border-radius:999px;
+    background:var(--panel); white-space:nowrap;
+  }
+  .chat-activity-body {
+    min-height:360px; max-height:58vh; overflow-y:auto; padding:16px 20px;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .chat-activity-empty, .chat-album-empty {
+    margin:auto; padding:36px 20px; color:var(--text-lo); text-align:center;
+    font-size:12px; line-height:1.55;
+  }
+  .chat-activity-body .chat-system {
+    margin:0; background:color-mix(in srgb, #63C7FF 9%, var(--panel));
+    border-style:solid;
+  }
+  .chat-album-body {
+    min-height:360px; max-height:58vh; overflow-y:auto; padding:16px 20px;
+  }
+  .chat-album-date-section + .chat-album-date-section { margin-top:18px; }
+  .chat-album-grid {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
+    gap:10px; margin-top:8px;
+  }
+  .chat-album-card {
+    min-width:0; border:1px solid var(--border); border-radius:11px; overflow:hidden;
+    background:var(--panel-2);
+  }
+  .chat-album-card a { display:block; aspect-ratio:1 / 1; background:var(--ink); }
+  .chat-album-card img { width:100%; height:100%; display:block; object-fit:cover; }
+  .chat-album-placeholder {
+    aspect-ratio:1 / 1; display:grid; place-items:center; color:var(--text-lo);
+    font-size:11px; background:var(--ink);
+  }
+  .chat-album-meta { padding:8px 9px; }
+  .chat-album-author {
+    display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+    font-size:10.5px; font-weight:700;
+  }
+  .chat-album-time { display:block; margin-top:2px; color:var(--text-lo); font-size:9px; }
+  .chat-album-caption {
+    margin-top:5px; color:var(--text-lo); font-size:10px; line-height:1.35;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .chat-message-menu button[data-chat-delete-silent] { color:var(--danger); }
+  .chat-message-menu button + button { margin-top:2px; }
+  .member-email-visible {
+    display:block; margin-top:3px; color:var(--text-lo); font-size:10px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .member-email-visible::before { content:"✉ "; }
+  @media (max-width:720px) {
+    .chat-workspace-tabs { padding:0 12px 8px; overflow-x:auto; }
+    .chat-workspace-tab { flex:1 0 auto; min-height:40px; font-size:11px; }
+    .chat-toolbar-v8 { padding:8px 12px; }
+    .chat-toolbar-left { width:100%; flex-wrap:wrap; }
+    .chat-date-jump { width:100%; }
+    .chat-date-input { flex:1 1 auto; min-width:0; font-size:16px !important; }
+    .chat-date-go { min-height:40px; }
+    .chat-activity-body, .chat-album-body {
+      flex:1 1 auto; min-height:0; max-height:none; padding:13px 12px;
+    }
+    .chat-album-grid { grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
+  }
+
+
+  /* App-wide font-size preference. Editable schedule fields remain at least
+     16px on phones to prevent iOS focus zoom. */
+  body { font-size:calc(14px * var(--app-font-scale)); }
+  .ticket-name { font-size:calc(13px * var(--app-font-scale)); }
+  .ticket-meta, .section-label { font-size:calc(11px * var(--app-font-scale)); }
+  .event-title { font-size:calc(15px * var(--app-font-scale)); }
+  .event-loc, .event-notes { font-size:calc(12.5px * var(--app-font-scale)); }
+  .toolbar-settings, .btn { font-size:calc(13px * var(--app-font-scale)); }
+  .mobile-menu-item { font-size:calc(12.5px * var(--app-font-scale)); }
+  .chat-message-text, .chat-system-title { font-size:calc(12px * var(--app-font-scale)); }
+
+  @media (max-width:720px) {
+    /* The active-trip title is deliberately a little smaller and denser. */
+    #mobile-trip-select {
+      font-size:14px !important;
+      letter-spacing:-0.025em;
+      font-weight:500;
+    }
+    /* These are the fields used while editing schedule information. Keeping
+       them at 16px prevents Safari/iPhone from zooming the entire page. */
+    #item-overlay input,
+    #item-overlay select,
+    #item-overlay textarea,
+    #trip-overlay input,
+    #trip-overlay select,
+    #trip-overlay textarea {
+      font-size:16px !important;
+    }
+    .app-settings-modal .appearance-opt,
+    .app-settings-modal .font-size-opt,
+    .app-settings-modal .field-label,
+    .app-settings-modal .field-help {
+      font-size:12px;
+    }
+    .app-settings-modal #s-language { font-size:16px !important; }
   }
 
 </style>
@@ -896,7 +1072,7 @@
 </div>
 
 <div class="overlay" id="app-overlay">
-  <div class="modal" style="max-width:430px;">
+  <div class="modal app-settings-modal" style="max-width:430px;">
     <div class="modal-head"><h3 id="app-modal-title">App settings</h3><button class="modal-close" id="app-close">✕</button></div>
     <div class="modal-body">
       <label class="field-label" data-i18n="language">Language</label>
@@ -918,6 +1094,23 @@
         </button>
       </div>
       <div class="field-help" id="appearance-help">The selected theme applies to the whole app.</div>
+
+      <label class="field-label" data-i18n="fontSize">Font size</label>
+      <div class="font-size-grid" id="font-size-grid">
+        <button type="button" class="font-size-opt" data-font-size-choice="small">
+          <span class="font-size-preview small">Aa</span>
+          <span data-i18n="fontSmall">Small</span>
+        </button>
+        <button type="button" class="font-size-opt" data-font-size-choice="normal">
+          <span class="font-size-preview normal">Aa</span>
+          <span data-i18n="fontNormal">Normal</span>
+        </button>
+        <button type="button" class="font-size-opt" data-font-size-choice="big">
+          <span class="font-size-preview big">Aa</span>
+          <span data-i18n="fontBig">Big</span>
+        </button>
+      </div>
+      <div class="field-help" data-i18n="fontSizeHelp">Changes the general interface text size.</div>
     </div>
     <div class="modal-foot" style="justify-content:flex-end;">
       <button class="btn btn-ghost" id="app-cancel">Cancel</button>
@@ -1053,12 +1246,32 @@
     <div class="modal-head"><h3 id="chat-modal-title">Trip chat</h3><button class="modal-close" id="chat-close">✕</button></div>
     <div id="chat-auth-note" class="muted-box chat-auth-note" style="display:none;"></div>
     <div id="chat-content" style="display:none; min-height:0; flex:1 1 auto; flex-direction:column;">
-      <div class="chat-toolbar">
-        <label class="chat-filter"><input type="checkbox" id="chat-show-modifications" checked><span id="chat-filter-label">Show modification log</span></label>
+      <div class="chat-workspace-tabs" role="tablist" aria-label="Trip communication">
+        <button id="chat-tab-conversation" class="chat-workspace-tab" type="button" role="tab" data-chat-view="conversation" aria-selected="true"><span id="chat-tab-conversation-label">Conversation</span></button>
+        <button id="chat-tab-activity" class="chat-workspace-tab" type="button" role="tab" data-chat-view="activity" aria-selected="false"><span id="chat-tab-activity-label">Activity</span><span id="chat-activity-count" class="chat-tab-count">0</span></button>
+        <button id="chat-tab-album" class="chat-workspace-tab" type="button" role="tab" data-chat-view="album" aria-selected="false"><span id="chat-tab-album-label">Album</span><span id="chat-album-count" class="chat-tab-count">0</span></button>
+      </div>
+      <div class="chat-toolbar chat-toolbar-v8">
+        <div class="chat-toolbar-left">
+          <label id="chat-filter-wrap" class="chat-filter"><input type="checkbox" id="chat-show-modifications" checked><span id="chat-filter-label">Show modification log</span></label>
+          <div class="chat-date-jump">
+            <label id="chat-jump-label" for="chat-jump-date">Go to date</label>
+            <input id="chat-jump-date" class="field-input chat-date-input" type="date">
+            <button id="chat-jump-btn" class="btn btn-ghost chat-date-go" type="button">Go</button>
+          </div>
+        </div>
         <span id="chat-status" class="chat-status"></span>
       </div>
-      <div id="chat-feed" class="chat-body scroll"></div>
-      <div class="chat-composer">
+      <section id="chat-conversation-panel" class="chat-view-panel" data-chat-panel="conversation">
+        <div id="chat-feed" class="chat-body scroll"></div>
+      </section>
+      <section id="chat-activity-panel" class="chat-view-panel" data-chat-panel="activity" hidden>
+        <div id="chat-activity-feed" class="chat-activity-body scroll"></div>
+      </section>
+      <section id="chat-album-panel" class="chat-view-panel" data-chat-panel="album" hidden>
+        <div id="chat-album" class="chat-album-body scroll"></div>
+      </section>
+      <div id="chat-composer" class="chat-composer">
         <div id="chat-image-preview" class="chat-image-preview" hidden>
           <img id="chat-image-preview-img" alt="">
           <div class="chat-image-preview-main"><span id="chat-image-preview-name" class="chat-image-preview-name"></span><span id="chat-image-preview-size" class="chat-image-preview-size"></span></div>
@@ -1149,7 +1362,7 @@ const I18N = {
     location:"Location", propertyLocation:"Property / location", from:"From", to:"To", departureAirport:"Departure airport", arrivalAirport:"Arrival airport",
     googleMapsLink:"Google Maps link", openMaps:"Open Maps", mapHelp:"Paste a place link, or use “Open Maps” to search using the location or route above.",
     date:"Date", start:"Start", end:"End", price:"Price", currency:"Currency", spendingCategory:"Spending category", add:"Add", trip:"Trip", notes:"Notes",
-    delete:"🗑 Delete", cancel:"Cancel", save:"Save", language:"Language", appearance:"Appearance", darkTheme:"Dark", lightTheme:"Light",
+    delete:"🗑 Delete", cancel:"Cancel", save:"Save", language:"Language", appearance:"Appearance", darkTheme:"Dark", lightTheme:"Light", fontSize:"Font size", fontSmall:"Small", fontNormal:"Normal", fontBig:"Big", fontSizeHelp:"Changes the general interface text size.",
     appearanceHelp:"The selected theme applies to the whole app.", appSettingsTitle:"App settings", tripName:"Trip name", startDate:"Start date", endDate:"End date",
     defaultCurrency:"Default price currency", currencyDefaultNote:"Entries set to “Trip default” follow this currency automatically. An entry-specific currency still overrides it.",
     tripColor:"Trip color", tripColorHelp:"Choose a preset or any custom color for this trip's box in the left list.", customCategories:"Custom spending categories",
@@ -1174,7 +1387,7 @@ const I18N = {
     location:"地點", propertyLocation:"住宿／地點", from:"出發地", to:"目的地", departureAirport:"出發機場", arrivalAirport:"抵達機場",
     googleMapsLink:"Google 地圖連結", openMaps:"開啟地圖", mapHelp:"貼上地點連結，或使用「開啟地圖」依上方地點或路線搜尋。",
     date:"日期", start:"開始", end:"結束", price:"價格", currency:"幣別", spendingCategory:"支出分類", add:"新增", trip:"旅程", notes:"備註",
-    delete:"🗑 刪除", cancel:"取消", save:"儲存", language:"語言", appearance:"外觀", darkTheme:"深色", lightTheme:"淺色",
+    delete:"🗑 刪除", cancel:"取消", save:"儲存", language:"語言", appearance:"外觀", darkTheme:"深色", lightTheme:"淺色", fontSize:"字體大小", fontSmall:"小", fontNormal:"一般", fontBig:"大", fontSizeHelp:"調整整體介面的文字大小。",
     appearanceHelp:"所選主題會套用到整個 App。", appSettingsTitle:"App 設定", tripName:"旅程名稱", startDate:"開始日期", endDate:"結束日期",
     defaultCurrency:"預設價格幣別", currencyDefaultNote:"設為「旅程預設」的項目會自動沿用此幣別；個別項目仍可覆寫。",
     tripColor:"旅程顏色", tripColorHelp:"可選擇預設色，或為左側旅程方塊指定任意自訂顏色。", customCategories:"自訂支出分類",
@@ -1199,7 +1412,7 @@ const I18N = {
     location:"場所", propertyLocation:"宿泊施設／場所", from:"出発地", to:"目的地", departureAirport:"出発空港", arrivalAirport:"到着空港",
     googleMapsLink:"Google マップリンク", openMaps:"マップを開く", mapHelp:"場所のリンクを貼るか、上の場所／経路から検索できます。",
     date:"日付", start:"開始", end:"終了", price:"価格", currency:"通貨", spendingCategory:"支出カテゴリ", add:"追加", trip:"旅行", notes:"メモ",
-    delete:"🗑 削除", cancel:"キャンセル", save:"保存", language:"言語", appearance:"外観", darkTheme:"ダーク", lightTheme:"ライト",
+    delete:"🗑 削除", cancel:"キャンセル", save:"保存", language:"言語", appearance:"外観", darkTheme:"ダーク", lightTheme:"ライト", fontSize:"文字サイズ", fontSmall:"小", fontNormal:"標準", fontBig:"大", fontSizeHelp:"画面全体の文字サイズを変更します。",
     appearanceHelp:"選択したテーマはアプリ全体に適用されます。", appSettingsTitle:"アプリ設定", tripName:"旅行名", startDate:"開始日", endDate:"終了日",
     defaultCurrency:"既定の通貨", currencyDefaultNote:"「旅行の既定値」の項目はこの通貨を自動的に使用し、個別項目で上書きできます。",
     tripColor:"旅行の色", tripColorHelp:"プリセットまたは任意の色を左側の旅行ボックスに設定できます。", customCategories:"カスタム支出カテゴリ",
@@ -1335,11 +1548,11 @@ function makeSeed() {
     { id: uid(), tripId, kind: "train", title: "Yamanote Line", fromPlace: "Asakusa", toPlace: "Shibuya", location: "Asakusa → Shibuya", date: "2026-07-21", startTime: "11:30", endTime: "12:10", price: 4, currency: null, categoryId: "transport", mapUrl: "", notes: "" },
     { id: uid(), tripId, kind: "activity", title: "teamLab Planets", location: "Toyosu", date: "2026-07-21", startTime: "15:00", endTime: "17:00", price: 32, currency: null, categoryId: "activity", mapUrl: "", notes: "Book tickets online in advance" },
   ];
-  return { trips: [trip], items, activeTripId: tripId, settings: { language: "en", theme: "dark" } };
+  return { trips: [trip], items, activeTripId: tripId, settings: { language: "en", theme: "dark", fontSize: "normal" } };
 }
 
 function makeEmptyState() {
-  return { trips: [], items: [], activeTripId: null, settings: { language: "en", theme: "dark" } };
+  return { trips: [], items: [], activeTripId: null, settings: { language: "en", theme: "dark", fontSize: "normal" } };
 }
 
 function hasSharedRouteAtStartup() {
@@ -1367,6 +1580,7 @@ function normalizeState(raw) {
   normalized.settings = normalized.settings && typeof normalized.settings === "object" ? normalized.settings : {};
   normalized.settings.language = ["en", "zh-TW", "ja"].includes(normalized.settings.language) ? normalized.settings.language : "en";
   normalized.settings.theme = ["dark", "light"].includes(normalized.settings.theme) ? normalized.settings.theme : "dark";
+  normalized.settings.fontSize = ["small", "normal", "big"].includes(normalized.settings.fontSize) ? normalized.settings.fontSize : "normal";
 
   normalized.trips.forEach((trip, index) => {
     const hadTripDefault = CURRENCIES.includes(trip.defaultCurrency);
@@ -1414,6 +1628,7 @@ let editingItemId = null;
 let editingTripId = null;
 let pendingDelete = null;
 let draftThemeChoice = null;
+let draftFontSizeChoice = null;
 
 const HISTORY_LIMIT = 100;
 const undoStack = [];
@@ -1588,6 +1803,7 @@ function kindLabel(kind) { return t(`kind_${kind}`); }
 function categoryLabel(id, fallback = "") { return t(`cat_${id}`) || fallback; }
 function applyTheme() {
   document.documentElement.dataset.theme = state.settings?.theme || "dark";
+  document.documentElement.dataset.fontSize = state.settings?.fontSize || "normal";
 }
 function applyStaticTranslations() {
   document.documentElement.lang = currentLanguage();
@@ -2951,14 +3167,19 @@ function openAppSettings() {
   document.getElementById("app-modal-title").textContent = t("appSettingsTitle");
   document.getElementById("s-language").value = currentLanguage();
   draftThemeChoice = state.settings.theme || "dark";
+  draftFontSizeChoice = state.settings.fontSize || "normal";
   document.querySelectorAll("[data-theme-choice]").forEach(button => {
     button.classList.toggle("active", button.dataset.themeChoice === draftThemeChoice);
+  });
+  document.querySelectorAll("[data-font-size-choice]").forEach(button => {
+    button.classList.toggle("active", button.dataset.fontSizeChoice === draftFontSizeChoice);
   });
   document.getElementById("app-overlay").classList.add("show");
 }
 function closeAppSettings() {
   document.getElementById("app-overlay").classList.remove("show");
   draftThemeChoice = null;
+  draftFontSizeChoice = null;
 }
 document.getElementById("app-settings-btn").addEventListener("click", openAppSettings);
 document.getElementById("app-close").addEventListener("click", closeAppSettings);
@@ -2970,9 +3191,16 @@ document.querySelectorAll("[data-theme-choice]").forEach(button => {
     document.querySelectorAll("[data-theme-choice]").forEach(candidate => candidate.classList.toggle("active", candidate === button));
   });
 });
+document.querySelectorAll("[data-font-size-choice]").forEach(button => {
+  button.addEventListener("click", () => {
+    draftFontSizeChoice = button.dataset.fontSizeChoice;
+    document.querySelectorAll("[data-font-size-choice]").forEach(candidate => candidate.classList.toggle("active", candidate === button));
+  });
+});
 document.getElementById("app-save").addEventListener("click", () => {
   state.settings.language = document.getElementById("s-language").value;
   state.settings.theme = draftThemeChoice || state.settings.theme || "dark";
+  state.settings.fontSize = draftFontSizeChoice || state.settings.fontSize || "normal";
   closeAppSettings();
   renderAll();
 });
@@ -3505,6 +3733,53 @@ Object.assign(COLLAB_I18N.ja, {
   backups:"バックアップ", backupsTitle:"旅行のバックアップ", backupHelp:"クラウド変更の直前と6時間ごとにサーバー復元スナップショットを作成します。旅行ごとに最大1,000件を保持します。", backupNeedsSignIn:"サーバーバックアップを使うにはサインインしてください。", backupNeedsSharedTrip:"サーバーバックアップを使う前に旅行を共有してください。", backupNoPermission:"バックアップの表示と復元には編集権限が必要です。", backupLoading:"バックアップを読み込んでいます…", backupEmpty:"復元スナップショットはまだありません。", createBackup:"今すぐバックアップ", refresh:"更新", backupCreated:"バックアップを作成しました。", backupCreateError:"バックアップを作成できませんでした。", backupBackendMissing:"バックアップ用データベースの準備ができていません。付属の v5 Supabase SQL を実行し、数秒待ってから再読み込みしてください。", backupAutomatic:"変更前", backupScheduled:"定期", backupManual:"手動", backupRestorePoint:"復元前", backupVersion:"バージョン {version}", backupBy:"{name}", server:"サーバー", restore:"復元", downloadJson:"JSONをダウンロード", confirmRestore:"このバックアップを復元しますか？現在の旅行は先に別の復元ポイントとして保存されます。", restoring:"バックアップを復元中…", restored:"バックアップを復元しました。", restoreError:"バックアップを復元できませんでした。",
   attachImage:"画像を添付", removeSelectedImage:"選択した画像を削除", imageTooLarge:"画像は8 MB以下にしてください。", imageTypeUnsupported:"JPEG、PNG、WebP、GIF画像を使用してください。", imageUploadError:"画像をアップロードできませんでした。", unsend:"送信取消", removeMessage:"削除", confirmUnsend:"このメッセージの送信を取り消しますか？", confirmRemoveMessage:"このメンバーのメッセージを削除しますか？", messageUnsent:"メッセージの送信が取り消されました", messageRemoved:"管理者がメッセージを削除しました", messageRemoveError:"メッセージを削除できませんでした。"
 });
+
+Object.assign(COLLAB_I18N.en, {
+  backupsTitle:"Trip & chat backups",
+  backupHelp:"Each trip is backed up independently. Snapshots include the itinerary, conversation, activity log, and photo references. The server creates one for every trip every six hours; up to 1,000 are retained per trip.",
+  backupCreated:"Trip and chat backup created.",
+  backupBackendMissing:"The backup database is not ready. Run the supplied v9 Supabase SQL, wait a few seconds, and reload this page.",
+  backupChatIncluded:"Chat: {messages} messages · {logs} activity records · {images} photos",
+  backupChatMissing:"Chat was not included in this older backup",
+  restoreAll:"Restore all",
+  restoreChat:"Restore chat",
+  confirmRestore:"Restore the itinerary and chat from this backup? The current trip and chat will first be saved as another recovery point.",
+  confirmRestoreChat:"Restore only the conversation and activity log from this backup? The current trip and chat will first be saved as another recovery point.",
+  restoringChat:"Restoring chat…",
+  chatRestored:"Chat restored.",
+  chatRestoreError:"The chat backup could not be restored."
+});
+Object.assign(COLLAB_I18N["zh-TW"], {
+  backupsTitle:"旅程與聊天備份",
+  backupHelp:"每個旅程都會獨立備份。快照包含行程、對話、活動紀錄及照片參照；伺服器每六小時為每個旅程建立一次備份，每個旅程最多保留 1,000 份。",
+  backupCreated:"已建立旅程與聊天備份。",
+  backupBackendMissing:"備份資料庫尚未就緒。請執行隨附的 v9 Supabase SQL，等待數秒後重新載入。",
+  backupChatIncluded:"聊天：{messages} 則訊息 · {logs} 筆活動紀錄 · {images} 張照片",
+  backupChatMissing:"此舊版備份未包含聊天",
+  restoreAll:"全部還原",
+  restoreChat:"還原聊天",
+  confirmRestore:"要從此備份還原行程與聊天嗎？目前的旅程與聊天會先另存為復原點。",
+  confirmRestoreChat:"只還原此備份中的對話與活動紀錄嗎？目前的旅程與聊天會先另存為復原點。",
+  restoringChat:"正在還原聊天…",
+  chatRestored:"聊天已還原。",
+  chatRestoreError:"無法還原聊天備份。"
+});
+Object.assign(COLLAB_I18N.ja, {
+  backupsTitle:"旅行とチャットのバックアップ",
+  backupHelp:"旅行ごとに独立してバックアップします。スナップショットには予定、会話、アクティビティ履歴、写真参照が含まれます。サーバーは旅行ごとに6時間ごとに保存し、最大1,000件保持します。",
+  backupCreated:"旅行とチャットのバックアップを作成しました。",
+  backupBackendMissing:"バックアップ用データベースの準備ができていません。付属の v9 Supabase SQL を実行し、数秒待ってから再読み込みしてください。",
+  backupChatIncluded:"チャット：{messages}件 · アクティビティ{logs}件 · 写真{images}枚",
+  backupChatMissing:"この古いバックアップにはチャットが含まれていません",
+  restoreAll:"すべて復元",
+  restoreChat:"チャットを復元",
+  confirmRestore:"このバックアップから予定とチャットを復元しますか？現在の旅行とチャットは先に復元ポイントとして保存されます。",
+  confirmRestoreChat:"このバックアップから会話とアクティビティ履歴だけを復元しますか？現在の旅行とチャットは先に復元ポイントとして保存されます。",
+  restoringChat:"チャットを復元中…",
+  chatRestored:"チャットを復元しました。",
+  chatRestoreError:"チャットのバックアップを復元できませんでした。"
+});
+
 function ct(key, variables = {}) {
   let value = (COLLAB_I18N[currentLanguage()] || COLLAB_I18N.en)[key] ?? COLLAB_I18N.en[key] ?? key;
   Object.entries(variables).forEach(([name, replacement]) => { value = value.replaceAll(`{${name}}`, String(replacement)); });
@@ -3512,7 +3787,7 @@ function ct(key, variables = {}) {
 }
 function applyCollabTranslations() {
   const set = (id, key) => { const element = document.getElementById(id); if (element) element.textContent = ct(key); };
-  set("share-trip-btn", "share"); set("chat-trip-btn", "chat"); set("backup-trip-btn", "backups"); set("readonly-banner", "viewOnlyBanner"); set("share-modal-title", "shareTitle"); set("share-done", "done"); set("chat-modal-title", "chatTitle"); set("chat-send-btn", "send"); set("chat-filter-label", "showModifications");
+  set("share-trip-btn", "share"); set("chat-trip-btn", "chat"); set("backup-trip-btn", "backups"); set("readonly-banner", "viewOnlyBanner"); set("share-modal-title", "shareTitle"); set("share-done", "done"); set("chat-modal-title", "chatTitle"); set("chat-send-btn", "send"); set("chat-filter-label", "showModifications"); set("chat-tab-conversation-label", "conversationTab"); set("chat-tab-activity-label", "activityTab"); set("chat-tab-album-label", "albumTab"); set("chat-jump-label", "jumpToDate"); set("chat-jump-btn", "go");
   set("backup-modal-title", "backupsTitle"); set("backup-help", "backupHelp"); set("backup-create-btn", "createBackup"); set("backup-refresh-btn", "refresh");
   set("account-modal-title", "accountTitle"); set("account-done", "done"); set("profile-title", "profileTitle"); set("profile-help", "profileHelp"); set("profile-name-label", "displayName"); set("profile-visibility-label", "showMeAs"); set("profile-save-btn", "saveIdentity"); set("member-directory-title", "memberDirectory"); set("member-directory-help", "memberDirectoryHelp"); set("collab-email-label", "email"); set("collab-auth-help", "authHelp"); set("share-auth-help", "shareAuthHelp"); set("account-global-help", "globalAccountHelp"); set("share-open-account-btn", "signIn"); set("collab-session-note", "sessionNote"); set("collab-login-btn", "sendSignIn"); set("collab-logout-btn", "signOut");
   const accountButton = document.getElementById("account-btn");
@@ -3565,6 +3840,26 @@ Object.assign(COLLAB_I18N.ja, {
   chatRefreshError:"会話を更新できませんでした。読み込み済みのメッセージはそのまま表示します。"
 });
 
+
+Object.assign(COLLAB_I18N.en, {
+  conversationTab:"Conversation", activityTab:"Activity", albumTab:"Album", jumpToDate:"Go to date", go:"Go",
+  noItemsOnDate:"Nothing was found on that date.", activityEmpty:"No trip modifications are available.", albumEmpty:"No photos have been shared yet.",
+  deleteSilently:"Delete silently", confirmDeleteSilently:"Permanently delete this message without leaving a placeholder?",
+  creatorEmail:"Email visible to creator", imageUnavailable:"Image unavailable"
+});
+Object.assign(COLLAB_I18N["zh-TW"], {
+  conversationTab:"對話", activityTab:"修改紀錄", albumTab:"相簿", jumpToDate:"前往日期", go:"前往",
+  noItemsOnDate:"該日期沒有內容。", activityEmpty:"目前沒有旅程修改紀錄。", albumEmpty:"目前尚未分享任何照片。",
+  deleteSilently:"靜默刪除", confirmDeleteSilently:"要永久刪除此訊息且不留下提示嗎？",
+  creatorEmail:"建立者可見的電子郵件", imageUnavailable:"圖片無法顯示"
+});
+Object.assign(COLLAB_I18N.ja, {
+  conversationTab:"会話", activityTab:"変更履歴", albumTab:"アルバム", jumpToDate:"日付へ移動", go:"移動",
+  noItemsOnDate:"この日付の項目はありません。", activityEmpty:"旅行の変更履歴はありません。", albumEmpty:"共有された写真はまだありません。",
+  deleteSilently:"表示を残さず削除", confirmDeleteSilently:"プレースホルダーを残さず、このメッセージを完全に削除しますか？",
+  creatorEmail:"作成者に表示されるメール", imageUnavailable:"画像を表示できません"
+});
+
 let supabaseClient = null;
 let collabUser = null;
 let remoteSaveTimer = null;
@@ -3589,6 +3884,8 @@ let chatLoadRequestId = 0;
 let chatLoadPromise = null;
 let expandedChangeLogIds = new Set();
 let openChatMessageMenuId = null;
+let activeChatView = "conversation";
+let chatScrollPositions = { conversation:0, activity:0, album:0 };
 let chatBackendReady = null;
 let selectedChatImage = null;
 let selectedChatImagePreviewUrl = "";
@@ -3740,33 +4037,25 @@ async function loadParticipantProfiles(remoteId = activeTrip()?.remoteId, option
   const requestId = ++participantProfileRequestId;
   const currentTrip = state.trips.find(trip => trip.remoteId === remoteId) || activeTrip();
 
-  // Registration only mirrors the signed-in user's identity preference. It is
-  // deliberately fire-and-forget and is not part of chat loading.
   registerCurrentParticipant(currentTrip).catch(() => false);
-
-  const [membersResult, profilesResult] = await Promise.all([
-    supabaseClient.rpc("list_voyage_members", { p_trip_id: remoteId }),
-    supabaseClient.rpc("list_voyage_participant_profiles", { p_trip_id: remoteId })
-  ]);
+  const profilesResult = await supabaseClient.rpc("list_voyage_participant_profiles", { p_trip_id: remoteId });
 
   if (requestId !== participantProfileRequestId || activeTrip()?.remoteId !== remoteId) {
     return Array.from(participantProfiles.values());
   }
-  if (membersResult.error) {
-    console.warn("Could not load authoritative trip members", membersResult.error);
+  if (profilesResult.error) {
+    console.warn("Could not load trip members", profilesResult.error);
     return Array.from(participantProfiles.values());
   }
 
-  const profileByUser = new Map((profilesResult.data || []).map(profile => [profile.user_id, profile]));
   const nextProfiles = new Map();
-  (membersResult.data || []).forEach(member => {
-    const profile = profileByUser.get(member.user_id);
-    nextProfiles.set(member.user_id, {
-      user_id: member.user_id,
-      role: member.role,
-      raw_email: member.email || "",
-      display_value: profile?.display_value || null,
-      visibility: normalizeProfileVisibility(profile?.visibility || "role")
+  (profilesResult.data || []).forEach(profile => {
+    nextProfiles.set(profile.user_id, {
+      user_id: profile.user_id,
+      role: profile.role,
+      display_value: profile.display_value || null,
+      visibility: normalizeProfileVisibility(profile.visibility || "role"),
+      email_value: profile.email_value || null
     });
   });
 
@@ -3813,7 +4102,9 @@ function renderMemberDirectory() {
   list.innerHTML = members.map(member => {
     const display = participantName(member.user_id);
     const hidden = member.visibility === "hidden";
-    return `<div class="member-directory-row" data-role="${esc(member.role)}"><span class="member-avatar">${esc(participantInitial(member.user_id))}</span><span class="member-directory-name ${hidden ? "member-hidden" : ""}" title="${hidden ? "" : esc(display)}"><strong>${esc(display)}</strong><small style="display:block;color:var(--text-lo);margin-top:2px;">${esc(rolePermissionLabel(member.role))}</small></span></div>`;
+    const creatorEmail = tripRole(activeTrip()) === "owner" && member.email_value
+      ? `<small class="member-email-visible" title="${esc(member.email_value)}">${esc(member.email_value)}</small>` : "";
+    return `<div class="member-directory-row" data-role="${esc(member.role)}"><span class="member-avatar">${esc(participantInitial(member.user_id))}</span><span class="member-directory-name ${hidden ? "member-hidden" : ""}" title="${hidden ? "" : esc(display)}"><strong>${esc(display)}</strong><small style="display:block;color:var(--text-lo);margin-top:2px;">${esc(rolePermissionLabel(member.role))}</small>${creatorEmail}</span></div>`;
   }).join("");
 }
 
@@ -3864,7 +4155,8 @@ function isMissingChatRelation(error) {
   const message = String(error?.message || "");
   return error?.code === "PGRST205"
     || /Could not find the table 'public\.(voyage_chat_messages|voyage_change_logs|voyage_trip_participants|voyage_user_profiles|voyage_trip_backups)'/i.test(message)
-    || /relation .*voyage_(chat_messages|change_logs|trip_participants|user_profiles|trip_backups).* does not exist/i.test(message);
+    || /relation .*voyage_(chat_messages|change_logs|trip_participants|user_profiles|trip_backups).* does not exist/i.test(message)
+    || /restore_voyage_chat_backup|chat_snapshot|chat_included/i.test(message);
 }
 function chatErrorText(error) {
   return isMissingChatRelation(error) ? ct("chatBackendMissing") : (error?.message || ct("chatSendError"));
@@ -4004,11 +4296,11 @@ async function loadChatData(options = {}) {
       const [messagesResult, logsResult] = await Promise.all([
         supabaseClient.from("voyage_chat_messages")
           .select("id,trip_id,user_id,body,message_kind,image_path,image_name,image_mime,image_size,deleted_at,deleted_by,deletion_kind,created_at")
-          .eq("trip_id", remoteId).order("created_at", { ascending:true }).limit(300),
+          .eq("trip_id", remoteId).order("created_at", { ascending:false }).limit(1000),
         supabaseClient.from("voyage_change_logs")
           .select("id,trip_id,user_id,action_id,details,is_active,created_at")
           .eq("trip_id", remoteId).eq("is_active", true)
-          .order("created_at", { ascending:true }).limit(300)
+          .order("created_at", { ascending:false }).limit(1000)
       ]);
 
       if (requestId !== chatLoadRequestId || activeTrip()?.remoteId !== remoteId) return false;
@@ -4020,8 +4312,8 @@ async function loadChatData(options = {}) {
       }
 
       chatBackendReady = true;
-      chatMessagesCache = messagesResult.data || [];
-      changeLogsCache = logsResult.data || [];
+      chatMessagesCache = (messagesResult.data || []).slice().reverse();
+      changeLogsCache = (logsResult.data || []).slice().reverse();
       chatDataLoadedTripId = remoteId;
       await loadChatImageUrls(chatMessagesCache);
       if (requestId !== chatLoadRequestId || activeTrip()?.remoteId !== remoteId) return false;
@@ -4038,10 +4330,93 @@ async function loadChatData(options = {}) {
   return chatLoadPromise;
 }
 
-function renderChatFeed(options = {}) {
+function chatDateKey(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = number => String(number).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+function chatDateLabel(dateKey) {
+  if (!dateKey) return "";
+  const date = new Date(`${dateKey}T00:00:00`);
+  return date.toLocaleDateString(currentLocale(), { weekday:"short", year:"numeric", month:"short", day:"numeric" });
+}
+function chatDateDividerHtml(dateKey) {
+  return `<div class="chat-date-divider" data-chat-date="${esc(dateKey)}"><span>${esc(chatDateLabel(dateKey))}</span></div>`;
+}
+function groupChatEntriesByDate(entries) {
+  const groups = [];
+  let current = null;
+  entries.forEach(entry => {
+    const dateKey = chatDateKey(entry.created_at);
+    if (!dateKey) return;
+    if (!current || current.dateKey !== dateKey) {
+      current = { dateKey, entries:[] };
+      groups.push(current);
+    }
+    current.entries.push(entry);
+  });
+  return groups;
+}
+function chatMessageHtml(entry) {
+  const author = participantName(entry.user_id);
+  const time = formatChatTime(entry.created_at);
+  const own = collabUser && entry.user_id === collabUser.id;
+  const canModerate = own || canManageTrip(activeTrip());
+  const deleted = Boolean(entry.deleted_at);
+  const actionLabel = own ? ct("unsend") : ct("removeMessage");
+  const menuOpen = openChatMessageMenuId === String(entry.id);
+  const actions = canModerate && !deleted
+    ? `<span class="chat-message-menu-wrap"><button class="chat-message-menu-btn" type="button" data-chat-menu="${esc(entry.id)}" aria-expanded="${menuOpen ? "true" : "false"}" aria-label="${esc(actionLabel)}">⋯</button><span class="chat-message-menu" ${menuOpen ? "" : "hidden"}><button type="button" data-chat-remove="${esc(entry.id)}">${esc(actionLabel)}</button><button type="button" data-chat-delete-silent="${esc(entry.id)}">${esc(ct("deleteSilently"))}</button></span></span>`
+    : "";
+  if (deleted) {
+    const deletedText = entry.deletion_kind === "removed" ? ct("messageRemoved") : ct("messageUnsent");
+    return `<article class="chat-message is-deleted ${own ? "is-own" : ""}" data-message-id="${esc(entry.id)}"><div class="chat-message-head"><span class="chat-message-head-main"><span class="chat-message-author">${esc(author)}</span><time>${esc(time)}</time></span></div><div class="chat-message-deleted">${esc(deletedText)}</div></article>`;
+  }
+  const signedUrl = entry.image_path ? chatImageUrls.get(entry.image_path) : "";
+  const imageHtml = signedUrl
+    ? `<a class="chat-image-link" href="${esc(signedUrl)}" target="_blank" rel="noopener noreferrer"><img src="${esc(signedUrl)}" alt="${esc(entry.image_name || ct("attachImage"))}" loading="lazy"></a>`
+    : "";
+  const bodyHtml = entry.body ? `<div class="chat-message-text ${imageHtml ? "chat-image-caption" : ""}">${esc(entry.body)}</div>` : "";
+  return `<article class="chat-message ${own ? "is-own" : ""}" data-message-id="${esc(entry.id)}"><div class="chat-message-head"><span class="chat-message-head-main"><span class="chat-message-author">${esc(author)}</span><time>${esc(time)}</time></span>${actions}</div>${imageHtml}${bodyHtml}</article>`;
+}
+function chatLogHtml(entry) {
+  const author = participantName(entry.user_id);
+  const time = formatChatTime(entry.created_at);
+  const changes = Array.isArray(entry.details?.changes) ? entry.details.changes : [];
+  const expanded = expandedChangeLogIds.has(String(entry.id));
+  return `<article class="chat-system ${expanded ? "expanded" : ""}" data-log-id="${esc(entry.id)}"><button class="chat-system-toggle" type="button"><span class="chat-system-icon">☷</span><span class="chat-system-main"><span class="chat-system-kicker">${esc(ct("activityLog"))}</span><span class="chat-system-title">${esc(ct("tripModified"))}</span><span class="chat-system-meta">${esc(ct("modificationBy", { name:author }))} · ${esc(time)}</span></span><span class="chat-system-chevron">${expanded ? "⌃" : "⌄"}</span></button><div class="chat-system-details"><ol>${changes.map(change => `<li>${esc(modificationLine(change))}</li>`).join("") || `<li>${esc(ct("tripModified"))}</li>`}</ol></div></article>`;
+}
+function bindChatInteractiveElements(root) {
+  if (!root) return;
+  root.querySelectorAll(".chat-system-toggle").forEach(button => button.addEventListener("click", () => {
+    const card = button.closest(".chat-system");
+    const id = String(card.dataset.logId);
+    if (expandedChangeLogIds.has(id)) expandedChangeLogIds.delete(id); else expandedChangeLogIds.add(id);
+    card.classList.toggle("expanded", expandedChangeLogIds.has(id));
+    button.querySelector(".chat-system-chevron").textContent = expandedChangeLogIds.has(id) ? "⌃" : "⌄";
+  }));
+  root.querySelectorAll("[data-chat-menu]").forEach(button => button.addEventListener("click", event => {
+    event.stopPropagation();
+    const id = String(button.dataset.chatMenu);
+    openChatMessageMenuId = openChatMessageMenuId === id ? null : id;
+    renderChatFeed();
+  }));
+  root.querySelectorAll("[data-chat-remove]").forEach(button => button.addEventListener("click", event => {
+    event.stopPropagation();
+    openChatMessageMenuId = null;
+    removeChatMessage(button.dataset.chatRemove);
+  }));
+  root.querySelectorAll("[data-chat-delete-silent]").forEach(button => button.addEventListener("click", event => {
+    event.stopPropagation();
+    openChatMessageMenuId = null;
+    deleteChatMessageSilently(button.dataset.chatDeleteSilent);
+  }));
+}
+function renderConversationFeed(options = {}) {
   const feed = document.getElementById("chat-feed");
   if (!feed) return;
-  const previousScrollTop = feed.scrollTop;
+  const previousScrollTop = feed.scrollTop || chatScrollPositions.conversation || 0;
   const wasNearBottom = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 90;
   const showLogs = document.getElementById("chat-show-modifications")?.checked !== false;
   const entries = [
@@ -4049,63 +4424,120 @@ function renderChatFeed(options = {}) {
     ...(showLogs ? changeLogsCache.map(log => ({ ...log, entryType:"log" })) : [])
   ].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-  const currentLogIds = new Set(changeLogsCache.map(log => String(log.id)));
-  expandedChangeLogIds = new Set([...expandedChangeLogIds].filter(id => currentLogIds.has(String(id))));
   if (!entries.length) {
     feed.innerHTML = `<div class="chat-empty">${esc(ct("chatEmpty"))}</div>`;
     return;
   }
-
-  feed.innerHTML = entries.map(entry => {
-    const author = participantName(entry.user_id);
-    const time = formatChatTime(entry.created_at);
-    if (entry.entryType === "message") {
-      const own = collabUser && entry.user_id === collabUser.id;
-      const canModerate = own || canManageTrip(activeTrip());
-      const deleted = Boolean(entry.deleted_at);
-      const actionLabel = own ? ct("unsend") : ct("removeMessage");
-      const menuOpen = openChatMessageMenuId === String(entry.id);
-      const actions = canModerate && !deleted
-        ? `<span class="chat-message-menu-wrap"><button class="chat-message-menu-btn" type="button" data-chat-menu="${esc(entry.id)}" aria-expanded="${menuOpen ? "true" : "false"}" aria-label="${esc(actionLabel)}">⋯</button><span class="chat-message-menu" ${menuOpen ? "" : "hidden"}><button type="button" data-chat-remove="${esc(entry.id)}">${esc(actionLabel)}</button></span></span>`
-        : "";
-      if (deleted) {
-        const deletedText = entry.deletion_kind === "removed" ? ct("messageRemoved") : ct("messageUnsent");
-        return `<article class="chat-message is-deleted ${own ? "is-own" : ""}"><div class="chat-message-head"><span class="chat-message-head-main"><span class="chat-message-author">${esc(author)}</span><time>${esc(time)}</time></span></div><div class="chat-message-deleted">${esc(deletedText)}</div></article>`;
-      }
-      const signedUrl = entry.image_path ? chatImageUrls.get(entry.image_path) : "";
-      const imageHtml = signedUrl
-        ? `<a class="chat-image-link" href="${esc(signedUrl)}" target="_blank" rel="noopener noreferrer"><img src="${esc(signedUrl)}" alt="${esc(entry.image_name || ct("attachImage"))}" loading="lazy"></a>`
-        : "";
-      const bodyHtml = entry.body ? `<div class="chat-message-text ${imageHtml ? "chat-image-caption" : ""}">${esc(entry.body)}</div>` : "";
-      return `<article class="chat-message ${own ? "is-own" : ""}"><div class="chat-message-head"><span class="chat-message-head-main"><span class="chat-message-author">${esc(author)}</span><time>${esc(time)}</time></span>${actions}</div>${imageHtml}${bodyHtml}</article>`;
-    }
-
-    const changes = Array.isArray(entry.details?.changes) ? entry.details.changes : [];
-    const expanded = expandedChangeLogIds.has(String(entry.id));
-    return `<article class="chat-system ${expanded ? "expanded" : ""}" data-log-id="${esc(entry.id)}"><button class="chat-system-toggle" type="button"><span class="chat-system-icon">☷</span><span class="chat-system-main"><span class="chat-system-kicker">${esc(ct("activityLog"))}</span><span class="chat-system-title">${esc(ct("tripModified"))}</span><span class="chat-system-meta">${esc(ct("modificationBy", { name:author }))} · ${esc(time)}</span></span><span class="chat-system-chevron">${expanded ? "⌃" : "⌄"}</span></button><div class="chat-system-details"><ol>${changes.map(change => `<li>${esc(modificationLine(change))}</li>`).join("") || `<li>${esc(ct("tripModified"))}</li>`}</ol></div></article>`;
-  }).join("");
-
-  feed.querySelectorAll(".chat-system-toggle").forEach(button => button.addEventListener("click", () => {
-    const card = button.closest(".chat-system");
-    const id = String(card.dataset.logId);
-    if (expandedChangeLogIds.has(id)) expandedChangeLogIds.delete(id); else expandedChangeLogIds.add(id);
-    card.classList.toggle("expanded", expandedChangeLogIds.has(id));
-    button.querySelector(".chat-system-chevron").textContent = expandedChangeLogIds.has(id) ? "⌃" : "⌄";
-  }));
-  feed.querySelectorAll("[data-chat-menu]").forEach(button => button.addEventListener("click", event => {
-    event.stopPropagation();
-    const id = String(button.dataset.chatMenu);
-    openChatMessageMenuId = openChatMessageMenuId === id ? null : id;
-    renderChatFeed();
-  }));
-  feed.querySelectorAll("[data-chat-remove]").forEach(button => button.addEventListener("click", event => {
-    event.stopPropagation();
-    openChatMessageMenuId = null;
-    removeChatMessage(button.dataset.chatRemove);
-  }));
-
+  feed.innerHTML = groupChatEntriesByDate(entries).map(group =>
+    chatDateDividerHtml(group.dateKey) + group.entries.map(entry =>
+      entry.entryType === "message" ? chatMessageHtml(entry) : chatLogHtml(entry)
+    ).join("")
+  ).join("");
+  bindChatInteractiveElements(feed);
   if (options.forceBottom || wasNearBottom) feed.scrollTop = feed.scrollHeight;
   else feed.scrollTop = previousScrollTop;
+  chatScrollPositions.conversation = feed.scrollTop;
+}
+function renderActivityFeed() {
+  const feed = document.getElementById("chat-activity-feed");
+  if (!feed) return;
+  const previousScrollTop = feed.scrollTop || chatScrollPositions.activity || 0;
+  if (!changeLogsCache.length) {
+    feed.innerHTML = `<div class="chat-activity-empty">${esc(ct("activityEmpty"))}</div>`;
+    return;
+  }
+  feed.innerHTML = groupChatEntriesByDate(changeLogsCache).map(group =>
+    chatDateDividerHtml(group.dateKey) + group.entries.map(chatLogHtml).join("")
+  ).join("");
+  bindChatInteractiveElements(feed);
+  feed.scrollTop = previousScrollTop;
+  chatScrollPositions.activity = feed.scrollTop;
+}
+function renderAlbumFeed() {
+  const feed = document.getElementById("chat-album");
+  if (!feed) return;
+  const previousScrollTop = feed.scrollTop || chatScrollPositions.album || 0;
+  const photos = chatMessagesCache.filter(message => !message.deleted_at && message.image_path);
+  if (!photos.length) {
+    feed.innerHTML = `<div class="chat-album-empty">${esc(ct("albumEmpty"))}</div>`;
+    return;
+  }
+  const groups = groupChatEntriesByDate(photos.slice().sort((a,b) => new Date(b.created_at) - new Date(a.created_at)));
+  feed.innerHTML = groups.map(group => {
+    const cards = group.entries.map(message => {
+      const url = chatImageUrls.get(message.image_path);
+      const media = url
+        ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer"><img src="${esc(url)}" alt="${esc(message.image_name || ct("attachImage"))}" loading="lazy"></a>`
+        : `<div class="chat-album-placeholder">${esc(ct("imageUnavailable"))}</div>`;
+      return `<article class="chat-album-card" data-message-id="${esc(message.id)}">${media}<div class="chat-album-meta"><span class="chat-album-author">${esc(participantName(message.user_id))}</span><time class="chat-album-time">${esc(formatChatTime(message.created_at))}</time>${message.body ? `<div class="chat-album-caption">${esc(message.body)}</div>` : ""}</div></article>`;
+    }).join("");
+    return `<section class="chat-album-date-section" data-chat-date="${esc(group.dateKey)}">${chatDateDividerHtml(group.dateKey)}<div class="chat-album-grid">${cards}</div></section>`;
+  }).join("");
+  feed.scrollTop = previousScrollTop;
+  chatScrollPositions.album = feed.scrollTop;
+}
+function updateChatDateBounds() {
+  const input = document.getElementById("chat-jump-date");
+  if (!input) return;
+  const dates = [...chatMessagesCache, ...changeLogsCache].map(entry => chatDateKey(entry.created_at)).filter(Boolean).sort();
+  input.min = dates[0] || "";
+  input.max = dates[dates.length - 1] || "";
+}
+function updateChatMeta() {
+  updateChatDateBounds();
+  const activityCount = document.getElementById("chat-activity-count");
+  const albumCount = document.getElementById("chat-album-count");
+  if (activityCount) activityCount.textContent = String(changeLogsCache.length);
+  if (albumCount) albumCount.textContent = String(chatMessagesCache.filter(message => !message.deleted_at && message.image_path).length);
+}
+function renderMessageViews(options = {}) {
+  renderConversationFeed(options);
+  renderAlbumFeed();
+  updateChatMeta();
+}
+function renderLogViews() {
+  renderConversationFeed();
+  renderActivityFeed();
+  updateChatMeta();
+}
+function renderChatFeed(options = {}) {
+  const currentLogIds = new Set(changeLogsCache.map(log => String(log.id)));
+  expandedChangeLogIds = new Set([...expandedChangeLogIds].filter(id => currentLogIds.has(String(id))));
+  renderConversationFeed(options);
+  renderActivityFeed();
+  renderAlbumFeed();
+  updateChatMeta();
+}
+function setChatView(view) {
+  activeChatView = ["conversation", "activity", "album"].includes(view) ? view : "conversation";
+  document.querySelectorAll("[data-chat-view]").forEach(button => {
+    button.setAttribute("aria-selected", String(button.dataset.chatView === activeChatView));
+  });
+  document.querySelectorAll("[data-chat-panel]").forEach(panel => {
+    panel.hidden = panel.dataset.chatPanel !== activeChatView;
+  });
+  const filter = document.getElementById("chat-filter-wrap");
+  const composer = document.getElementById("chat-composer");
+  if (filter) filter.style.display = activeChatView === "conversation" ? "inline-flex" : "none";
+  if (composer) composer.style.display = activeChatView === "conversation" ? "flex" : "none";
+}
+function jumpChatToDate() {
+  const date = document.getElementById("chat-jump-date")?.value;
+  if (!date) return;
+  const feed = {
+    conversation:document.getElementById("chat-feed"),
+    activity:document.getElementById("chat-activity-feed"),
+    album:document.getElementById("chat-album")
+  }[activeChatView];
+  const target = feed?.querySelector(`[data-chat-date="${CSS.escape(date)}"]`);
+  const status = document.getElementById("chat-status");
+  if (!target || !feed) {
+    if (status) status.textContent = ct("noItemsOnDate");
+    return;
+  }
+  if (status) status.textContent = "";
+  feed.scrollTo({ top:Math.max(0, target.offsetTop - 8), behavior:"smooth" });
+  chatScrollPositions[activeChatView] = Math.max(0, target.offsetTop - 8);
 }
 
 function upsertChatMessage(message) {
@@ -4125,11 +4557,11 @@ function applyChatRealtimePayload(payload) {
     if (row.image_path && !row.deleted_at && !chatImageUrls.has(row.image_path)) {
       supabaseClient.storage.from(CHAT_MEDIA_BUCKET).createSignedUrl(row.image_path, 3600).then(({data}) => {
         const url = data?.signedUrl || data?.signedURL;
-        if (url) { chatImageUrls.set(row.image_path, url); renderChatFeed(); }
+        if (url) { chatImageUrls.set(row.image_path, url); renderMessageViews(); }
       }).catch(() => null);
     }
   }
-  renderChatFeed();
+  renderMessageViews();
 }
 function applyLogRealtimePayload(payload) {
   const row = payload.new && Object.keys(payload.new).length ? payload.new : payload.old;
@@ -4137,7 +4569,7 @@ function applyLogRealtimePayload(payload) {
   changeLogsCache = changeLogsCache.filter(log => String(log.id) !== String(row.id));
   if (payload.eventType !== "DELETE" && row.is_active !== false) changeLogsCache.push(row);
   changeLogsCache.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
-  renderChatFeed();
+  renderLogViews();
 }
 
 async function removeChatMessage(messageId) {
@@ -4152,10 +4584,8 @@ async function removeChatMessage(messageId) {
     return;
   }
   const result = Array.isArray(data) ? data[0] : data;
-  if (result?.removed_image_path) {
-    const removal = await supabaseClient.storage.from(CHAT_MEDIA_BUCKET).remove([result.removed_image_path]);
-    if (removal.error) console.warn("Could not remove chat image object", removal.error);
-  }
+  // The private image object is intentionally retained so a chat backup
+  // created before this removal can restore the photo.
   const cached = chatMessagesCache.find(candidate => String(candidate.id) === String(messageId));
   if (cached) {
     cached.deleted_at = new Date().toISOString();
@@ -4163,7 +4593,27 @@ async function removeChatMessage(messageId) {
     cached.body = "";
     cached.image_path = null;
   }
-  renderChatFeed();
+  renderMessageViews();
+}
+
+
+async function deleteChatMessageSilently(messageId) {
+  const message = chatMessagesCache.find(candidate => String(candidate.id) === String(messageId));
+  if (!message || !supabaseClient || !collabUser) return;
+  const own = message.user_id === collabUser.id;
+  if (!own && !canManageTrip(activeTrip())) return;
+  if (!window.confirm(ct("confirmDeleteSilently"))) return;
+  const { data, error } = await supabaseClient.rpc("delete_voyage_chat_message_silently", { p_message_id:messageId });
+  if (error) {
+    document.getElementById("chat-status").textContent = error.message || ct("messageRemoveError");
+    return;
+  }
+  const result = Array.isArray(data) ? data[0] : data;
+  // Silent deletion removes the message row, but retains a private image
+  // object referenced by older backups so that recovery remains possible.
+  chatMessagesCache = chatMessagesCache.filter(candidate => String(candidate.id) !== String(messageId));
+  if (message.image_path) chatImageUrls.delete(message.image_path);
+  renderMessageViews();
 }
 
 async function ensureChatRealtime(remoteId = activeTrip()?.remoteId) {
@@ -4222,7 +4672,7 @@ async function sendChatMessage() {
   clearSelectedChatImage();
   if (insertedMessage) upsertChatMessage(insertedMessage);
   document.getElementById("chat-status").textContent = "";
-  renderChatFeed({ forceBottom:true });
+  renderMessageViews({ forceBottom:true });
 }
 async function openChatModal() {
   applyCollabTranslations();
@@ -4236,6 +4686,7 @@ async function openChatModal() {
   note.style.display = message ? "block" : "none";
   content.style.display = message ? "none" : "flex";
   document.getElementById("chat-overlay").classList.add("show");
+  setChatView(activeChatView || "conversation");
   if (!message) {
     registerCurrentParticipant(trip).catch(() => false);
     await ensureChatRealtime(trip.remoteId);
@@ -4263,7 +4714,7 @@ async function loadBackups() {
   setBackupStatus(ct("backupLoading"));
   await loadParticipantProfiles(trip.remoteId).catch(() => []);
   const { data, error } = await supabaseClient.from("voyage_trip_backups")
-    .select("id,trip_id,created_by,source,label,version,snapshot_hash,created_at")
+    .select("id,trip_id,created_by,source,label,version,snapshot_hash,chat_included,message_count,log_count,image_count,created_at")
     .eq("trip_id", trip.remoteId)
     .order("created_at", { ascending:false })
     .limit(300);
@@ -4289,9 +4740,21 @@ function renderBackups() {
     const version = backup.version === null || backup.version === undefined ? "" : ct("backupVersion", { version:backup.version });
     const metadata = [formatChatTime(backup.created_at), version, ct("backupBy", { name:creator })].filter(Boolean).join(" · ");
     const dotClass = backup.source === "manual" ? "manual" : backup.source === "restore" ? "restore" : "";
-    return `<article class="backup-row" data-backup-id="${esc(backup.id)}"><div class="backup-row-main"><div class="backup-row-title"><span class="backup-source-dot ${dotClass}"></span><span>${esc(backup.label || source)}</span></div><div class="backup-row-meta">${esc(metadata)}</div></div><div class="backup-row-actions"><button class="btn btn-ghost" type="button" data-backup-download="${esc(backup.id)}">${esc(ct("downloadJson"))}</button><button class="btn btn-primary" type="button" data-backup-restore="${esc(backup.id)}">${esc(ct("restore"))}</button></div></article>`;
+    const chatText = backup.chat_included
+      ? ct("backupChatIncluded", {
+          messages:Number(backup.message_count || 0),
+          logs:Number(backup.log_count || 0),
+          images:Number(backup.image_count || 0)
+        })
+      : ct("backupChatMissing");
+    const chatClass = backup.chat_included ? "chat" : "missing";
+    const restoreChatButton = backup.chat_included
+      ? `<button class="btn btn-ghost" type="button" data-backup-restore-chat="${esc(backup.id)}">${esc(ct("restoreChat"))}</button>`
+      : "";
+    return `<article class="backup-row" data-backup-id="${esc(backup.id)}"><div class="backup-row-main"><div class="backup-row-title"><span class="backup-source-dot ${dotClass}"></span><span>${esc(backup.label || source)}</span></div><div class="backup-row-meta">${esc(metadata)}</div><div class="backup-scope-row"><span class="backup-scope-pill">🗓 ${esc(t("schedule"))}</span><span class="backup-scope-pill ${chatClass}">💬 ${esc(chatText)}</span></div></div><div class="backup-row-actions"><button class="btn btn-ghost" type="button" data-backup-download="${esc(backup.id)}">${esc(ct("downloadJson"))}</button>${restoreChatButton}<button class="btn btn-primary" type="button" data-backup-restore="${esc(backup.id)}">${esc(ct("restoreAll"))}</button></div></article>`;
   }).join("");
   list.querySelectorAll("[data-backup-download]").forEach(button => button.addEventListener("click", () => downloadBackup(button.dataset.backupDownload)));
+  list.querySelectorAll("[data-backup-restore-chat]").forEach(button => button.addEventListener("click", () => restoreChatBackup(button.dataset.backupRestoreChat)));
   list.querySelectorAll("[data-backup-restore]").forEach(button => button.addEventListener("click", () => restoreBackup(button.dataset.backupRestore)));
 }
 async function createManualBackup() {
@@ -4309,7 +4772,7 @@ async function downloadBackup(backupId) {
   const trip = activeTrip();
   if (!supabaseClient || !trip?.remoteId) return;
   setBackupStatus("");
-  const { data, error } = await supabaseClient.from("voyage_trip_backups").select("id,source,label,version,snapshot,created_at").eq("id", backupId).eq("trip_id", trip.remoteId).single();
+  const { data, error } = await supabaseClient.from("voyage_trip_backups").select("id,source,label,version,snapshot,chat_snapshot,chat_included,message_count,log_count,image_count,created_at").eq("id", backupId).eq("trip_id", trip.remoteId).single();
   if (error) return setBackupStatus(error.message, true);
   const blob = new Blob([JSON.stringify({ voyageBoardBackup:true, tripId:trip.remoteId, ...data }, null, 2)], { type:"application/json" });
   const link = document.createElement("a");
@@ -4321,6 +4784,17 @@ async function downloadBackup(backupId) {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
+async function refreshRestoredChat(remoteId) {
+  if (!remoteId) return;
+  chatMessagesCache = [];
+  changeLogsCache = [];
+  chatDataLoadedTripId = null;
+  expandedChangeLogIds.clear();
+  chatImageUrls = new Map();
+  if (document.getElementById("chat-overlay")?.classList.contains("show")) {
+    await loadChatData({ forceBottom:false });
+  }
+}
 async function restoreBackup(backupId) {
   const trip = activeTrip();
   if (!supabaseClient || !collabUser || !trip?.remoteId || !canEditTrip(trip)) return;
@@ -4329,6 +4803,7 @@ async function restoreBackup(backupId) {
   const { error } = await supabaseClient.rpc("restore_voyage_trip_backup", { p_backup_id:Number(backupId) });
   if (error) return setBackupStatus(isMissingChatRelation(error) ? ct("backupBackendMissing") : (error.message || ct("restoreError")), true);
   await loadRemoteTrip(trip.remoteId, true);
+  await refreshRestoredChat(trip.remoteId);
   undoStack.length = 0;
   redoStack.length = 0;
   pendingModificationActions.clear();
@@ -4337,6 +4812,17 @@ async function restoreBackup(backupId) {
   updateHistoryButtons();
   renderAll();
   setBackupStatus(ct("restored"));
+  await loadBackups();
+}
+async function restoreChatBackup(backupId) {
+  const trip = activeTrip();
+  if (!supabaseClient || !collabUser || !trip?.remoteId || !canEditTrip(trip)) return;
+  if (!window.confirm(ct("confirmRestoreChat"))) return;
+  setBackupStatus(ct("restoringChat"));
+  const { error } = await supabaseClient.rpc("restore_voyage_chat_backup", { p_backup_id:Number(backupId) });
+  if (error) return setBackupStatus(isMissingChatRelation(error) ? ct("backupBackendMissing") : (error.message || ct("chatRestoreError")), true);
+  await refreshRestoredChat(trip.remoteId);
+  setBackupStatus(ct("chatRestored"));
   await loadBackups();
 }
 async function openBackupModal() {
@@ -4571,7 +5057,9 @@ async function listMembers(options = {}) {
     const isOwner = member.role === "owner";
     const canTouch = tripRole(trip) === "owner" ? !isOwner : ["viewer", "editor"].includes(member.role) && member.user_id !== collabUser.id;
     const roleOptions = tripRole(trip) === "owner" ? ["admin", "editor", "viewer"] : ["editor", "viewer"];
-    return `<div class="member-row" data-member="${esc(member.user_id)}"><span class="member-email" title="${esc(display)}"><strong>${esc(display)}</strong><small style="display:block;color:var(--text-lo);margin-top:2px;">${esc(rolePermissionLabel(member.role))}</small></span>${!canTouch ? `<span class="role-badge">${esc(roleText(member.role))}</span>` : `<select class="field-input" data-member-role>${roleOptions.map(role => `<option value="${role}" ${member.role === role ? "selected" : ""}>${esc(roleText(role))}</option>`).join("")}</select>`}${canTouch ? `<button class="icon-btn danger" data-remove-member title="${esc(ct("removeMember"))}">✕</button>` : ""}</div>`;
+    const creatorEmail = tripRole(trip) === "owner" && member.email_value
+      ? `<small class="member-email-visible" title="${esc(member.email_value)}">${esc(member.email_value)}</small>` : "";
+    return `<div class="member-row" data-member="${esc(member.user_id)}"><span class="member-email" title="${esc(display)}"><strong>${esc(display)}</strong><small style="display:block;color:var(--text-lo);margin-top:2px;">${esc(rolePermissionLabel(member.role))}</small>${creatorEmail}</span>${!canTouch ? `<span class="role-badge">${esc(roleText(member.role))}</span>` : `<select class="field-input" data-member-role>${roleOptions.map(role => `<option value="${role}" ${member.role === role ? "selected" : ""}>${esc(roleText(role))}</option>`).join("")}</select>`}${canTouch ? `<button class="icon-btn danger" data-remove-member title="${esc(ct("removeMember"))}">✕</button>` : ""}</div>`;
   }).join("");
 
   list.querySelectorAll("[data-member-role]").forEach(select => select.addEventListener("change", async () => {
@@ -4740,7 +5228,7 @@ document.getElementById("chat-overlay").addEventListener("click", event => {
   if (event.target.id === "chat-overlay") closeChatModal();
   if (openChatMessageMenuId && !event.target.closest(".chat-message-menu-wrap")) {
     openChatMessageMenuId = null;
-    renderChatFeed();
+    renderConversationFeed();
   }
 });
 document.getElementById("chat-send-btn").addEventListener("click", sendChatMessage);
@@ -4751,6 +5239,11 @@ document.getElementById("chat-message-input").addEventListener("keydown", event 
   if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendChatMessage(); }
 });
 document.getElementById("chat-show-modifications").addEventListener("change", renderChatFeed);
+document.querySelectorAll("[data-chat-view]").forEach(button => button.addEventListener("click", () => setChatView(button.dataset.chatView)));
+document.getElementById("chat-jump-btn").addEventListener("click", jumpChatToDate);
+document.getElementById("chat-jump-date").addEventListener("keydown", event => {
+  if (event.key === "Enter") { event.preventDefault(); jumpChatToDate(); }
+});
 document.getElementById("backup-trip-btn").addEventListener("click", openBackupModal);
 document.getElementById("backup-close").addEventListener("click", closeBackupModal);
 document.getElementById("backup-overlay").addEventListener("click", event => { if (event.target.id === "backup-overlay") closeBackupModal(); });
