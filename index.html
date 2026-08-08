@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board update: profiles, privacy-aware member directory, trip chat, modification log -->
+<!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -575,6 +575,62 @@
     .chat-system-details { padding-left:12px; }
   }
 
+
+  /* Chat media, moderation controls, and trip recovery snapshots */
+  .chat-message-head-main { display:flex; align-items:center; gap:8px; min-width:0; }
+  .chat-message-actions { display:flex; align-items:center; gap:4px; flex:0 0 auto; }
+  .chat-message-action { border:0; background:transparent; color:var(--text-lo); font:9.5px var(--font-ui); padding:2px 4px; cursor:pointer; border-radius:5px; }
+  .chat-message-action:hover { color:var(--danger); background:var(--hover); }
+  .chat-message.is-deleted { opacity:.72; border-style:dashed; }
+  .chat-message-deleted { color:var(--text-lo); font-style:italic; font-size:11.5px; }
+  .chat-image-link { display:block; margin-top:7px; border-radius:10px; overflow:hidden; border:1px solid var(--border); background:var(--ink); }
+  .chat-image-link img { display:block; width:100%; max-width:420px; max-height:380px; object-fit:contain; }
+  .chat-image-caption { margin-top:7px; }
+  .chat-composer { flex-wrap:wrap; align-items:flex-end; }
+  .chat-attach-btn { width:44px; height:44px; padding:0; display:grid; place-items:center; }
+  .chat-image-preview { flex:1 0 100%; display:flex; align-items:center; gap:10px; border:1px solid var(--border); border-radius:10px; padding:8px; background:var(--panel-2); }
+  .chat-image-preview[hidden] { display:none; }
+  .chat-image-preview img { width:58px; height:58px; object-fit:cover; border-radius:8px; border:1px solid var(--border); }
+  .chat-image-preview-main { flex:1; min-width:0; }
+  .chat-image-preview-name { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; }
+  .chat-image-preview-size { display:block; color:var(--text-lo); font-size:9.5px; margin-top:3px; }
+  .chat-image-remove { width:34px; height:34px; border:0; border-radius:8px; background:transparent; color:var(--danger); cursor:pointer; }
+  .chat-image-remove:hover { background:var(--hover); }
+
+  .backup-modal { max-width:760px !important; }
+  .backup-toolbar { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:14px; }
+  .backup-help { color:var(--text-lo); font-size:11px; line-height:1.5; max-width:500px; }
+  .backup-toolbar-actions { display:flex; gap:7px; flex:0 0 auto; }
+  .backup-status { min-height:18px; margin-bottom:8px; color:var(--text-lo); font-size:10.5px; }
+  .backup-status.error { color:var(--danger); }
+  .backup-status.success { color:#55E08A; }
+  .backup-list { display:flex; flex-direction:column; gap:8px; }
+  .backup-empty { padding:38px 18px; text-align:center; color:var(--text-lo); border:1px dashed var(--border); border-radius:12px; font-size:12px; }
+  .backup-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; border:1px solid var(--border); border-radius:11px; background:var(--panel-2); padding:11px 12px; }
+  .backup-row-main { min-width:0; }
+  .backup-row-title { display:flex; align-items:center; gap:7px; font-size:12px; font-weight:700; }
+  .backup-row-meta { margin-top:4px; color:var(--text-lo); font-size:9.8px; line-height:1.45; }
+  .backup-row-actions { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+  .backup-row-actions .btn { min-height:36px; padding:7px 10px; font-size:10.5px; }
+  .backup-source-dot { width:8px; height:8px; border-radius:50%; background:#63C7FF; box-shadow:0 0 0 3px color-mix(in srgb, #63C7FF 12%, transparent); }
+  .backup-source-dot.manual { background:var(--amber); box-shadow:0 0 0 3px color-mix(in srgb, var(--amber) 12%, transparent); }
+  .backup-source-dot.restore { background:#D78BFF; box-shadow:0 0 0 3px color-mix(in srgb, #D78BFF 12%, transparent); }
+  .backup-auth-note { margin:16px 20px; }
+
+  @media (max-width:720px) {
+    .chat-message-head { align-items:flex-start; }
+    .chat-message-actions { margin-left:auto; }
+    .chat-image-link img { max-height:48vh; }
+    .chat-attach-btn { flex:0 0 44px; }
+    .backup-modal { height:100dvh; }
+    .backup-toolbar { flex-direction:column; }
+    .backup-toolbar-actions { width:100%; }
+    .backup-toolbar-actions .btn { flex:1; }
+    .backup-row { grid-template-columns:1fr; }
+    .backup-row-actions { justify-content:stretch; }
+    .backup-row-actions .btn { flex:1; }
+  }
+
 </style>
 </head>
 <body>
@@ -613,6 +669,7 @@
         <button id="app-settings-btn" class="btn btn-ghost toolbar-settings">◐ App settings</button>
         <button id="share-trip-btn" class="btn btn-ghost toolbar-settings">↗ Share</button>
         <button id="chat-trip-btn" class="btn btn-ghost toolbar-settings" type="button">◌ Chat</button>
+        <button id="backup-trip-btn" class="btn btn-ghost toolbar-settings" type="button">▣ Backups</button>
         <button id="account-btn" class="btn btn-ghost toolbar-settings" type="button">◎ Sign in</button>
         <span id="sync-status" class="sync-status" data-state="local">Local only</span>
         <span class="toolbar-hint" id="toolbar-hint">Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.</span>
@@ -949,9 +1006,35 @@
       </div>
       <div id="chat-feed" class="chat-body scroll"></div>
       <div class="chat-composer">
+        <div id="chat-image-preview" class="chat-image-preview" hidden>
+          <img id="chat-image-preview-img" alt="">
+          <div class="chat-image-preview-main"><span id="chat-image-preview-name" class="chat-image-preview-name"></span><span id="chat-image-preview-size" class="chat-image-preview-size"></span></div>
+          <button id="chat-image-remove-btn" class="chat-image-remove" type="button" aria-label="Remove selected image">✕</button>
+        </div>
+        <input id="chat-image-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+        <button id="chat-image-btn" class="field-action chat-attach-btn" type="button" aria-label="Attach image" title="Attach image">▧</button>
         <textarea class="field-input" id="chat-message-input" maxlength="2000" placeholder="Write a message…"></textarea>
         <button class="btn btn-primary" id="chat-send-btn" type="button">Send</button>
       </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="overlay" id="backup-overlay">
+  <div class="modal backup-modal">
+    <div class="modal-head"><h3 id="backup-modal-title">Trip backups</h3><button class="modal-close" id="backup-close">✕</button></div>
+    <div id="backup-auth-note" class="muted-box backup-auth-note" style="display:none;"></div>
+    <div id="backup-content" class="modal-body" style="display:none;">
+      <div class="backup-toolbar">
+        <div id="backup-help" class="backup-help">Server snapshots are created before cloud changes and every six hours.</div>
+        <div class="backup-toolbar-actions">
+          <button id="backup-refresh-btn" class="btn btn-ghost" type="button">Refresh</button>
+          <button id="backup-create-btn" class="btn btn-primary" type="button">Create backup now</button>
+        </div>
+      </div>
+      <div id="backup-status" class="backup-status"></div>
+      <div id="backup-list" class="backup-list"></div>
     </div>
   </div>
 </div>
@@ -1007,7 +1090,7 @@ const OLD_TRIP_COLOR_MAP = {
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "TWD", "CNY", "HKD", "KRW", "SGD", "THB", "AUD", "CAD", "CHF", "NZD", "MYR", "IDR", "PHP", "VND", "INR", "AED"];
 const I18N = {
   en: {
-    trips:"TRIPS", tripSpend:"TRIP SPEND", newTrip:"+ New trip", addEntry:"+ Add entry", tripSettings:"⚙ Trip settings", appSettings:"◐ App settings", spending:"💰 Spending", schedule:"Schedule", share:"Share", chat:"Chat", signIn:"Sign in", account:"Account", undo:"Undo", redo:"Redo", hotelMenu:"Hotels", mobileMenu:"Menu",
+    trips:"TRIPS", tripSpend:"TRIP SPEND", newTrip:"+ New trip", addEntry:"+ Add entry", tripSettings:"⚙ Trip settings", appSettings:"◐ App settings", spending:"💰 Spending", schedule:"Schedule", share:"Share", chat:"Chat", signIn:"Sign in", account:"Account", undo:"Undo", redo:"Redo", hotelMenu:"Hotels", backups:"Backups", mobileMenu:"Menu",
     toolbarHint:"Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.", type:"Type", titleLabel:"Title", entryColor:"Entry color",
     useTypeDefault:"Use type default", colorDefaultHelp:"Uses the selected type's default color unless you choose a custom color.", colorCustomHelp:"Custom color override is active for this entry.",
     location:"Location", propertyLocation:"Property / location", from:"From", to:"To", departureAirport:"Departure airport", arrivalAirport:"Arrival airport",
@@ -1032,7 +1115,7 @@ const I18N = {
     nightsCount:"{n} nights", nightOf:"Night {n} of {total}", invalidDuration:"Enter a duration like “1d 2h 30m 15s”, “90m”, or “1:30:00”.", stayingHere:"Staying here", addHotel:"＋ Add hotel", noHotels:"No hotels saved for this trip yet.", hotelMenuIntro:"Hotels saved here are automatically shown at the top of every applicable schedule day.", edit:"Edit", daysUnit:"DAY", hoursUnit:"HOUR", minutesUnit:"MIN", secondsUnit:"SEC", durationPickerHelp:"Use the four selectors or type the duration manually above."
   },
   "zh-TW": {
-    trips:"旅程", tripSpend:"旅程支出", newTrip:"＋ 新增旅程", addEntry:"＋ 新增項目", tripSettings:"⚙ 旅程設定", appSettings:"◐ App 設定", spending:"💰 支出", schedule:"行程", share:"分享", chat:"聊天", signIn:"登入", account:"帳號", undo:"復原", redo:"重做", hotelMenu:"住宿", mobileMenu:"選單",
+    trips:"旅程", tripSpend:"旅程支出", newTrip:"＋ 新增旅程", addEntry:"＋ 新增項目", tripSettings:"⚙ 旅程設定", appSettings:"◐ App 設定", spending:"💰 支出", schedule:"行程", share:"分享", chat:"聊天", signIn:"登入", account:"帳號", undo:"復原", redo:"重做", hotelMenu:"住宿", backups:"備份", mobileMenu:"選單",
     toolbarHint:"拖曳時間軸項目可重新排序；拖曳左側旅程可調整旅程順序。", type:"類型", titleLabel:"標題", entryColor:"項目顏色",
     useTypeDefault:"使用類型預設色", colorDefaultHelp:"除非選擇自訂顏色，否則會使用所選類型的預設色。", colorCustomHelp:"此項目已啟用自訂顏色。",
     location:"地點", propertyLocation:"住宿／地點", from:"出發地", to:"目的地", departureAirport:"出發機場", arrivalAirport:"抵達機場",
@@ -1057,7 +1140,7 @@ const I18N = {
     nightsCount:"{n} 晚", nightOf:"第 {n} 晚（共 {total} 晚）", invalidDuration:"請輸入如「1d 2h 30m 15s」、「90m」或「1:30:00」的時長格式。", stayingHere:"本日住宿", addHotel:"＋ 新增住宿", noHotels:"此旅程尚未設定住宿。", hotelMenuIntro:"在此設定的住宿會自動顯示於適用日期的行程最上方。", edit:"編輯", daysUnit:"天", hoursUnit:"小時", minutesUnit:"分", secondsUnit:"秒", durationPickerHelp:"可使用下方四個欄位選擇，或直接在上方手動輸入時長。"
   },
   ja: {
-    trips:"旅行", tripSpend:"旅行支出", newTrip:"＋ 新しい旅行", addEntry:"＋ 予定を追加", tripSettings:"⚙ 旅行設定", appSettings:"◐ アプリ設定", spending:"💰 支出", schedule:"予定", share:"共有", chat:"チャット", signIn:"サインイン", account:"アカウント", undo:"元に戻す", redo:"やり直す", hotelMenu:"ホテル", mobileMenu:"メニュー",
+    trips:"旅行", tripSpend:"旅行支出", newTrip:"＋ 新しい旅行", addEntry:"＋ 予定を追加", tripSettings:"⚙ 旅行設定", appSettings:"◐ アプリ設定", spending:"💰 支出", schedule:"予定", share:"共有", chat:"チャット", signIn:"サインイン", account:"アカウント", undo:"元に戻す", redo:"やり直す", hotelMenu:"ホテル", backups:"バックアップ", mobileMenu:"メニュー",
     toolbarHint:"タイムライン項目をドラッグして並べ替えます。左側の旅行もドラッグできます。", type:"種類", titleLabel:"タイトル", entryColor:"項目の色",
     useTypeDefault:"種類の既定色", colorDefaultHelp:"カスタム色を選ばない場合、種類の既定色を使用します。", colorCustomHelp:"この項目にはカスタム色が設定されています。",
     location:"場所", propertyLocation:"宿泊施設／場所", from:"出発地", to:"目的地", departureAirport:"出発空港", arrivalAirport:"到着空港",
@@ -1282,6 +1365,7 @@ let draftThemeChoice = null;
 const HISTORY_LIMIT = 100;
 const undoStack = [];
 const redoStack = [];
+const pendingModificationActions = new Map();
 let historyApplying = false;
 let historySuspended = false;
 let lastHistorySnapshot = null;
@@ -1316,6 +1400,36 @@ function updateHistoryButtons() {
   if (undoButton) undoButton.disabled = undoStack.length === 0;
   if (redoButton) redoButton.disabled = redoStack.length === 0;
 }
+function historySharedDocument(snapshot, localTripId) {
+  const trip = snapshot?.trips?.find(candidate => candidate.id === localTripId);
+  if (!trip) return null;
+  const documentTrip = { ...trip };
+  ["remoteId", "remoteRole", "remoteVersion", "remoteUpdatedAt", "remoteSnapshot"].forEach(key => delete documentTrip[key]);
+  return {
+    schemaVersion: 1,
+    trip: documentTrip,
+    items: (snapshot.items || []).filter(item => item.tripId === localTripId).map(item => ({ ...item })),
+  };
+}
+function makeHistoryAction(beforeSnapshot, afterSnapshot) {
+  const localTripId = afterSnapshot?.activeTripId || beforeSnapshot?.activeTripId;
+  if (!localTripId) return null;
+  const beforeTrip = beforeSnapshot?.trips?.find(trip => trip.id === localTripId);
+  const afterTrip = afterSnapshot?.trips?.find(trip => trip.id === localTripId);
+  const remoteId = afterTrip?.remoteId || beforeTrip?.remoteId || null;
+  if (!remoteId || !beforeTrip || !afterTrip) return null;
+  const beforeDocument = historySharedDocument(beforeSnapshot, localTripId);
+  const afterDocument = historySharedDocument(afterSnapshot, localTripId);
+  const changes = buildModificationDetails(beforeDocument, afterDocument);
+  if (!changes.length) return null;
+  return {
+    id: crypto.randomUUID ? crypto.randomUUID() : `${uid()}-${uid()}`,
+    localTripId,
+    remoteId,
+    changes,
+    createdAt: new Date().toISOString(),
+  };
+}
 function recordHistoryCheckpoint() {
   const current = historySnapshot();
   const comparable = historyComparable(current);
@@ -1332,7 +1446,9 @@ function recordHistoryCheckpoint() {
     return;
   }
   if (comparable !== lastHistoryComparable) {
-    undoStack.push(lastHistorySnapshot);
+    const action = makeHistoryAction(lastHistorySnapshot, current);
+    undoStack.push({ snapshot: lastHistorySnapshot, action });
+    if (action) pendingModificationActions.set(action.id, action);
     if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
     redoStack.length = 0;
   }
@@ -1348,7 +1464,25 @@ function applyHistorySnapshot(snapshot) {
   editingTripId = null;
   pendingDelete = null;
   document.getElementById("f-trip")?.removeAttribute("disabled");
+
+  // Keep the latest cloud metadata while restoring only the user-editable data.
+  // Without this, undo could restore an old remoteSnapshot and incorrectly decide
+  // that no cloud save is required.
+  const remoteMetadata = new Map(state.trips.map(trip => [trip.id, {
+    remoteId: trip.remoteId,
+    remoteRole: trip.remoteRole,
+    remoteVersion: trip.remoteVersion,
+    remoteUpdatedAt: trip.remoteUpdatedAt,
+    remoteSnapshot: trip.remoteSnapshot,
+  }]));
   state.trips = deepClone(snapshot.trips);
+  state.trips.forEach(trip => {
+    const metadata = remoteMetadata.get(trip.id);
+    if (!metadata) return;
+    Object.entries(metadata).forEach(([key, value]) => {
+      if (value !== undefined) trip[key] = value;
+    });
+  });
   state.items = deepClone(snapshot.items);
   state.settings = deepClone(snapshot.settings);
   state.activeTripId = state.trips.some(trip => trip.id === snapshot.activeTripId)
@@ -1362,17 +1496,25 @@ function applyHistorySnapshot(snapshot) {
 }
 function undoLastChange() {
   if (!undoStack.length) return;
-  const target = undoStack.pop();
-  redoStack.push(historySnapshot());
+  clearTimeout(remoteSaveTimer);
+  const entry = undoStack.pop();
+  const target = entry?.snapshot || entry;
+  const action = entry?.action || null;
+  redoStack.push({ snapshot: historySnapshot(), action });
   if (redoStack.length > HISTORY_LIMIT) redoStack.shift();
   applyHistorySnapshot(target);
+  queueHistoryRemoteSave(action, false);
 }
 function redoLastChange() {
   if (!redoStack.length) return;
-  const target = redoStack.pop();
-  undoStack.push(historySnapshot());
+  clearTimeout(remoteSaveTimer);
+  const entry = redoStack.pop();
+  const target = entry?.snapshot || entry;
+  const action = entry?.action || null;
+  undoStack.push({ snapshot: historySnapshot(), action });
   if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
   applyHistorySnapshot(target);
+  queueHistoryRemoteSave(action, true);
 }
 
 function currentLanguage() {
@@ -1768,12 +1910,14 @@ const ICON_PATHS = {
   app: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z"/>',
   account: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
   chat: '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/>',
+  backup: '<path d="M4 7h16v13H4z"/><path d="M7 4h10v3H7z"/><path d="M9 12h6M12 9v6"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/>',
 };
 function iconSvg(name, extraClass = "") {
   return `<svg class="ui-icon ${extraClass}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ""}</svg>`;
 }
 
-const MOBILE_VIEWS = ["schedule", "spending", "tripSettings", "hotel", "share", "chat", "appSettings", "account"];
+const MOBILE_VIEWS = ["schedule", "spending", "tripSettings", "hotel", "share", "chat", "backups", "appSettings", "account"];
 const MOBILE_VIEW_META = {
   schedule: { label: "schedule", icon: "calendar" },
   spending: { label: "spending", icon: "wallet" },
@@ -1781,6 +1925,7 @@ const MOBILE_VIEW_META = {
   hotel: { label: "hotelMenu", icon: "hotel" },
   share: { label: "share", icon: "share" },
   chat: { label: "chat", icon: "chat" },
+  backups: { label: "backups", icon: "backup" },
   appSettings: { label: "appSettings", icon: "app" },
   account: { label: "signIn", icon: "account" },
 };
@@ -1849,7 +1994,7 @@ function attachMobileNavToOverlay(overlayId, activeView) {
   bindMobileNav(root, activeView);
 }
 function closeMobileSectionOverlays() {
-  ["spend-overlay", "trip-overlay", "app-overlay", "share-overlay", "chat-overlay", "account-overlay", "hotel-overlay", "item-overlay"].forEach(id => document.getElementById(id)?.classList.remove("show"));
+  ["spend-overlay", "trip-overlay", "app-overlay", "share-overlay", "chat-overlay", "backup-overlay", "account-overlay", "hotel-overlay", "item-overlay"].forEach(id => document.getElementById(id)?.classList.remove("show"));
   document.getElementById("f-trip")?.removeAttribute("disabled");
   editingItemId = null;
   editingTripId = null;
@@ -1866,6 +2011,7 @@ function navigateMobileView(view) {
   if (view === "hotel") { openHotelMenu(); attachMobileNavToOverlay("hotel-overlay", view); return; }
   if (view === "share") { openShareModal(); attachMobileNavToOverlay("share-overlay", view); return; }
   if (view === "chat") { openChatModal(); attachMobileNavToOverlay("chat-overlay", view); return; }
+  if (view === "backups") { openBackupModal(); attachMobileNavToOverlay("backup-overlay", view); return; }
   if (view === "appSettings") { openAppSettings(); attachMobileNavToOverlay("app-overlay", view); return; }
   if (view === "account") { openAccountModal(); attachMobileNavToOverlay("account-overlay", view); }
 }
@@ -1935,6 +2081,7 @@ function renderAll() {
   document.getElementById("add-entry-btn").disabled = !trip || !editable;
   document.getElementById("trip-settings-btn").disabled = !trip || !editable;
   document.getElementById("share-trip-btn").disabled = !trip;
+  document.getElementById("backup-trip-btn").disabled = !trip;
   updateHistoryButtons();
   document.body.classList.toggle("is-viewer", Boolean(trip?.remoteId) && !editable);
   updateSyncStatus();
@@ -3267,7 +3414,7 @@ const COLLAB_I18N = {
 };
 Object.assign(COLLAB_I18N.en, {
   chatTitle:"Trip chat", chat:"Chat", send:"Send", messagePlaceholder:"Write a message…", showModifications:"Show modification log",
-  chatNeedsSignIn:"Sign in to use trip chat.", chatNeedsSharedTrip:"Publish this trip before using chat.", chatLoading:"Loading conversation…", chatEmpty:"No messages yet. Start the conversation.", chatSendError:"Message could not be sent.",
+  chatNeedsSignIn:"Sign in to use trip chat.", chatNeedsSharedTrip:"Publish this trip before using chat.", chatLoading:"Loading conversation…", chatEmpty:"No messages yet. Start the conversation.", chatSendError:"Message could not be sent.", chatBackendMissing:"The chat database is not ready. Run the supplied v5 Supabase SQL, wait a few seconds, then reload this page.",
   tripModified:"Trip modified", modificationBy:"Modified by {name}", modificationDetails:"Modification details", hiddenMember:"Hidden member", unknownMember:"Trip member",
   profileTitle:"Member identity", profileHelp:"Choose how your identity appears to people who share a trip with you.", displayName:"Display name", showMeAs:"Show me as", showName:"Display name", showEmail:"Email address", showHidden:"Hidden member", saveIdentity:"Save identity", profileSaved:"Identity preference saved.", profileNameRequired:"Enter a display name before choosing Display name.",
   memberDirectory:"Trip members", memberDirectoryHelp:"Each member controls whether their display name, email address, or no identity is shown.",
@@ -3276,7 +3423,7 @@ Object.assign(COLLAB_I18N.en, {
 });
 Object.assign(COLLAB_I18N["zh-TW"], {
   chatTitle:"旅程聊天", chat:"聊天", send:"傳送", messagePlaceholder:"輸入訊息…", showModifications:"顯示修改紀錄",
-  chatNeedsSignIn:"請先登入才能使用旅程聊天。", chatNeedsSharedTrip:"請先發布此旅程，才能使用聊天。", chatLoading:"正在載入對話…", chatEmpty:"目前沒有訊息，開始聊天吧。", chatSendError:"訊息傳送失敗。",
+  chatNeedsSignIn:"請先登入才能使用旅程聊天。", chatNeedsSharedTrip:"請先發布此旅程，才能使用聊天。", chatLoading:"正在載入對話…", chatEmpty:"目前沒有訊息，開始聊天吧。", chatSendError:"訊息傳送失敗。", chatBackendMissing:"聊天資料庫尚未就緒。請執行隨附的 v5 Supabase SQL，等待數秒後重新載入此頁面。",
   tripModified:"旅程已修改", modificationBy:"由 {name} 修改", modificationDetails:"修改內容", hiddenMember:"隱藏成員", unknownMember:"旅程成員",
   profileTitle:"成員身分", profileHelp:"選擇與您共享旅程的人可看到您的名稱、電子郵件，或不顯示身分。", displayName:"顯示名稱", showMeAs:"顯示方式", showName:"顯示名稱", showEmail:"電子郵件", showHidden:"隱藏成員", saveIdentity:"儲存身分設定", profileSaved:"身分顯示設定已儲存。", profileNameRequired:"選擇顯示名稱前，請先輸入名稱。",
   memberDirectory:"旅程成員", memberDirectoryHelp:"每位成員可自行選擇顯示名稱、電子郵件，或不顯示身分。",
@@ -3285,12 +3432,25 @@ Object.assign(COLLAB_I18N["zh-TW"], {
 });
 Object.assign(COLLAB_I18N.ja, {
   chatTitle:"旅行チャット", chat:"チャット", send:"送信", messagePlaceholder:"メッセージを書く…", showModifications:"変更履歴を表示",
-  chatNeedsSignIn:"旅行チャットを使うにはサインインしてください。", chatNeedsSharedTrip:"チャットを使う前にこの旅行を共有してください。", chatLoading:"会話を読み込んでいます…", chatEmpty:"まだメッセージはありません。会話を始めましょう。", chatSendError:"メッセージを送信できませんでした。",
+  chatNeedsSignIn:"旅行チャットを使うにはサインインしてください。", chatNeedsSharedTrip:"チャットを使う前にこの旅行を共有してください。", chatLoading:"会話を読み込んでいます…", chatEmpty:"まだメッセージはありません。会話を始めましょう。", chatSendError:"メッセージを送信できませんでした。", chatBackendMissing:"チャット用データベースの準備ができていません。付属の v5 Supabase SQL を実行し、数秒待ってからページを再読み込みしてください。",
   tripModified:"旅行が変更されました", modificationBy:"{name} が変更", modificationDetails:"変更内容", hiddenMember:"非表示のメンバー", unknownMember:"旅行メンバー",
   profileTitle:"メンバー表示", profileHelp:"同じ旅行のメンバーに、表示名・メール・非表示のどれで見せるか選べます。", displayName:"表示名", showMeAs:"表示方法", showName:"表示名", showEmail:"メールアドレス", showHidden:"非表示のメンバー", saveIdentity:"表示設定を保存", profileSaved:"表示設定を保存しました。", profileNameRequired:"表示名を選ぶ前に名前を入力してください。",
   memberDirectory:"旅行メンバー", memberDirectoryHelp:"各メンバーは表示名、メール、非表示を自分で選べます。",
   changeTripField:"旅行の{field}：{before} → {after}", changeAdded:"{kind}を追加：{title}", changeRemoved:"{kind}を削除：{title}", changeUpdated:"{title}を更新", changeItemField:"{field}：{before} → {after}",
   fieldName:"名前", fieldStartDate:"開始日", fieldEndDate:"終了日", fieldCurrency:"既定通貨", fieldColor:"色", fieldTitle:"タイトル", fieldKind:"種類", fieldLocation:"場所", fieldDate:"日付", fieldStartTime:"開始時刻", fieldEndTime:"終了時刻", fieldItemEndDate:"終了日", fieldPrice:"価格", fieldNotes:"メモ", fieldNights:"宿泊数", fieldDuration:"所要時間"
+});
+
+Object.assign(COLLAB_I18N.en, {
+  backups:"Backups", backupsTitle:"Trip backups", backupHelp:"Server recovery snapshots are created before every cloud change and every six hours. Up to 1,000 snapshots are retained for each trip.", backupNeedsSignIn:"Sign in to use server backups.", backupNeedsSharedTrip:"Publish this trip before using server backups.", backupNoPermission:"Editing access is required to view or restore backups.", backupLoading:"Loading backups…", backupEmpty:"No recovery snapshots are available yet.", createBackup:"Create backup now", refresh:"Refresh", backupCreated:"Backup created.", backupCreateError:"The backup could not be created.", backupBackendMissing:"The backup database is not ready. Run the supplied v5 Supabase SQL, wait a few seconds, and reload this page.", backupAutomatic:"Before change", backupScheduled:"Scheduled", backupManual:"Manual", backupRestorePoint:"Before restore", backupVersion:"Version {version}", backupBy:"by {name}", server:"Server", restore:"Restore", downloadJson:"Download JSON", confirmRestore:"Restore this backup? The current trip will first be saved as another recovery point.", restoring:"Restoring backup…", restored:"Backup restored.", restoreError:"The backup could not be restored.",
+  attachImage:"Attach image", removeSelectedImage:"Remove selected image", imageTooLarge:"Images must be 8 MB or smaller.", imageTypeUnsupported:"Use a JPEG, PNG, WebP, or GIF image.", imageUploadError:"The image could not be uploaded.", unsend:"Unsend", removeMessage:"Remove", confirmUnsend:"Unsend this message?", confirmRemoveMessage:"Remove this member's message?", messageUnsent:"Message unsent", messageRemoved:"Message removed by an administrator", messageRemoveError:"The message could not be removed."
+});
+Object.assign(COLLAB_I18N["zh-TW"], {
+  backups:"備份", backupsTitle:"旅程備份", backupHelp:"伺服器會在每次雲端修改前及每六小時建立復原快照；每個旅程最多保留 1,000 份。", backupNeedsSignIn:"請先登入才能使用伺服器備份。", backupNeedsSharedTrip:"請先發布此旅程，才能使用伺服器備份。", backupNoPermission:"需要可編輯權限才能查看或還原備份。", backupLoading:"正在載入備份…", backupEmpty:"目前沒有可用的復原快照。", createBackup:"立即建立備份", refresh:"重新整理", backupCreated:"備份已建立。", backupCreateError:"無法建立備份。", backupBackendMissing:"備份資料庫尚未就緒。請執行隨附的 v5 Supabase SQL，等待數秒後重新載入。", backupAutomatic:"修改前", backupScheduled:"定時備份", backupManual:"手動備份", backupRestorePoint:"還原前", backupVersion:"版本 {version}", backupBy:"由 {name}", server:"伺服器", restore:"還原", downloadJson:"下載 JSON", confirmRestore:"要還原此備份嗎？目前的旅程會先另存為一個復原點。", restoring:"正在還原備份…", restored:"備份已還原。", restoreError:"無法還原備份。",
+  attachImage:"附加圖片", removeSelectedImage:"移除已選圖片", imageTooLarge:"圖片大小不可超過 8 MB。", imageTypeUnsupported:"請使用 JPEG、PNG、WebP 或 GIF 圖片。", imageUploadError:"圖片上傳失敗。", unsend:"收回", removeMessage:"移除", confirmUnsend:"要收回這則訊息嗎？", confirmRemoveMessage:"要移除此成員的訊息嗎？", messageUnsent:"訊息已收回", messageRemoved:"訊息已由管理者移除", messageRemoveError:"無法移除訊息。"
+});
+Object.assign(COLLAB_I18N.ja, {
+  backups:"バックアップ", backupsTitle:"旅行のバックアップ", backupHelp:"クラウド変更の直前と6時間ごとにサーバー復元スナップショットを作成します。旅行ごとに最大1,000件を保持します。", backupNeedsSignIn:"サーバーバックアップを使うにはサインインしてください。", backupNeedsSharedTrip:"サーバーバックアップを使う前に旅行を共有してください。", backupNoPermission:"バックアップの表示と復元には編集権限が必要です。", backupLoading:"バックアップを読み込んでいます…", backupEmpty:"復元スナップショットはまだありません。", createBackup:"今すぐバックアップ", refresh:"更新", backupCreated:"バックアップを作成しました。", backupCreateError:"バックアップを作成できませんでした。", backupBackendMissing:"バックアップ用データベースの準備ができていません。付属の v5 Supabase SQL を実行し、数秒待ってから再読み込みしてください。", backupAutomatic:"変更前", backupScheduled:"定期", backupManual:"手動", backupRestorePoint:"復元前", backupVersion:"バージョン {version}", backupBy:"{name}", server:"サーバー", restore:"復元", downloadJson:"JSONをダウンロード", confirmRestore:"このバックアップを復元しますか？現在の旅行は先に別の復元ポイントとして保存されます。", restoring:"バックアップを復元中…", restored:"バックアップを復元しました。", restoreError:"バックアップを復元できませんでした。",
+  attachImage:"画像を添付", removeSelectedImage:"選択した画像を削除", imageTooLarge:"画像は8 MB以下にしてください。", imageTypeUnsupported:"JPEG、PNG、WebP、GIF画像を使用してください。", imageUploadError:"画像をアップロードできませんでした。", unsend:"送信取消", removeMessage:"削除", confirmUnsend:"このメッセージの送信を取り消しますか？", confirmRemoveMessage:"このメンバーのメッセージを削除しますか？", messageUnsent:"メッセージの送信が取り消されました", messageRemoved:"管理者がメッセージを削除しました", messageRemoveError:"メッセージを削除できませんでした。"
 });
 function ct(key, variables = {}) {
   let value = (COLLAB_I18N[currentLanguage()] || COLLAB_I18N.en)[key] ?? COLLAB_I18N.en[key] ?? key;
@@ -3299,7 +3459,8 @@ function ct(key, variables = {}) {
 }
 function applyCollabTranslations() {
   const set = (id, key) => { const element = document.getElementById(id); if (element) element.textContent = ct(key); };
-  set("share-trip-btn", "share"); set("chat-trip-btn", "chat"); set("readonly-banner", "viewOnlyBanner"); set("share-modal-title", "shareTitle"); set("share-done", "done"); set("chat-modal-title", "chatTitle"); set("chat-send-btn", "send"); set("chat-filter-label", "showModifications");
+  set("share-trip-btn", "share"); set("chat-trip-btn", "chat"); set("backup-trip-btn", "backups"); set("readonly-banner", "viewOnlyBanner"); set("share-modal-title", "shareTitle"); set("share-done", "done"); set("chat-modal-title", "chatTitle"); set("chat-send-btn", "send"); set("chat-filter-label", "showModifications");
+  set("backup-modal-title", "backupsTitle"); set("backup-help", "backupHelp"); set("backup-create-btn", "createBackup"); set("backup-refresh-btn", "refresh");
   set("account-modal-title", "accountTitle"); set("account-done", "done"); set("profile-title", "profileTitle"); set("profile-help", "profileHelp"); set("profile-name-label", "displayName"); set("profile-visibility-label", "showMeAs"); set("profile-save-btn", "saveIdentity"); set("member-directory-title", "memberDirectory"); set("member-directory-help", "memberDirectoryHelp"); set("collab-email-label", "email"); set("collab-auth-help", "authHelp"); set("share-auth-help", "shareAuthHelp"); set("account-global-help", "globalAccountHelp"); set("share-open-account-btn", "signIn"); set("collab-session-note", "sessionNote"); set("collab-login-btn", "sendSignIn"); set("collab-logout-btn", "signOut");
   const accountButton = document.getElementById("account-btn");
   if (accountButton) accountButton.textContent = `◎ ${ct(collabUser ? "account" : "signIn")}`;
@@ -3320,6 +3481,10 @@ function applyCollabTranslations() {
   }
   const chatInput = document.getElementById("chat-message-input");
   if (chatInput) chatInput.placeholder = ct("messagePlaceholder");
+  const imageButton = document.getElementById("chat-image-btn");
+  if (imageButton) { imageButton.title = ct("attachImage"); imageButton.setAttribute("aria-label", ct("attachImage")); imageButton.innerHTML = iconSvg("image"); }
+  const imageRemoveButton = document.getElementById("chat-image-remove-btn");
+  if (imageRemoveButton) imageRemoveButton.setAttribute("aria-label", ct("removeSelectedImage"));
   updateSyncStatus();
 }
 
@@ -3327,6 +3492,7 @@ let supabaseClient = null;
 let collabUser = null;
 let remoteSaveTimer = null;
 let remoteSaveInFlight = false;
+let remoteSaveQueue = Promise.resolve();
 let suppressRemoteSave = false;
 let realtimeChannel = null;
 let realtimeTripId = null;
@@ -3337,6 +3503,14 @@ let chatRealtimeChannel = null;
 let chatRealtimeTripId = null;
 let chatMessagesCache = [];
 let changeLogsCache = [];
+let chatBackendReady = null;
+let selectedChatImage = null;
+let selectedChatImagePreviewUrl = "";
+let chatImageUrls = new Map();
+let backupCache = [];
+const CHAT_MEDIA_BUCKET = "voyage-chat-media";
+const CHAT_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+const CHAT_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
 function collabConfigured() {
   let validUrl = false;
@@ -3520,12 +3694,58 @@ function buildModificationDetails(beforeDocument, afterDocument) {
   });
   return changes;
 }
-async function insertModificationLog(remoteId, changes) {
-  if (!supabaseClient || !collabUser || !remoteId || !changes?.length) return false;
-  await registerCurrentParticipant(activeTrip()).catch(() => false);
-  const { error } = await supabaseClient.from("voyage_change_logs").insert({ trip_id:remoteId, user_id:collabUser.id, details:{ changes } });
-  if (error) { console.warn("Could not write modification log", error); return false; }
+function isMissingChatRelation(error) {
+  const message = String(error?.message || "");
+  return error?.code === "PGRST205"
+    || /Could not find the table 'public\.(voyage_chat_messages|voyage_change_logs|voyage_trip_participants|voyage_user_profiles|voyage_trip_backups)'/i.test(message)
+    || /relation .*voyage_(chat_messages|change_logs|trip_participants|user_profiles|trip_backups).* does not exist/i.test(message);
+}
+function chatErrorText(error) {
+  return isMissingChatRelation(error) ? ct("chatBackendMissing") : (error?.message || ct("chatSendError"));
+}
+async function upsertModificationAction(action, isActive = true) {
+  if (!supabaseClient || !collabUser || !action?.remoteId || !action?.changes?.length) return false;
+  const trip = state.trips.find(candidate => candidate.remoteId === action.remoteId) || activeTrip();
+  await registerCurrentParticipant(trip).catch(() => false);
+  const payload = {
+    trip_id: action.remoteId,
+    user_id: collabUser.id,
+    action_id: action.id,
+    details: { changes: action.changes },
+    is_active: Boolean(isActive),
+    created_at: action.createdAt || new Date().toISOString(),
+  };
+  const { error } = await supabaseClient.from("voyage_change_logs").upsert(payload, { onConflict:"trip_id,action_id" });
+  if (error) {
+    chatBackendReady = isMissingChatRelation(error) ? false : chatBackendReady;
+    console.warn("Could not write modification log", error);
+    return false;
+  }
+  chatBackendReady = true;
   return true;
+}
+async function flushPendingModificationActions(remoteId, fallbackChanges = []) {
+  const actions = Array.from(pendingModificationActions.values()).filter(action => action.remoteId === remoteId);
+  if (!actions.length && fallbackChanges?.length) {
+    actions.push({
+      id: crypto.randomUUID ? crypto.randomUUID() : `${uid()}-${uid()}`,
+      remoteId,
+      changes: fallbackChanges,
+      createdAt: new Date().toISOString(),
+    });
+  }
+  for (const action of actions) {
+    const saved = await upsertModificationAction(action, true);
+    if (saved) pendingModificationActions.delete(action.id);
+  }
+}
+async function setModificationActionActive(action, isActive) {
+  if (!action) return false;
+  // If undo happens before the debounced save, the pending entry is simply
+  // written as inactive. Redo activates the same entry again—no extra system
+  // message is created for the undo/redo operation itself.
+  pendingModificationActions.delete(action.id);
+  return upsertModificationAction(action, isActive);
 }
 function modificationLine(change) {
   if (!change) return "";
@@ -3544,19 +3764,76 @@ function formatChatTime(value) {
   if (Number.isNaN(date.getTime())) return "";
   return date.toLocaleString(currentLocale(), { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
 }
+function clearSelectedChatImage() {
+  selectedChatImage = null;
+  if (selectedChatImagePreviewUrl) URL.revokeObjectURL(selectedChatImagePreviewUrl);
+  selectedChatImagePreviewUrl = "";
+  const input = document.getElementById("chat-image-input");
+  if (input) input.value = "";
+  const preview = document.getElementById("chat-image-preview");
+  if (preview) preview.hidden = true;
+  const image = document.getElementById("chat-image-preview-img");
+  if (image) image.removeAttribute("src");
+}
+function selectChatImage(file) {
+  if (!file) return clearSelectedChatImage();
+  const status = document.getElementById("chat-status");
+  if (!CHAT_IMAGE_TYPES.has(file.type)) {
+    status.textContent = ct("imageTypeUnsupported");
+    return clearSelectedChatImage();
+  }
+  if (file.size > CHAT_IMAGE_MAX_BYTES) {
+    status.textContent = ct("imageTooLarge");
+    return clearSelectedChatImage();
+  }
+  clearSelectedChatImage();
+  selectedChatImage = file;
+  selectedChatImagePreviewUrl = URL.createObjectURL(file);
+  document.getElementById("chat-image-preview-img").src = selectedChatImagePreviewUrl;
+  document.getElementById("chat-image-preview-name").textContent = file.name;
+  document.getElementById("chat-image-preview-size").textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+  document.getElementById("chat-image-preview").hidden = false;
+  status.textContent = "";
+}
+function safeChatFileName(name = "image") {
+  const extension = (name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+  return `image.${extension}`;
+}
+async function loadChatImageUrls(messages = chatMessagesCache) {
+  chatImageUrls = new Map();
+  const paths = [...new Set(messages.filter(message => !message.deleted_at && message.image_path).map(message => message.image_path))];
+  if (!paths.length || !supabaseClient) return;
+  const { data, error } = await supabaseClient.storage.from(CHAT_MEDIA_BUCKET).createSignedUrls(paths, 3600);
+  if (error) { console.warn("Could not sign chat image URLs", error); return; }
+  (data || []).forEach((entry, index) => {
+    const path = entry.path || paths[index];
+    const signedUrl = entry.signedUrl || entry.signedURL;
+    if (path && signedUrl) chatImageUrls.set(path, signedUrl);
+  });
+}
 async function loadChatData() {
   const trip = activeTrip();
   if (!supabaseClient || !collabUser || !trip?.remoteId) return;
-  document.getElementById("chat-status").textContent = ct("chatLoading");
+  const status = document.getElementById("chat-status");
+  status.textContent = ct("chatLoading");
   await loadParticipantProfiles(trip.remoteId);
   const [messagesResult, logsResult] = await Promise.all([
-    supabaseClient.from("voyage_chat_messages").select("id,trip_id,user_id,body,created_at").eq("trip_id", trip.remoteId).order("created_at", { ascending:true }).limit(300),
-    supabaseClient.from("voyage_change_logs").select("id,trip_id,user_id,details,created_at").eq("trip_id", trip.remoteId).order("created_at", { ascending:true }).limit(300)
+    supabaseClient.from("voyage_chat_messages").select("id,trip_id,user_id,body,message_kind,image_path,image_name,image_mime,image_size,deleted_at,deleted_by,deletion_kind,created_at").eq("trip_id", trip.remoteId).order("created_at", { ascending:true }).limit(300),
+    supabaseClient.from("voyage_change_logs").select("id,trip_id,user_id,action_id,details,is_active,created_at").eq("trip_id", trip.remoteId).eq("is_active", true).order("created_at", { ascending:true }).limit(300)
   ]);
-  chatMessagesCache = messagesResult.data || [];
-  changeLogsCache = logsResult.data || [];
   const error = messagesResult.error || logsResult.error;
-  document.getElementById("chat-status").textContent = error ? error.message : "";
+  if (error) {
+    chatBackendReady = isMissingChatRelation(error) ? false : chatBackendReady;
+    chatMessagesCache = [];
+    changeLogsCache = [];
+    status.textContent = chatErrorText(error);
+  } else {
+    chatBackendReady = true;
+    chatMessagesCache = messagesResult.data || [];
+    changeLogsCache = logsResult.data || [];
+    await loadChatImageUrls(chatMessagesCache);
+    status.textContent = "";
+  }
   renderChatFeed();
   renderMemberDirectory();
 }
@@ -3577,7 +3854,22 @@ function renderChatFeed() {
     const time = formatChatTime(entry.created_at);
     if (entry.entryType === "message") {
       const own = collabUser && entry.user_id === collabUser.id;
-      return `<article class="chat-message ${own ? "is-own" : ""}"><div class="chat-message-head"><span class="chat-message-author">${esc(author)}</span><time>${esc(time)}</time></div><div class="chat-message-text">${esc(entry.body)}</div></article>`;
+      const canModerate = own || canManageTrip(activeTrip());
+      const deleted = Boolean(entry.deleted_at);
+      const actionLabel = own ? ct("unsend") : ct("removeMessage");
+      const actions = canModerate && !deleted
+        ? `<span class="chat-message-actions"><button class="chat-message-action" type="button" data-chat-remove="${esc(entry.id)}">${esc(actionLabel)}</button></span>`
+        : "";
+      if (deleted) {
+        const deletedText = entry.deletion_kind === "removed" ? ct("messageRemoved") : ct("messageUnsent");
+        return `<article class="chat-message is-deleted ${own ? "is-own" : ""}"><div class="chat-message-head"><span class="chat-message-head-main"><span class="chat-message-author">${esc(author)}</span><time>${esc(time)}</time></span></div><div class="chat-message-deleted">${esc(deletedText)}</div></article>`;
+      }
+      const signedUrl = entry.image_path ? chatImageUrls.get(entry.image_path) : "";
+      const imageHtml = signedUrl
+        ? `<a class="chat-image-link" href="${esc(signedUrl)}" target="_blank" rel="noopener noreferrer"><img src="${esc(signedUrl)}" alt="${esc(entry.image_name || ct("attachImage"))}" loading="lazy"></a>`
+        : "";
+      const bodyHtml = entry.body ? `<div class="chat-message-text ${imageHtml ? "chat-image-caption" : ""}">${esc(entry.body)}</div>` : "";
+      return `<article class="chat-message ${own ? "is-own" : ""}"><div class="chat-message-head"><span class="chat-message-head-main"><span class="chat-message-author">${esc(author)}</span><time>${esc(time)}</time></span>${actions}</div>${imageHtml}${bodyHtml}</article>`;
     }
     const changes = Array.isArray(entry.details?.changes) ? entry.details.changes : [];
     return `<article class="chat-system" data-log-id="${esc(entry.id)}"><button class="chat-system-toggle" type="button"><span class="chat-system-icon">↻</span><span class="chat-system-main"><span class="chat-system-title">${esc(ct("tripModified"))}</span><span class="chat-system-meta">${esc(ct("modificationBy", { name:author }))} · ${esc(time)}</span></span><span class="chat-system-chevron">⌄</span></button><div class="chat-system-details"><ol>${changes.map(change => `<li>${esc(modificationLine(change))}</li>`).join("") || `<li>${esc(ct("tripModified"))}</li>`}</ol></div></article>`;
@@ -3587,7 +3879,26 @@ function renderChatFeed() {
     card.classList.toggle("expanded");
     button.querySelector(".chat-system-chevron").textContent = card.classList.contains("expanded") ? "⌃" : "⌄";
   }));
+  feed.querySelectorAll("[data-chat-remove]").forEach(button => button.addEventListener("click", () => removeChatMessage(button.dataset.chatRemove)));
   feed.scrollTop = feed.scrollHeight;
+}
+async function removeChatMessage(messageId) {
+  const message = chatMessagesCache.find(candidate => candidate.id === messageId);
+  if (!message || !supabaseClient || !collabUser) return;
+  const own = message.user_id === collabUser.id;
+  if (!own && !canManageTrip(activeTrip())) return;
+  if (!window.confirm(ct(own ? "confirmUnsend" : "confirmRemoveMessage"))) return;
+  const { data, error } = await supabaseClient.rpc("moderate_voyage_chat_message", { p_message_id:messageId });
+  if (error) {
+    document.getElementById("chat-status").textContent = error.message || ct("messageRemoveError");
+    return;
+  }
+  const result = Array.isArray(data) ? data[0] : data;
+  if (result?.removed_image_path) {
+    const removal = await supabaseClient.storage.from(CHAT_MEDIA_BUCKET).remove([result.removed_image_path]);
+    if (removal.error) console.warn("Could not remove chat image object", removal.error);
+  }
+  await loadChatData();
 }
 async function ensureChatRealtime(remoteId = activeTrip()?.remoteId) {
   if (!supabaseClient || !collabUser || !remoteId) return;
@@ -3595,8 +3906,8 @@ async function ensureChatRealtime(remoteId = activeTrip()?.remoteId) {
   if (chatRealtimeChannel) await supabaseClient.removeChannel(chatRealtimeChannel);
   chatRealtimeTripId = remoteId;
   chatRealtimeChannel = supabaseClient.channel(`voyage-chat-${remoteId}`)
-    .on("postgres_changes", { event:"INSERT", schema:"public", table:"voyage_chat_messages", filter:`trip_id=eq.${remoteId}` }, () => loadChatData())
-    .on("postgres_changes", { event:"INSERT", schema:"public", table:"voyage_change_logs", filter:`trip_id=eq.${remoteId}` }, () => loadChatData())
+    .on("postgres_changes", { event:"*", schema:"public", table:"voyage_chat_messages", filter:`trip_id=eq.${remoteId}` }, () => loadChatData())
+    .on("postgres_changes", { event:"*", schema:"public", table:"voyage_change_logs", filter:`trip_id=eq.${remoteId}` }, () => loadChatData())
     .on("postgres_changes", { event:"*", schema:"public", table:"voyage_trip_participants", filter:`trip_id=eq.${remoteId}` }, () => loadChatData())
     .subscribe();
 }
@@ -3604,14 +3915,44 @@ async function sendChatMessage() {
   const trip = activeTrip();
   const input = document.getElementById("chat-message-input");
   const body = input.value.trim();
-  if (!body || !supabaseClient || !collabUser || !trip?.remoteId) return;
+  const imageFile = selectedChatImage;
+  if ((!body && !imageFile) || !supabaseClient || !collabUser || !trip?.remoteId) return;
   const button = document.getElementById("chat-send-btn");
   button.disabled = true;
+  document.getElementById("chat-image-btn").disabled = true;
   await registerCurrentParticipant(trip).catch(() => false);
-  const { error } = await supabaseClient.from("voyage_chat_messages").insert({ trip_id:trip.remoteId, user_id:collabUser.id, body });
+  const messageId = crypto.randomUUID ? crypto.randomUUID() : `${uid()}-${uid()}`;
+  let imagePath = null;
+  if (imageFile) {
+    imagePath = `${trip.remoteId}/${messageId}/${safeChatFileName(imageFile.name)}`;
+    const upload = await supabaseClient.storage.from(CHAT_MEDIA_BUCKET).upload(imagePath, imageFile, { cacheControl:"3600", contentType:imageFile.type, upsert:false });
+    if (upload.error) {
+      button.disabled = false;
+      document.getElementById("chat-image-btn").disabled = false;
+      document.getElementById("chat-status").textContent = upload.error.message || ct("imageUploadError");
+      return;
+    }
+  }
+  const payload = {
+    id:messageId, trip_id:trip.remoteId, user_id:collabUser.id, body,
+    message_kind:imageFile ? "image" : "text",
+    image_path:imagePath,
+    image_name:imageFile?.name || null,
+    image_mime:imageFile?.type || null,
+    image_size:imageFile?.size || null,
+  };
+  const { error } = await supabaseClient.from("voyage_chat_messages").insert(payload);
   button.disabled = false;
-  if (error) { document.getElementById("chat-status").textContent = error.message || ct("chatSendError"); return; }
+  document.getElementById("chat-image-btn").disabled = false;
+  if (error) {
+    if (imagePath) await supabaseClient.storage.from(CHAT_MEDIA_BUCKET).remove([imagePath]).catch(() => null);
+    chatBackendReady = isMissingChatRelation(error) ? false : chatBackendReady;
+    document.getElementById("chat-status").textContent = chatErrorText(error);
+    return;
+  }
+  chatBackendReady = true;
   input.value = "";
+  clearSelectedChatImage();
   await loadChatData();
 }
 async function openChatModal() {
@@ -3634,6 +3975,118 @@ async function openChatModal() {
 }
 async function closeChatModal() {
   document.getElementById("chat-overlay").classList.remove("show");
+  clearSelectedChatImage();
+}
+
+
+function setBackupStatus(message = "", isError = false) {
+  const status = document.getElementById("backup-status");
+  if (!status) return;
+  status.textContent = message;
+  status.className = `backup-status${message ? (isError ? " error" : " success") : ""}`;
+}
+function backupSourceText(source) {
+  return ct({ automatic:"backupAutomatic", scheduled:"backupScheduled", manual:"backupManual", restore:"backupRestorePoint" }[source] || "backupAutomatic");
+}
+async function loadBackups() {
+  const trip = activeTrip();
+  if (!supabaseClient || !collabUser || !trip?.remoteId || !canEditTrip(trip)) return;
+  setBackupStatus(ct("backupLoading"));
+  await loadParticipantProfiles(trip.remoteId).catch(() => []);
+  const { data, error } = await supabaseClient.from("voyage_trip_backups")
+    .select("id,trip_id,created_by,source,label,version,snapshot_hash,created_at")
+    .eq("trip_id", trip.remoteId)
+    .order("created_at", { ascending:false })
+    .limit(300);
+  if (error) {
+    backupCache = [];
+    setBackupStatus(isMissingChatRelation(error) ? ct("backupBackendMissing") : error.message, true);
+  } else {
+    backupCache = data || [];
+    setBackupStatus("");
+  }
+  renderBackups();
+}
+function renderBackups() {
+  const list = document.getElementById("backup-list");
+  if (!list) return;
+  if (!backupCache.length) {
+    list.innerHTML = `<div class="backup-empty">${esc(ct("backupEmpty"))}</div>`;
+    return;
+  }
+  list.innerHTML = backupCache.map(backup => {
+    const source = backupSourceText(backup.source);
+    const creator = backup.created_by ? participantName(backup.created_by) : ct("server");
+    const version = backup.version === null || backup.version === undefined ? "" : ct("backupVersion", { version:backup.version });
+    const metadata = [formatChatTime(backup.created_at), version, ct("backupBy", { name:creator })].filter(Boolean).join(" · ");
+    const dotClass = backup.source === "manual" ? "manual" : backup.source === "restore" ? "restore" : "";
+    return `<article class="backup-row" data-backup-id="${esc(backup.id)}"><div class="backup-row-main"><div class="backup-row-title"><span class="backup-source-dot ${dotClass}"></span><span>${esc(backup.label || source)}</span></div><div class="backup-row-meta">${esc(metadata)}</div></div><div class="backup-row-actions"><button class="btn btn-ghost" type="button" data-backup-download="${esc(backup.id)}">${esc(ct("downloadJson"))}</button><button class="btn btn-primary" type="button" data-backup-restore="${esc(backup.id)}">${esc(ct("restore"))}</button></div></article>`;
+  }).join("");
+  list.querySelectorAll("[data-backup-download]").forEach(button => button.addEventListener("click", () => downloadBackup(button.dataset.backupDownload)));
+  list.querySelectorAll("[data-backup-restore]").forEach(button => button.addEventListener("click", () => restoreBackup(button.dataset.backupRestore)));
+}
+async function createManualBackup() {
+  const trip = activeTrip();
+  if (!supabaseClient || !collabUser || !trip?.remoteId || !canEditTrip(trip)) return;
+  const button = document.getElementById("backup-create-btn");
+  button.disabled = true;
+  const { error } = await supabaseClient.rpc("create_voyage_trip_backup", { p_trip_id:trip.remoteId, p_label:null });
+  button.disabled = false;
+  if (error) return setBackupStatus(isMissingChatRelation(error) ? ct("backupBackendMissing") : (error.message || ct("backupCreateError")), true);
+  setBackupStatus(ct("backupCreated"));
+  await loadBackups();
+}
+async function downloadBackup(backupId) {
+  const trip = activeTrip();
+  if (!supabaseClient || !trip?.remoteId) return;
+  setBackupStatus("");
+  const { data, error } = await supabaseClient.from("voyage_trip_backups").select("id,source,label,version,snapshot,created_at").eq("id", backupId).eq("trip_id", trip.remoteId).single();
+  if (error) return setBackupStatus(error.message, true);
+  const blob = new Blob([JSON.stringify({ voyageBoardBackup:true, tripId:trip.remoteId, ...data }, null, 2)], { type:"application/json" });
+  const link = document.createElement("a");
+  const stamp = String(data.created_at || "backup").replace(/[:.]/g, "-");
+  link.href = URL.createObjectURL(blob);
+  link.download = `voyage-board-${(trip.name || "trip").replace(/[^a-z0-9_-]+/gi, "-")}-${stamp}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+}
+async function restoreBackup(backupId) {
+  const trip = activeTrip();
+  if (!supabaseClient || !collabUser || !trip?.remoteId || !canEditTrip(trip)) return;
+  if (!window.confirm(ct("confirmRestore"))) return;
+  setBackupStatus(ct("restoring"));
+  const { error } = await supabaseClient.rpc("restore_voyage_trip_backup", { p_backup_id:Number(backupId) });
+  if (error) return setBackupStatus(isMissingChatRelation(error) ? ct("backupBackendMissing") : (error.message || ct("restoreError")), true);
+  await loadRemoteTrip(trip.remoteId, true);
+  undoStack.length = 0;
+  redoStack.length = 0;
+  pendingModificationActions.clear();
+  lastHistorySnapshot = historySnapshot();
+  lastHistoryComparable = historyComparable(lastHistorySnapshot);
+  updateHistoryButtons();
+  renderAll();
+  setBackupStatus(ct("restored"));
+  await loadBackups();
+}
+async function openBackupModal() {
+  applyCollabTranslations();
+  const note = document.getElementById("backup-auth-note");
+  const content = document.getElementById("backup-content");
+  const trip = activeTrip();
+  let message = "";
+  if (!collabUser) message = ct("backupNeedsSignIn");
+  else if (!trip?.remoteId) message = ct("backupNeedsSharedTrip");
+  else if (!canEditTrip(trip)) message = ct("backupNoPermission");
+  note.textContent = message;
+  note.style.display = message ? "block" : "none";
+  content.style.display = message ? "none" : "block";
+  document.getElementById("backup-overlay").classList.add("show");
+  if (!message) await loadBackups();
+}
+function closeBackupModal() {
+  document.getElementById("backup-overlay").classList.remove("show");
 }
 
 function sharedDocument(trip) {
@@ -3698,7 +4151,7 @@ async function loadRemoteTrip(remoteId, silent = false) {
     const fingerprint = JSON.stringify(sharedDocument(existing));
     if (existing.remoteSnapshot !== fingerprint) {
       clearTimeout(remoteSaveTimer);
-      await saveRemoteTrip(existing);
+      await queueRemoteSave(existing);
     }
   }
 
@@ -3712,36 +4165,69 @@ async function loadRemoteTrip(remoteId, silent = false) {
   return true;
 }
 function scheduleRemoteSave() {
-  if (suppressRemoteSave || !supabaseClient || !collabUser) return;
+  if (historyApplying || suppressRemoteSave || !supabaseClient || !collabUser) return;
   const trip = activeTrip();
   if (!trip?.remoteId || !canEditTrip(trip)) return;
   const fingerprint = JSON.stringify(sharedDocument(trip));
   if (trip.remoteSnapshot === fingerprint) return;
   clearTimeout(remoteSaveTimer);
-  remoteSaveTimer = setTimeout(saveActiveRemoteTrip, 450);
+  remoteSaveTimer = setTimeout(() => queueRemoteSave(trip), 450);
 }
-async function saveRemoteTrip(trip) {
-  if (!trip?.remoteId || !canEditTrip(trip) || !supabaseClient || remoteSaveInFlight) return false;
+function queueRemoteSave(trip = activeTrip(), historyOperation = null) {
+  const localTripId = trip?.id;
+  if (!localTripId) return Promise.resolve(false);
+  remoteSaveQueue = remoteSaveQueue
+    .catch(() => false)
+    .then(() => saveRemoteTrip(tripById(localTripId), historyOperation));
+  return remoteSaveQueue;
+}
+function queueHistoryRemoteSave(action, isActive) {
+  const trip = action
+    ? state.trips.find(candidate => candidate.remoteId === action.remoteId)
+    : activeTrip();
+  if (!trip?.remoteId || !canEditTrip(trip) || !supabaseClient || !collabUser) return;
+  clearTimeout(remoteSaveTimer);
+  const targetDocument = sharedDocument(trip);
+  queueRemoteSave(trip, action ? { action, isActive:Boolean(isActive), targetDocument } : { targetDocument });
+}
+async function saveRemoteTrip(trip, historyOperation = null) {
+  if (!trip?.remoteId || !canEditTrip(trip) || !supabaseClient) return false;
   const isActive = trip === activeTrip();
   const beforeDocument = safeJsonParse(trip.remoteSnapshot, null);
-  const afterDocument = sharedDocument(trip);
+  const afterDocument = historyOperation?.targetDocument || sharedDocument(trip);
+  const beforeFingerprint = beforeDocument ? JSON.stringify(beforeDocument) : "";
+  const afterFingerprint = JSON.stringify(afterDocument);
+  const documentChanged = beforeFingerprint !== afterFingerprint;
   const modificationDetails = buildModificationDetails(beforeDocument, afterDocument);
   remoteSaveInFlight = true;
-  if (isActive) updateSyncStatus("saving");
-  const payload = { name: trip.name, document: afterDocument, last_client_id: CLIENT_ID };
-  const { data, error } = await supabaseClient.from("voyage_trips").update(payload).eq("id", trip.remoteId).select("version,updated_at").single();
-  remoteSaveInFlight = false;
-  if (error) { if (isActive) { updateSyncStatus("error"); setCollabMessage(error.message, true); } return false; }
-  trip.remoteVersion = data.version;
-  trip.remoteUpdatedAt = data.updated_at;
-  trip.remoteSnapshot = JSON.stringify(afterDocument);
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
-  if (modificationDetails.length) insertModificationLog(trip.remoteId, modificationDetails).catch(() => false);
-  if (isActive) updateSyncStatus("synced");
-  return true;
+  if (isActive && documentChanged) updateSyncStatus("saving");
+  try {
+    if (documentChanged) {
+      const payload = { name: afterDocument.trip?.name || trip.name, document: afterDocument, last_client_id: CLIENT_ID };
+      const { data, error } = await supabaseClient.from("voyage_trips").update(payload).eq("id", trip.remoteId).select("version,updated_at").single();
+      if (error) {
+        if (isActive) { updateSyncStatus("error"); setCollabMessage(error.message, true); }
+        return false;
+      }
+      trip.remoteVersion = data.version;
+      trip.remoteUpdatedAt = data.updated_at;
+      trip.remoteSnapshot = afterFingerprint;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+    }
+
+    if (historyOperation?.action) {
+      await setModificationActionActive(historyOperation.action, historyOperation.isActive);
+    } else if (documentChanged) {
+      await flushPendingModificationActions(trip.remoteId, modificationDetails);
+    }
+    if (isActive) updateSyncStatus("synced");
+    return true;
+  } finally {
+    remoteSaveInFlight = false;
+  }
 }
-async function saveActiveRemoteTrip() {
-  await saveRemoteTrip(activeTrip());
+async function saveActiveRemoteTrip(historyOperation = null) {
+  return queueRemoteSave(activeTrip(), historyOperation);
 }
 async function ensureRealtimeForActiveTrip() {
   if (!supabaseClient || !collabUser) return;
@@ -3955,10 +4441,18 @@ document.getElementById("chat-trip-btn").addEventListener("click", openChatModal
 document.getElementById("chat-close").addEventListener("click", closeChatModal);
 document.getElementById("chat-overlay").addEventListener("click", event => { if (event.target.id === "chat-overlay") closeChatModal(); });
 document.getElementById("chat-send-btn").addEventListener("click", sendChatMessage);
+document.getElementById("chat-image-btn").addEventListener("click", () => document.getElementById("chat-image-input").click());
+document.getElementById("chat-image-input").addEventListener("change", event => selectChatImage(event.target.files?.[0] || null));
+document.getElementById("chat-image-remove-btn").addEventListener("click", clearSelectedChatImage);
 document.getElementById("chat-message-input").addEventListener("keydown", event => {
   if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendChatMessage(); }
 });
 document.getElementById("chat-show-modifications").addEventListener("change", renderChatFeed);
+document.getElementById("backup-trip-btn").addEventListener("click", openBackupModal);
+document.getElementById("backup-close").addEventListener("click", closeBackupModal);
+document.getElementById("backup-overlay").addEventListener("click", event => { if (event.target.id === "backup-overlay") closeBackupModal(); });
+document.getElementById("backup-refresh-btn").addEventListener("click", loadBackups);
+document.getElementById("backup-create-btn").addEventListener("click", createManualBackup);
 document.getElementById("profile-save-btn").addEventListener("click", saveOwnProfile);
 document.getElementById("share-close").addEventListener("click", closeShareModal);
 document.getElementById("share-done").addEventListener("click", closeShareModal);
@@ -4002,7 +4496,8 @@ document.getElementById("collab-login-btn").addEventListener("click", async () =
 document.getElementById("collab-logout-btn").addEventListener("click", async () => {
   await supabaseClient.auth.signOut();
   collabUser = null;
-  ownProfile = null; participantProfiles = new Map(); chatMessagesCache = []; changeLogsCache = [];
+  ownProfile = null; participantProfiles = new Map(); chatMessagesCache = []; changeLogsCache = []; backupCache = [];
+  clearSelectedChatImage();
   refreshSharePanel();
   renderMobileScheduleNav();
 });
