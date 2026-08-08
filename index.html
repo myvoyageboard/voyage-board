@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board collaboration stability fixes v6 -->
+<!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
 <html lang="en">
 <head>
@@ -632,6 +632,57 @@
     .backup-row-actions .btn { flex:1; }
   }
 
+
+  /* v7: stable chat actions, clearly separated activity logs, and iOS input sizing */
+  .chat-message-menu-wrap { position:relative; flex:0 0 auto; }
+  .chat-message-menu-btn {
+    width:28px; height:28px; border:0; border-radius:8px; background:transparent;
+    color:var(--text-lo); cursor:pointer; display:grid; place-items:center;
+    font:700 16px/1 var(--font-ui);
+  }
+  .chat-message-menu-btn:hover, .chat-message-menu-btn[aria-expanded="true"] { background:var(--hover); color:var(--text-hi); }
+  .chat-message-menu {
+    position:absolute; z-index:8; top:31px; right:0; min-width:132px; padding:5px;
+    border:1px solid var(--border); border-radius:10px; background:var(--panel);
+    box-shadow:0 12px 30px var(--shadow);
+  }
+  .chat-message-menu[hidden] { display:none; }
+  .chat-message-menu button {
+    width:100%; min-height:36px; border:0; border-radius:7px; padding:7px 9px;
+    background:transparent; color:var(--danger); text-align:left; cursor:pointer;
+    font:11px var(--font-ui);
+  }
+  .chat-message-menu button:hover { background:var(--hover); }
+  .chat-system {
+    align-self:stretch; max-width:none; margin:5px 0;
+    border:1px dashed color-mix(in srgb, #63C7FF 58%, var(--border));
+    border-left:4px solid #63C7FF;
+    border-radius:10px;
+    background:repeating-linear-gradient(-45deg,
+      color-mix(in srgb, #63C7FF 8%, var(--panel)),
+      color-mix(in srgb, #63C7FF 8%, var(--panel)) 8px,
+      color-mix(in srgb, #63C7FF 4%, var(--panel)) 8px,
+      color-mix(in srgb, #63C7FF 4%, var(--panel)) 16px);
+  }
+  .chat-system-toggle { padding:11px 12px; }
+  .chat-system-icon { width:32px; height:32px; border-radius:9px; font-size:15px; }
+  .chat-system-kicker {
+    display:block; margin-bottom:2px; color:#63C7FF; font-size:8.5px;
+    font-weight:800; letter-spacing:.13em; text-transform:uppercase;
+  }
+  .chat-system-title { font-size:12px; }
+  .chat-system-details { background:color-mix(in srgb, #63C7FF 4%, var(--panel)); }
+  .member-directory-row[data-role="owner"] { border-left:3px solid var(--amber); }
+  .member-directory-row[data-role="admin"] { border-left:3px solid #63C7FF; }
+
+  @media (max-width:720px) {
+    /* iOS zooms focused controls below 16px. Keep form controls at 16px instead
+       of disabling pinch zoom, so accessibility zoom remains available. */
+    input, select, textarea, .field-input { font-size:16px !important; }
+    .chat-message-menu-btn { width:36px; height:36px; }
+    .chat-message-menu { top:39px; }
+  }
+
 </style>
 </head>
 <body>
@@ -906,6 +957,7 @@
           <input class="field-input" id="profile-display-name" maxlength="80" placeholder="Your name">
           <label class="field-label" id="profile-visibility-label" for="profile-visibility">Show me as</label>
           <select class="field-input" id="profile-visibility">
+            <option value="role">Trip role (recommended)</option>
             <option value="name">Display name</option>
             <option value="email">Email address</option>
             <option value="hidden">Hidden member</option>
@@ -3476,6 +3528,7 @@ function applyCollabTranslations() {
   }
   const visibilitySelect = document.getElementById("profile-visibility");
   if (visibilitySelect) {
+    visibilitySelect.querySelector('[value="role"]').textContent = ct("showRole");
     visibilitySelect.querySelector('[value="name"]').textContent = ct("showName");
     visibilitySelect.querySelector('[value="email"]').textContent = ct("showEmail");
     visibilitySelect.querySelector('[value="hidden"]').textContent = ct("showHidden");
@@ -3488,6 +3541,29 @@ function applyCollabTranslations() {
   if (imageRemoveButton) imageRemoveButton.setAttribute("aria-label", ct("removeSelectedImage"));
   updateSyncStatus();
 }
+
+
+Object.assign(COLLAB_I18N.en, {
+  showRole:"Trip role (recommended)", roleIdentityOwner:"Creator", roleIdentityAdmin:"Manager", roleIdentityEditor:"Member", roleIdentityViewer:"Member",
+  rolePermissionOwner:"Owns trip", rolePermissionAdmin:"Can manage", rolePermissionEditor:"Can edit", rolePermissionViewer:"View only",
+  memberDirectoryHelp:"Members appear by trip role by default. Each person may instead show a display name, email address, or remain hidden.",
+  activityLog:"ACTIVITY LOG", confirmRemoveMember:"Remove this member from the trip? They will lose access immediately.",
+  chatRefreshError:"Conversation could not be refreshed. Existing messages remain available."
+});
+Object.assign(COLLAB_I18N["zh-TW"], {
+  showRole:"旅程角色（建議）", roleIdentityOwner:"建立者", roleIdentityAdmin:"管理者", roleIdentityEditor:"成員", roleIdentityViewer:"成員",
+  rolePermissionOwner:"旅程擁有者", rolePermissionAdmin:"可管理", rolePermissionEditor:"可編輯", rolePermissionViewer:"僅供檢視",
+  memberDirectoryHelp:"預設以旅程角色顯示成員；每位使用者也可改為顯示名稱、電子郵件或隱藏身分。",
+  activityLog:"修改紀錄", confirmRemoveMember:"確定要將此成員移出旅程嗎？對方會立即失去存取權。",
+  chatRefreshError:"無法重新整理對話；目前已載入的訊息仍會保留。"
+});
+Object.assign(COLLAB_I18N.ja, {
+  showRole:"旅行での役割（推奨）", roleIdentityOwner:"作成者", roleIdentityAdmin:"管理者", roleIdentityEditor:"メンバー", roleIdentityViewer:"メンバー",
+  rolePermissionOwner:"旅行の所有者", rolePermissionAdmin:"管理可能", rolePermissionEditor:"編集可能", rolePermissionViewer:"閲覧のみ",
+  memberDirectoryHelp:"既定では旅行での役割を表示します。各ユーザーは表示名、メール、非表示にも変更できます。",
+  activityLog:"変更履歴", confirmRemoveMember:"このメンバーを旅行から削除しますか？アクセス権は直ちに失われます。",
+  chatRefreshError:"会話を更新できませんでした。読み込み済みのメッセージはそのまま表示します。"
+});
 
 let supabaseClient = null;
 let collabUser = null;
@@ -3510,9 +3586,9 @@ let chatMessagesCache = [];
 let changeLogsCache = [];
 let chatDataLoadedTripId = null;
 let chatLoadRequestId = 0;
-let chatRefreshTimer = null;
-let participantRefreshTimer = null;
+let chatLoadPromise = null;
 let expandedChangeLogIds = new Set();
+let openChatMessageMenuId = null;
 let chatBackendReady = null;
 let selectedChatImage = null;
 let selectedChatImagePreviewUrl = "";
@@ -3572,7 +3648,7 @@ function safeJsonParse(value, fallback = null) {
   try { return JSON.parse(value); } catch { return fallback; }
 }
 function normalizeProfileVisibility(value) {
-  return ["name", "email", "hidden"].includes(value) ? value : "email";
+  return ["role", "name", "email", "hidden"].includes(value) ? value : "role";
 }
 async function ensureOwnProfile() {
   if (!supabaseClient || !collabUser) return null;
@@ -3585,7 +3661,7 @@ async function ensureOwnProfile() {
       ownProfile.email = collabUser.email;
     }
   } else {
-    const created = { user_id: collabUser.id, email: collabUser.email || "", display_name: "", visibility: "email" };
+    const created = { user_id: collabUser.id, email: collabUser.email || "", display_name: "", visibility: "role" };
     const { data: inserted, error: insertError } = await supabaseClient.from("voyage_user_profiles").insert(created).select("user_id,email,display_name,visibility").single();
     if (insertError) { console.warn("Could not create identity profile", insertError); return null; }
     ownProfile = inserted;
@@ -3659,76 +3735,65 @@ async function registerCurrentParticipant(trip = activeTrip(), force = false) {
   return task;
 }
 
-async function loadParticipantProfiles(remoteId = activeTrip()?.remoteId) {
+async function loadParticipantProfiles(remoteId = activeTrip()?.remoteId, options = {}) {
   if (!supabaseClient || !collabUser || !remoteId) return [];
   const requestId = ++participantProfileRequestId;
+  const currentTrip = state.trips.find(trip => trip.remoteId === remoteId) || activeTrip();
 
-  await registerCurrentParticipant(
-    state.trips.find(trip => trip.remoteId === remoteId) || activeTrip()
-  ).catch(() => false);
+  // Registration only mirrors the signed-in user's identity preference. It is
+  // deliberately fire-and-forget and is not part of chat loading.
+  registerCurrentParticipant(currentTrip).catch(() => false);
 
-  const [profilesResult, authoritativeResult] = await Promise.all([
-    supabaseClient.rpc("list_voyage_participant_profiles", { p_trip_id: remoteId }),
-    // This older collaboration RPC is authoritative for membership. It may be
-    // restricted to owners/admins, so failure is intentionally non-fatal.
-    (async () => {
-      try {
-        return await supabaseClient.rpc("list_voyage_members", { p_trip_id: remoteId });
-      } catch (error) {
-        return { data:null, error };
-      }
-    })()
+  const [membersResult, profilesResult] = await Promise.all([
+    supabaseClient.rpc("list_voyage_members", { p_trip_id: remoteId }),
+    supabaseClient.rpc("list_voyage_participant_profiles", { p_trip_id: remoteId })
   ]);
 
-  if (requestId !== participantProfileRequestId) return Array.from(participantProfiles.values());
-  if (profilesResult.error) {
-    console.warn("Could not load participant identities", profilesResult.error);
+  if (requestId !== participantProfileRequestId || activeTrip()?.remoteId !== remoteId) {
+    return Array.from(participantProfiles.values());
+  }
+  if (membersResult.error) {
+    console.warn("Could not load authoritative trip members", membersResult.error);
     return Array.from(participantProfiles.values());
   }
 
+  const profileByUser = new Map((profilesResult.data || []).map(profile => [profile.user_id, profile]));
   const nextProfiles = new Map();
-  (profilesResult.data || []).forEach(member => nextProfiles.set(member.user_id, member));
-
-  // Keep every authoritative member visible even before that person has opened
-  // the upgraded app and created a public identity preference.
-  if (!authoritativeResult?.error) {
-    (authoritativeResult.data || []).forEach(member => {
-      if (!nextProfiles.has(member.user_id)) {
-        nextProfiles.set(member.user_id, {
-          user_id: member.user_id,
-          role: member.role,
-          display_value: null,
-          visibility: "unregistered"
-        });
-      } else {
-        nextProfiles.get(member.user_id).role = member.role;
-      }
+  (membersResult.data || []).forEach(member => {
+    const profile = profileByUser.get(member.user_id);
+    nextProfiles.set(member.user_id, {
+      user_id: member.user_id,
+      role: member.role,
+      raw_email: member.email || "",
+      display_value: profile?.display_value || null,
+      visibility: normalizeProfileVisibility(profile?.visibility || "role")
     });
-  }
+  });
 
   participantProfiles = nextProfiles;
   participantProfilesTripId = remoteId;
+  renderMemberDirectory();
+  if (options.renderChat !== false) renderChatFeed();
   return Array.from(nextProfiles.values());
 }
 
-function ownVisibleIdentity() {
-  if (!collabUser) return "";
-  const visibility = normalizeProfileVisibility(ownProfile?.visibility);
-  if (visibility === "hidden") return ct("hiddenMember");
-  if (visibility === "name") return ownProfile?.display_name?.trim() || ct("unknownMember");
-  return ownProfile?.email || collabUser.email || ct("unknownMember");
+function roleIdentityLabel(role) {
+  return ct({ owner:"roleIdentityOwner", admin:"roleIdentityAdmin", editor:"roleIdentityEditor", viewer:"roleIdentityViewer" }[role] || "unknownMember");
 }
-
+function rolePermissionLabel(role) {
+  return ct({ owner:"rolePermissionOwner", admin:"rolePermissionAdmin", editor:"rolePermissionEditor", viewer:"rolePermissionViewer" }[role] || "rolePermissionViewer");
+}
 function participantName(userId) {
   const member = participantProfiles.get(userId);
-  if (member?.display_value) return member.display_value;
-  if (member?.visibility === "hidden") return ct("hiddenMember");
-  if (collabUser?.id === userId) return ownVisibleIdentity();
-  return ct("unknownMember");
+  const visibility = normalizeProfileVisibility(member?.visibility);
+  if (visibility === "hidden") return ct("hiddenMember");
+  if ((visibility === "name" || visibility === "email") && member?.display_value) return member.display_value;
+  return roleIdentityLabel(member?.role || (collabUser?.id === userId ? tripRole(activeTrip()) : "viewer"));
 }
 function participantInitial(userId) {
-  const name = participantName(userId);
-  return (name || "?").trim().charAt(0).toUpperCase() || "?";
+  const member = participantProfiles.get(userId);
+  const role = member?.role || (collabUser?.id === userId ? tripRole(activeTrip()) : "viewer");
+  return ({ owner:"C", admin:"M", editor:"E", viewer:"V" }[role] || "?");
 }
 function renderMemberDirectory() {
   const list = document.getElementById("member-directory-list");
@@ -3737,16 +3802,19 @@ function renderMemberDirectory() {
   const members = participantProfilesTripId === currentRemoteId
     ? Array.from(participantProfiles.values()).sort((a, b) => {
         const order = { owner:0, admin:1, editor:2, viewer:3 };
-        return (order[a.role] ?? 9) - (order[b.role] ?? 9)
-          || String(a.display_value || "").localeCompare(String(b.display_value || ""));
+        return (order[a.role] ?? 9) - (order[b.role] ?? 9);
       })
     : [];
 
-  list.innerHTML = members.length ? members.map(member => {
+  if (!members.length) {
+    list.innerHTML = `<div class="field-help">${esc(ct("loading"))}</div>`;
+    return;
+  }
+  list.innerHTML = members.map(member => {
     const display = participantName(member.user_id);
     const hidden = member.visibility === "hidden";
-    return `<div class="member-directory-row"><span class="member-avatar">${esc(participantInitial(member.user_id))}</span><span class="member-directory-name ${hidden ? "member-hidden" : ""}" title="${hidden ? "" : esc(display)}">${esc(display)}</span><span class="role-badge">${esc(roleText(member.role))}</span></div>`;
-  }).join("") : `<div class="field-help">${esc(ct("loading"))}</div>`;
+    return `<div class="member-directory-row" data-role="${esc(member.role)}"><span class="member-avatar">${esc(participantInitial(member.user_id))}</span><span class="member-directory-name ${hidden ? "member-hidden" : ""}" title="${hidden ? "" : esc(display)}"><strong>${esc(display)}</strong><small style="display:block;color:var(--text-lo);margin-top:2px;">${esc(rolePermissionLabel(member.role))}</small></span></div>`;
+  }).join("");
 }
 
 function valueForLog(value) {
@@ -3913,51 +3981,61 @@ async function loadChatData(options = {}) {
   const trip = activeTrip();
   if (!supabaseClient || !collabUser || !trip?.remoteId) return false;
   const remoteId = trip.remoteId;
-  const requestId = ++chatLoadRequestId;
   const firstLoadForTrip = chatDataLoadedTripId !== remoteId;
   const status = document.getElementById("chat-status");
 
+  if (chatLoadPromise && !firstLoadForTrip) return chatLoadPromise;
+  const requestId = ++chatLoadRequestId;
   if (firstLoadForTrip) {
     chatMessagesCache = [];
     changeLogsCache = [];
     chatImageUrls = new Map();
     expandedChangeLogIds = new Set();
     renderChatFeed();
-  }
-  if (options.showLoading ?? firstLoadForTrip) status.textContent = ct("chatLoading");
-
-  const [profilesResult, messagesResult, logsResult] = await Promise.all([
-    loadParticipantProfiles(remoteId).catch(() => []),
-    supabaseClient.from("voyage_chat_messages")
-      .select("id,trip_id,user_id,body,message_kind,image_path,image_name,image_mime,image_size,deleted_at,deleted_by,deletion_kind,created_at")
-      .eq("trip_id", remoteId).order("created_at", { ascending:true }).limit(300),
-    supabaseClient.from("voyage_change_logs")
-      .select("id,trip_id,user_id,action_id,details,is_active,created_at")
-      .eq("trip_id", remoteId).eq("is_active", true)
-      .order("created_at", { ascending:true }).limit(300)
-  ]);
-
-  if (requestId !== chatLoadRequestId || activeTrip()?.remoteId !== remoteId) return false;
-
-  const error = messagesResult.error || logsResult.error;
-  if (error) {
-    chatBackendReady = isMissingChatRelation(error) ? false : chatBackendReady;
-    status.textContent = chatErrorText(error);
-    renderMemberDirectory();
-    return false;
+    status.textContent = ct("chatLoading");
   }
 
-  chatBackendReady = true;
-  chatMessagesCache = messagesResult.data || [];
-  changeLogsCache = logsResult.data || [];
-  chatDataLoadedTripId = remoteId;
-  await loadChatImageUrls(chatMessagesCache);
+  // Member/profile loading is independent. A slow identity RPC must never keep
+  // the conversation itself in a loading state.
+  loadParticipantProfiles(remoteId).catch(error => console.warn("Member directory refresh failed", error));
 
-  if (requestId !== chatLoadRequestId || activeTrip()?.remoteId !== remoteId) return false;
-  status.textContent = "";
-  renderChatFeed({ forceBottom:Boolean(options.forceBottom) });
-  renderMemberDirectory();
-  return true;
+  chatLoadPromise = (async () => {
+    try {
+      const [messagesResult, logsResult] = await Promise.all([
+        supabaseClient.from("voyage_chat_messages")
+          .select("id,trip_id,user_id,body,message_kind,image_path,image_name,image_mime,image_size,deleted_at,deleted_by,deletion_kind,created_at")
+          .eq("trip_id", remoteId).order("created_at", { ascending:true }).limit(300),
+        supabaseClient.from("voyage_change_logs")
+          .select("id,trip_id,user_id,action_id,details,is_active,created_at")
+          .eq("trip_id", remoteId).eq("is_active", true)
+          .order("created_at", { ascending:true }).limit(300)
+      ]);
+
+      if (requestId !== chatLoadRequestId || activeTrip()?.remoteId !== remoteId) return false;
+      const error = messagesResult.error || logsResult.error;
+      if (error) {
+        chatBackendReady = isMissingChatRelation(error) ? false : chatBackendReady;
+        status.textContent = chatErrorText(error);
+        return false;
+      }
+
+      chatBackendReady = true;
+      chatMessagesCache = messagesResult.data || [];
+      changeLogsCache = logsResult.data || [];
+      chatDataLoadedTripId = remoteId;
+      await loadChatImageUrls(chatMessagesCache);
+      if (requestId !== chatLoadRequestId || activeTrip()?.remoteId !== remoteId) return false;
+      status.textContent = "";
+      renderChatFeed({ forceBottom:Boolean(options.forceBottom) });
+      return true;
+    } catch (error) {
+      if (requestId === chatLoadRequestId) status.textContent = error?.message || ct("chatRefreshError");
+      return false;
+    } finally {
+      if (requestId === chatLoadRequestId) chatLoadPromise = null;
+    }
+  })();
+  return chatLoadPromise;
 }
 
 function renderChatFeed(options = {}) {
@@ -3973,7 +4051,6 @@ function renderChatFeed(options = {}) {
 
   const currentLogIds = new Set(changeLogsCache.map(log => String(log.id)));
   expandedChangeLogIds = new Set([...expandedChangeLogIds].filter(id => currentLogIds.has(String(id))));
-
   if (!entries.length) {
     feed.innerHTML = `<div class="chat-empty">${esc(ct("chatEmpty"))}</div>`;
     return;
@@ -3987,8 +4064,9 @@ function renderChatFeed(options = {}) {
       const canModerate = own || canManageTrip(activeTrip());
       const deleted = Boolean(entry.deleted_at);
       const actionLabel = own ? ct("unsend") : ct("removeMessage");
+      const menuOpen = openChatMessageMenuId === String(entry.id);
       const actions = canModerate && !deleted
-        ? `<span class="chat-message-actions"><button class="chat-message-action" type="button" data-chat-remove="${esc(entry.id)}">${esc(actionLabel)}</button></span>`
+        ? `<span class="chat-message-menu-wrap"><button class="chat-message-menu-btn" type="button" data-chat-menu="${esc(entry.id)}" aria-expanded="${menuOpen ? "true" : "false"}" aria-label="${esc(actionLabel)}">⋯</button><span class="chat-message-menu" ${menuOpen ? "" : "hidden"}><button type="button" data-chat-remove="${esc(entry.id)}">${esc(actionLabel)}</button></span></span>`
         : "";
       if (deleted) {
         const deletedText = entry.deletion_kind === "removed" ? ct("messageRemoved") : ct("messageUnsent");
@@ -4004,44 +4082,62 @@ function renderChatFeed(options = {}) {
 
     const changes = Array.isArray(entry.details?.changes) ? entry.details.changes : [];
     const expanded = expandedChangeLogIds.has(String(entry.id));
-    return `<article class="chat-system ${expanded ? "expanded" : ""}" data-log-id="${esc(entry.id)}"><button class="chat-system-toggle" type="button"><span class="chat-system-icon">↻</span><span class="chat-system-main"><span class="chat-system-title">${esc(ct("tripModified"))}</span><span class="chat-system-meta">${esc(ct("modificationBy", { name:author }))} · ${esc(time)}</span></span><span class="chat-system-chevron">${expanded ? "⌃" : "⌄"}</span></button><div class="chat-system-details"><ol>${changes.map(change => `<li>${esc(modificationLine(change))}</li>`).join("") || `<li>${esc(ct("tripModified"))}</li>`}</ol></div></article>`;
+    return `<article class="chat-system ${expanded ? "expanded" : ""}" data-log-id="${esc(entry.id)}"><button class="chat-system-toggle" type="button"><span class="chat-system-icon">☷</span><span class="chat-system-main"><span class="chat-system-kicker">${esc(ct("activityLog"))}</span><span class="chat-system-title">${esc(ct("tripModified"))}</span><span class="chat-system-meta">${esc(ct("modificationBy", { name:author }))} · ${esc(time)}</span></span><span class="chat-system-chevron">${expanded ? "⌃" : "⌄"}</span></button><div class="chat-system-details"><ol>${changes.map(change => `<li>${esc(modificationLine(change))}</li>`).join("") || `<li>${esc(ct("tripModified"))}</li>`}</ol></div></article>`;
   }).join("");
 
   feed.querySelectorAll(".chat-system-toggle").forEach(button => button.addEventListener("click", () => {
     const card = button.closest(".chat-system");
     const id = String(card.dataset.logId);
-    if (expandedChangeLogIds.has(id)) expandedChangeLogIds.delete(id);
-    else expandedChangeLogIds.add(id);
+    if (expandedChangeLogIds.has(id)) expandedChangeLogIds.delete(id); else expandedChangeLogIds.add(id);
     card.classList.toggle("expanded", expandedChangeLogIds.has(id));
     button.querySelector(".chat-system-chevron").textContent = expandedChangeLogIds.has(id) ? "⌃" : "⌄";
   }));
-  feed.querySelectorAll("[data-chat-remove]").forEach(button => button.addEventListener("click", () => removeChatMessage(button.dataset.chatRemove)));
+  feed.querySelectorAll("[data-chat-menu]").forEach(button => button.addEventListener("click", event => {
+    event.stopPropagation();
+    const id = String(button.dataset.chatMenu);
+    openChatMessageMenuId = openChatMessageMenuId === id ? null : id;
+    renderChatFeed();
+  }));
+  feed.querySelectorAll("[data-chat-remove]").forEach(button => button.addEventListener("click", event => {
+    event.stopPropagation();
+    openChatMessageMenuId = null;
+    removeChatMessage(button.dataset.chatRemove);
+  }));
 
   if (options.forceBottom || wasNearBottom) feed.scrollTop = feed.scrollHeight;
   else feed.scrollTop = previousScrollTop;
 }
 
-function scheduleChatDataRefresh(remoteId = activeTrip()?.remoteId) {
-  if (!remoteId) return;
-  clearTimeout(chatRefreshTimer);
-  chatRefreshTimer = setTimeout(() => {
-    if (activeTrip()?.remoteId === remoteId) loadChatData({ showLoading:false }).catch(() => false);
-  }, 120);
+function upsertChatMessage(message) {
+  if (!message?.id || message.trip_id !== activeTrip()?.remoteId) return;
+  const index = chatMessagesCache.findIndex(candidate => String(candidate.id) === String(message.id));
+  if (index >= 0) chatMessagesCache[index] = { ...chatMessagesCache[index], ...message };
+  else chatMessagesCache.push(message);
+  chatMessagesCache.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
 }
-
-function scheduleParticipantRefresh(remoteId = activeTrip()?.remoteId) {
-  if (!remoteId) return;
-  clearTimeout(participantRefreshTimer);
-  participantRefreshTimer = setTimeout(async () => {
-    if (activeTrip()?.remoteId !== remoteId) return;
-    participantRegistrationRoles.delete(`${remoteId}:${collabUser?.id || ""}`);
-    await loadParticipantProfiles(remoteId).catch(() => []);
-    renderMemberDirectory();
-    renderChatFeed();
-    if (document.getElementById("share-overlay")?.classList.contains("show") && canManageTrip(activeTrip())) {
-      await listMembers({ skipProfileLoad:true }).catch(() => false);
+function applyChatRealtimePayload(payload) {
+  const row = payload.new && Object.keys(payload.new).length ? payload.new : payload.old;
+  if (!row || row.trip_id !== activeTrip()?.remoteId) return;
+  if (payload.eventType === "DELETE") {
+    chatMessagesCache = chatMessagesCache.filter(message => String(message.id) !== String(row.id));
+  } else {
+    upsertChatMessage(row);
+    if (row.image_path && !row.deleted_at && !chatImageUrls.has(row.image_path)) {
+      supabaseClient.storage.from(CHAT_MEDIA_BUCKET).createSignedUrl(row.image_path, 3600).then(({data}) => {
+        const url = data?.signedUrl || data?.signedURL;
+        if (url) { chatImageUrls.set(row.image_path, url); renderChatFeed(); }
+      }).catch(() => null);
     }
-  }, 140);
+  }
+  renderChatFeed();
+}
+function applyLogRealtimePayload(payload) {
+  const row = payload.new && Object.keys(payload.new).length ? payload.new : payload.old;
+  if (!row || row.trip_id !== activeTrip()?.remoteId) return;
+  changeLogsCache = changeLogsCache.filter(log => String(log.id) !== String(row.id));
+  if (payload.eventType !== "DELETE" && row.is_active !== false) changeLogsCache.push(row);
+  changeLogsCache.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+  renderChatFeed();
 }
 
 async function removeChatMessage(messageId) {
@@ -4060,7 +4156,14 @@ async function removeChatMessage(messageId) {
     const removal = await supabaseClient.storage.from(CHAT_MEDIA_BUCKET).remove([result.removed_image_path]);
     if (removal.error) console.warn("Could not remove chat image object", removal.error);
   }
-  await loadChatData({ showLoading:false });
+  const cached = chatMessagesCache.find(candidate => String(candidate.id) === String(messageId));
+  if (cached) {
+    cached.deleted_at = new Date().toISOString();
+    cached.deletion_kind = own ? "unsent" : "removed";
+    cached.body = "";
+    cached.image_path = null;
+  }
+  renderChatFeed();
 }
 
 async function ensureChatRealtime(remoteId = activeTrip()?.remoteId) {
@@ -4069,9 +4172,8 @@ async function ensureChatRealtime(remoteId = activeTrip()?.remoteId) {
   if (chatRealtimeChannel) await supabaseClient.removeChannel(chatRealtimeChannel);
   chatRealtimeTripId = remoteId;
   chatRealtimeChannel = supabaseClient.channel(`voyage-chat-${remoteId}`)
-    .on("postgres_changes", { event:"*", schema:"public", table:"voyage_chat_messages", filter:`trip_id=eq.${remoteId}` }, () => scheduleChatDataRefresh(remoteId))
-    .on("postgres_changes", { event:"*", schema:"public", table:"voyage_change_logs", filter:`trip_id=eq.${remoteId}` }, () => scheduleChatDataRefresh(remoteId))
-    .on("postgres_changes", { event:"*", schema:"public", table:"voyage_trip_participants", filter:`trip_id=eq.${remoteId}` }, () => scheduleParticipantRefresh(remoteId))
+    .on("postgres_changes", { event:"*", schema:"public", table:"voyage_chat_messages", filter:`trip_id=eq.${remoteId}` }, applyChatRealtimePayload)
+    .on("postgres_changes", { event:"*", schema:"public", table:"voyage_change_logs", filter:`trip_id=eq.${remoteId}` }, applyLogRealtimePayload)
     .subscribe();
 }
 
@@ -4084,7 +4186,7 @@ async function sendChatMessage() {
   const button = document.getElementById("chat-send-btn");
   button.disabled = true;
   document.getElementById("chat-image-btn").disabled = true;
-  await registerCurrentParticipant(trip).catch(() => false);
+  registerCurrentParticipant(trip).catch(() => false);
   const messageId = crypto.randomUUID ? crypto.randomUUID() : `${uid()}-${uid()}`;
   let imagePath = null;
   if (imageFile) {
@@ -4105,7 +4207,8 @@ async function sendChatMessage() {
     image_mime:imageFile?.type || null,
     image_size:imageFile?.size || null,
   };
-  const { error } = await supabaseClient.from("voyage_chat_messages").insert(payload);
+  const { data: insertedMessage, error } = await supabaseClient.from("voyage_chat_messages").insert(payload)
+    .select("id,trip_id,user_id,body,message_kind,image_path,image_name,image_mime,image_size,deleted_at,deleted_by,deletion_kind,created_at").single();
   button.disabled = false;
   document.getElementById("chat-image-btn").disabled = false;
   if (error) {
@@ -4117,7 +4220,9 @@ async function sendChatMessage() {
   chatBackendReady = true;
   input.value = "";
   clearSelectedChatImage();
-  await loadChatData({ showLoading:false, forceBottom:true });
+  if (insertedMessage) upsertChatMessage(insertedMessage);
+  document.getElementById("chat-status").textContent = "";
+  renderChatFeed({ forceBottom:true });
 }
 async function openChatModal() {
   applyCollabTranslations();
@@ -4132,9 +4237,9 @@ async function openChatModal() {
   content.style.display = message ? "none" : "flex";
   document.getElementById("chat-overlay").classList.add("show");
   if (!message) {
-    await registerCurrentParticipant(trip).catch(() => false);
+    registerCurrentParticipant(trip).catch(() => false);
     await ensureChatRealtime(trip.remoteId);
-    await loadChatData({ showLoading:true, forceBottom:true });
+    await loadChatData({ forceBottom:true });
   }
 }
 async function closeChatModal() {
@@ -4454,62 +4559,49 @@ async function listMembers(options = {}) {
   const trip = activeTrip();
   const list = document.getElementById("member-list");
   if (!trip?.remoteId || !canManageTrip(trip)) { list.innerHTML = ""; return false; }
-  if (!options.skipProfileLoad) await loadParticipantProfiles(trip.remoteId).catch(() => []);
+  if (!options.skipProfileLoad) await loadParticipantProfiles(trip.remoteId, { renderChat:false }).catch(() => []);
 
-  list.innerHTML = `<div class="field-help">${esc(ct("loading"))}</div>`;
-  const { data, error } = await supabaseClient.rpc("list_voyage_members", { p_trip_id: trip.remoteId });
-  if (error) {
-    list.innerHTML = `<div class="collab-message error">${esc(error.message)}</div>`;
+  const members = participantProfilesTripId === trip.remoteId ? Array.from(participantProfiles.values()) : [];
+  if (!members.length) {
+    list.innerHTML = `<div class="field-help">${esc(ct("loading"))}</div>`;
     return false;
   }
-
-  const members = data || [];
   list.innerHTML = members.map(member => {
-    const identity = participantProfiles.get(member.user_id);
-    const display = identity?.display_value
-      || (identity?.visibility === "hidden" ? ct("hiddenMember") : ct("unknownMember"));
-    const hidden = identity?.visibility === "hidden";
+    const display = participantName(member.user_id);
     const isOwner = member.role === "owner";
-    const canTouch = tripRole(trip) === "owner"
-      ? !isOwner
-      : ["viewer", "editor"].includes(member.role) && member.user_id !== collabUser.id;
+    const canTouch = tripRole(trip) === "owner" ? !isOwner : ["viewer", "editor"].includes(member.role) && member.user_id !== collabUser.id;
     const roleOptions = tripRole(trip) === "owner" ? ["admin", "editor", "viewer"] : ["editor", "viewer"];
-
-    return `<div class="member-row" data-member="${esc(member.user_id)}"><span class="member-email ${hidden ? "member-hidden" : ""}" title="${hidden ? "" : esc(display)}">${esc(display)}</span>${!canTouch ? `<span class="role-badge">${esc(roleText(member.role))}</span>` : `<select class="field-input" data-member-role>${roleOptions.map(role => `<option value="${role}" ${member.role === role ? "selected" : ""}>${esc(roleText(role))}</option>`).join("")}</select>`}${canTouch ? `<button class="icon-btn danger" data-remove-member title="${esc(ct("removeMember"))}">✕</button>` : ""}</div>`;
+    return `<div class="member-row" data-member="${esc(member.user_id)}"><span class="member-email" title="${esc(display)}"><strong>${esc(display)}</strong><small style="display:block;color:var(--text-lo);margin-top:2px;">${esc(rolePermissionLabel(member.role))}</small></span>${!canTouch ? `<span class="role-badge">${esc(roleText(member.role))}</span>` : `<select class="field-input" data-member-role>${roleOptions.map(role => `<option value="${role}" ${member.role === role ? "selected" : ""}>${esc(roleText(role))}</option>`).join("")}</select>`}${canTouch ? `<button class="icon-btn danger" data-remove-member title="${esc(ct("removeMember"))}">✕</button>` : ""}</div>`;
   }).join("");
 
   list.querySelectorAll("[data-member-role]").forEach(select => select.addEventListener("change", async () => {
     const row = select.closest("[data-member]");
-    const { error } = await supabaseClient.rpc("set_voyage_member_role", {
-      p_trip_id:trip.remoteId, p_user_id:row.dataset.member, p_role:select.value
-    });
+    const previousRole = participantProfiles.get(row.dataset.member)?.role;
+    select.disabled = true;
+    const { error } = await supabaseClient.rpc("set_voyage_member_role", { p_trip_id:trip.remoteId, p_user_id:row.dataset.member, p_role:select.value });
     if (error) {
       setCollabMessage(error.message, true);
+      select.value = previousRole || "viewer";
+      select.disabled = false;
       return;
     }
-    const cached = participantProfiles.get(row.dataset.member);
-    if (cached) cached.role = select.value;
-    participantRegistrationRoles.delete(`${trip.remoteId}:${row.dataset.member}`);
-    await listMembers();
-    renderMemberDirectory();
+    await loadParticipantProfiles(trip.remoteId, { renderChat:true });
+    await listMembers({ skipProfileLoad:true });
   }));
 
   list.querySelectorAll("[data-remove-member]").forEach(button => button.addEventListener("click", async () => {
     const row = button.closest("[data-member]");
-    const { error } = await supabaseClient.rpc("remove_voyage_member", {
-      p_trip_id:trip.remoteId, p_user_id:row.dataset.member
-    });
+    if (!window.confirm(ct("confirmRemoveMember"))) return;
+    button.disabled = true;
+    const { error } = await supabaseClient.rpc("remove_voyage_member", { p_trip_id:trip.remoteId, p_user_id:row.dataset.member });
     if (error) {
       setCollabMessage(error.message, true);
+      button.disabled = false;
       return;
     }
-    // Clean up the optional identity directory row after the authoritative
-    // membership RPC succeeds.
-    await supabaseClient.from("voyage_trip_participants")
-      .delete().eq("trip_id", trip.remoteId).eq("user_id", row.dataset.member);
     participantProfiles.delete(row.dataset.member);
-    await listMembers();
     renderMemberDirectory();
+    await listMembers({ skipProfileLoad:true });
   }));
   return true;
 }
@@ -4644,7 +4736,13 @@ document.getElementById("share-open-account-btn").addEventListener("click", () =
 document.getElementById("share-trip-btn").addEventListener("click", openShareModal);
 document.getElementById("chat-trip-btn").addEventListener("click", openChatModal);
 document.getElementById("chat-close").addEventListener("click", closeChatModal);
-document.getElementById("chat-overlay").addEventListener("click", event => { if (event.target.id === "chat-overlay") closeChatModal(); });
+document.getElementById("chat-overlay").addEventListener("click", event => {
+  if (event.target.id === "chat-overlay") closeChatModal();
+  if (openChatMessageMenuId && !event.target.closest(".chat-message-menu-wrap")) {
+    openChatMessageMenuId = null;
+    renderChatFeed();
+  }
+});
 document.getElementById("chat-send-btn").addEventListener("click", sendChatMessage);
 document.getElementById("chat-image-btn").addEventListener("click", () => document.getElementById("chat-image-input").click());
 document.getElementById("chat-image-input").addEventListener("change", event => selectChatImage(event.target.files?.[0] || null));
@@ -4709,6 +4807,8 @@ document.getElementById("collab-logout-btn").addEventListener("click", async () 
   chatMessagesCache = [];
   changeLogsCache = [];
   chatDataLoadedTripId = null;
+  chatLoadPromise = null;
+  openChatMessageMenuId = null;
   expandedChangeLogIds.clear();
   backupCache = [];
   clearSelectedChatImage();
