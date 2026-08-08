@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v13 — compact mobile actions, multiline chat, and tab-wide font scaling -->
+<!-- Voyage Board v14 — stable mobile chat tabs and viewport layout -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -1261,6 +1261,104 @@
       min-height:34px;
       height:34px;
       padding:5px 9px;
+    }
+  }
+
+
+  /* ---------------------------------------------------------------------
+     v14: prevent the chat tabs/header/composer from being flex-compressed.
+     Only the active Conversation / Activity / Album panel may shrink.
+     --------------------------------------------------------------------- */
+  .chat-modal,
+  #chat-content {
+    min-height:0;
+    overflow:hidden;
+  }
+
+  #chat-content > .chat-workspace-tabs,
+  #chat-content > .chat-activity-summary,
+  #chat-content > .chat-toolbar,
+  #chat-content > .chat-composer {
+    flex:0 0 auto;
+  }
+
+  #chat-content > .chat-view-panel {
+    flex:1 1 0;
+    min-height:0;
+    overflow:hidden;
+  }
+
+  #chat-content > .chat-view-panel > .chat-body,
+  #chat-content > .chat-view-panel > .chat-activity-body,
+  #chat-content > .chat-view-panel > .chat-album-body {
+    flex:1 1 auto;
+    min-height:0;
+    max-height:none;
+    overflow-y:auto;
+  }
+
+  .chat-workspace-tabs {
+    box-sizing:border-box;
+    min-height:48px;
+    flex-shrink:0;
+  }
+
+  .chat-workspace-tab {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    box-sizing:border-box;
+    overflow:hidden;
+  }
+
+  .chat-workspace-tab > span:first-child {
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .chat-status:empty {
+    display:none;
+  }
+
+  @media (max-width:720px) {
+    .chat-workspace-tabs {
+      display:grid;
+      grid-template-columns:minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, .82fr);
+      gap:4px;
+      width:100%;
+      min-height:48px;
+      height:48px;
+      padding:4px 8px;
+      overflow:hidden;
+    }
+
+    .chat-workspace-tab {
+      width:100%;
+      min-width:0;
+      min-height:40px;
+      height:40px;
+      padding:6px 7px;
+      flex:none;
+    }
+
+    .chat-tab-count {
+      flex:0 0 auto;
+      margin-left:2px;
+    }
+
+    #chat-content > .chat-activity-summary {
+      flex-shrink:0;
+    }
+
+    #chat-content > .chat-toolbar {
+      flex-shrink:0;
+    }
+
+    #chat-content > .chat-composer {
+      flex-shrink:0;
     }
   }
 
@@ -5162,17 +5260,29 @@ function renderChatFeed(options = {}) {
 }
 function setChatView(view) {
   activeChatView = ["conversation", "activity", "album"].includes(view) ? view : "conversation";
+
+  let selectedTab = null;
   document.querySelectorAll("[data-chat-view]").forEach(button => {
-    button.setAttribute("aria-selected", String(button.dataset.chatView === activeChatView));
+    const selected = button.dataset.chatView === activeChatView;
+    button.setAttribute("aria-selected", String(selected));
+    if (selected) selectedTab = button;
   });
+
   document.querySelectorAll("[data-chat-panel]").forEach(panel => {
     panel.hidden = panel.dataset.chatPanel !== activeChatView;
   });
+
   const filter = document.getElementById("chat-filter-wrap");
   const composer = document.getElementById("chat-composer");
   if (filter) filter.style.display = activeChatView === "conversation" ? "inline-flex" : "none";
   if (composer) composer.style.display = activeChatView === "conversation" ? "flex" : "none";
+
   renderActivitySummary();
+
+  requestAnimationFrame(() => {
+    selectedTab?.scrollIntoView({ block:"nearest", inline:"nearest" });
+    if (activeChatView === "conversation") resizeChatMessageInput();
+  });
 }
 function jumpChatToDate() {
   const date = document.getElementById("chat-jump-date")?.value;
