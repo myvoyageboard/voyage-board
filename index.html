@@ -210,6 +210,11 @@
 
   /* Modal */
   .overlay { position: fixed; inset: 0; background: var(--overlay-bg); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; backdrop-filter: blur(2px); }
+  .image-lightbox { position: fixed; inset: 0; background: rgba(4,5,7,0.94); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .image-lightbox.show { display: flex; }
+  .image-lightbox img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 6px; }
+  .image-lightbox-close { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); background: rgba(0,0,0,0.45); color: #fff; font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .image-lightbox-close:hover { background: rgba(0,0,0,0.65); }
   .overlay.show { display: flex; }
   .modal { width: 100%; max-width: 480px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 20px 60px var(--shadow); }
   .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 0; }
@@ -812,9 +817,9 @@
     .chat-workspace-tab { flex:1 0 auto; min-height:40px; font-size:11px; }
     .chat-toolbar-v8 { padding:8px 12px; }
     .chat-toolbar-left { width:100%; flex-wrap:wrap; }
-    .chat-date-jump { width:100%; }
-    .chat-date-input { flex:1 1 auto; min-width:0; font-size:16px !important; }
-    .chat-date-go { min-height:40px; }
+    .chat-date-jump { width:auto; flex:0 1 auto; }
+    .chat-date-input { flex:0 1 auto; width:130px; min-width:0; font-size:16px !important; padding:5px 7px; }
+    .chat-date-go { min-height:32px; padding:5px 9px; }
     .chat-activity-body, .chat-album-body {
       flex:1 1 auto; min-height:0; max-height:none; padding:13px 12px;
     }
@@ -3695,7 +3700,7 @@ const COLLAB_I18N = {
 };
 Object.assign(COLLAB_I18N.en, {
   chatTitle:"Trip chat", chat:"Chat", send:"Send", messagePlaceholder:"Write a message…", showModifications:"Show modification log",
-  chatNeedsSignIn:"Sign in to use trip chat.", chatNeedsSharedTrip:"Publish this trip before using chat.", chatLoading:"Loading conversation…", chatEmpty:"No messages yet. Start the conversation.", chatSendError:"Message could not be sent.", chatBackendMissing:"The chat database is not ready. Run the supplied v5 Supabase SQL, wait a few seconds, then reload this page.",
+  chatNeedsSignIn:"Sign in to use trip chat.", chatNeedsSharedTrip:"Publish this trip before using chat.", chatLoading:"Loading conversation…", chatEmpty:"No messages yet. Start the conversation.", chatSendError:"Message could not be sent.", chatBackendMissing:"The chat database is not ready. Run the supplied v9 Supabase SQL, wait a few seconds, then reload this page.",
   tripModified:"Trip modified", modificationBy:"Modified by {name}", modificationDetails:"Modification details", hiddenMember:"Hidden member", unknownMember:"Trip member",
   profileTitle:"Member identity", profileHelp:"Choose how your identity appears to people who share a trip with you.", displayName:"Display name", showMeAs:"Show me as", showName:"Display name", showEmail:"Email address", showHidden:"Hidden member", saveIdentity:"Save identity", profileSaved:"Identity preference saved.", profileNameRequired:"Enter a display name before choosing Display name.",
   memberDirectory:"Trip members", memberDirectoryHelp:"Each member controls whether their display name, email address, or no identity is shown.",
@@ -3704,7 +3709,7 @@ Object.assign(COLLAB_I18N.en, {
 });
 Object.assign(COLLAB_I18N["zh-TW"], {
   chatTitle:"旅程聊天", chat:"聊天", send:"傳送", messagePlaceholder:"輸入訊息…", showModifications:"顯示修改紀錄",
-  chatNeedsSignIn:"請先登入才能使用旅程聊天。", chatNeedsSharedTrip:"請先發布此旅程，才能使用聊天。", chatLoading:"正在載入對話…", chatEmpty:"目前沒有訊息，開始聊天吧。", chatSendError:"訊息傳送失敗。", chatBackendMissing:"聊天資料庫尚未就緒。請執行隨附的 v5 Supabase SQL，等待數秒後重新載入此頁面。",
+  chatNeedsSignIn:"請先登入才能使用旅程聊天。", chatNeedsSharedTrip:"請先發布此旅程，才能使用聊天。", chatLoading:"正在載入對話…", chatEmpty:"目前沒有訊息，開始聊天吧。", chatSendError:"訊息傳送失敗。", chatBackendMissing:"聊天資料庫尚未就緒。請執行隨附的 v9 Supabase SQL，等待數秒後重新載入此頁面。",
   tripModified:"旅程已修改", modificationBy:"由 {name} 修改", modificationDetails:"修改內容", hiddenMember:"隱藏成員", unknownMember:"旅程成員",
   profileTitle:"成員身分", profileHelp:"選擇與您共享旅程的人可看到您的名稱、電子郵件，或不顯示身分。", displayName:"顯示名稱", showMeAs:"顯示方式", showName:"顯示名稱", showEmail:"電子郵件", showHidden:"隱藏成員", saveIdentity:"儲存身分設定", profileSaved:"身分顯示設定已儲存。", profileNameRequired:"選擇顯示名稱前，請先輸入名稱。",
   memberDirectory:"旅程成員", memberDirectoryHelp:"每位成員可自行選擇顯示名稱、電子郵件，或不顯示身分。",
@@ -3713,7 +3718,7 @@ Object.assign(COLLAB_I18N["zh-TW"], {
 });
 Object.assign(COLLAB_I18N.ja, {
   chatTitle:"旅行チャット", chat:"チャット", send:"送信", messagePlaceholder:"メッセージを書く…", showModifications:"変更履歴を表示",
-  chatNeedsSignIn:"旅行チャットを使うにはサインインしてください。", chatNeedsSharedTrip:"チャットを使う前にこの旅行を共有してください。", chatLoading:"会話を読み込んでいます…", chatEmpty:"まだメッセージはありません。会話を始めましょう。", chatSendError:"メッセージを送信できませんでした。", chatBackendMissing:"チャット用データベースの準備ができていません。付属の v5 Supabase SQL を実行し、数秒待ってからページを再読み込みしてください。",
+  chatNeedsSignIn:"旅行チャットを使うにはサインインしてください。", chatNeedsSharedTrip:"チャットを使う前にこの旅行を共有してください。", chatLoading:"会話を読み込んでいます…", chatEmpty:"まだメッセージはありません。会話を始めましょう。", chatSendError:"メッセージを送信できませんでした。", chatBackendMissing:"チャット用データベースの準備ができていません。付属の v9 Supabase SQL を実行し、数秒待ってからページを再読み込みしてください。",
   tripModified:"旅行が変更されました", modificationBy:"{name} が変更", modificationDetails:"変更内容", hiddenMember:"非表示のメンバー", unknownMember:"旅行メンバー",
   profileTitle:"メンバー表示", profileHelp:"同じ旅行のメンバーに、表示名・メール・非表示のどれで見せるか選べます。", displayName:"表示名", showMeAs:"表示方法", showName:"表示名", showEmail:"メールアドレス", showHidden:"非表示のメンバー", saveIdentity:"表示設定を保存", profileSaved:"表示設定を保存しました。", profileNameRequired:"表示名を選ぶ前に名前を入力してください。",
   memberDirectory:"旅行メンバー", memberDirectoryHelp:"各メンバーは表示名、メール、非表示を自分で選べます。",
@@ -3722,15 +3727,15 @@ Object.assign(COLLAB_I18N.ja, {
 });
 
 Object.assign(COLLAB_I18N.en, {
-  backups:"Backups", backupsTitle:"Trip backups", backupHelp:"Server recovery snapshots are created before every cloud change and every six hours. Up to 1,000 snapshots are retained for each trip.", backupNeedsSignIn:"Sign in to use server backups.", backupNeedsSharedTrip:"Publish this trip before using server backups.", backupNoPermission:"Editing access is required to view or restore backups.", backupLoading:"Loading backups…", backupEmpty:"No recovery snapshots are available yet.", createBackup:"Create backup now", refresh:"Refresh", backupCreated:"Backup created.", backupCreateError:"The backup could not be created.", backupBackendMissing:"The backup database is not ready. Run the supplied v5 Supabase SQL, wait a few seconds, and reload this page.", backupAutomatic:"Before change", backupScheduled:"Scheduled", backupManual:"Manual", backupRestorePoint:"Before restore", backupVersion:"Version {version}", backupBy:"by {name}", server:"Server", restore:"Restore", downloadJson:"Download JSON", confirmRestore:"Restore this backup? The current trip will first be saved as another recovery point.", restoring:"Restoring backup…", restored:"Backup restored.", restoreError:"The backup could not be restored.",
+  backups:"Backups", backupsTitle:"Trip backups", backupHelp:"Server recovery snapshots are created before every cloud change and every six hours. Up to 1,000 snapshots are retained for each trip.", backupNeedsSignIn:"Sign in to use server backups.", backupNeedsSharedTrip:"Publish this trip before using server backups.", backupNoPermission:"Editing access is required to view or restore backups.", backupLoading:"Loading backups…", backupEmpty:"No recovery snapshots are available yet.", createBackup:"Create backup now", refresh:"Refresh", backupCreated:"Backup created.", backupCreateError:"The backup could not be created.", backupBackendMissing:"The backup database is not ready. Run the supplied v9 Supabase SQL, wait a few seconds, and reload this page.", backupAutomatic:"Before change", backupScheduled:"Scheduled", backupManual:"Manual", backupRestorePoint:"Before restore", backupVersion:"Version {version}", backupBy:"by {name}", server:"Server", restore:"Restore", downloadJson:"Download JSON", confirmRestore:"Restore this backup? The current trip will first be saved as another recovery point.", restoring:"Restoring backup…", restored:"Backup restored.", restoreError:"The backup could not be restored.",
   attachImage:"Attach image", removeSelectedImage:"Remove selected image", imageTooLarge:"Images must be 8 MB or smaller.", imageTypeUnsupported:"Use a JPEG, PNG, WebP, or GIF image.", imageUploadError:"The image could not be uploaded.", unsend:"Unsend", removeMessage:"Remove", confirmUnsend:"Unsend this message?", confirmRemoveMessage:"Remove this member's message?", messageUnsent:"Message unsent", messageRemoved:"Message removed by an administrator", messageRemoveError:"The message could not be removed."
 });
 Object.assign(COLLAB_I18N["zh-TW"], {
-  backups:"備份", backupsTitle:"旅程備份", backupHelp:"伺服器會在每次雲端修改前及每六小時建立復原快照；每個旅程最多保留 1,000 份。", backupNeedsSignIn:"請先登入才能使用伺服器備份。", backupNeedsSharedTrip:"請先發布此旅程，才能使用伺服器備份。", backupNoPermission:"需要可編輯權限才能查看或還原備份。", backupLoading:"正在載入備份…", backupEmpty:"目前沒有可用的復原快照。", createBackup:"立即建立備份", refresh:"重新整理", backupCreated:"備份已建立。", backupCreateError:"無法建立備份。", backupBackendMissing:"備份資料庫尚未就緒。請執行隨附的 v5 Supabase SQL，等待數秒後重新載入。", backupAutomatic:"修改前", backupScheduled:"定時備份", backupManual:"手動備份", backupRestorePoint:"還原前", backupVersion:"版本 {version}", backupBy:"由 {name}", server:"伺服器", restore:"還原", downloadJson:"下載 JSON", confirmRestore:"要還原此備份嗎？目前的旅程會先另存為一個復原點。", restoring:"正在還原備份…", restored:"備份已還原。", restoreError:"無法還原備份。",
+  backups:"備份", backupsTitle:"旅程備份", backupHelp:"伺服器會在每次雲端修改前及每六小時建立復原快照；每個旅程最多保留 1,000 份。", backupNeedsSignIn:"請先登入才能使用伺服器備份。", backupNeedsSharedTrip:"請先發布此旅程，才能使用伺服器備份。", backupNoPermission:"需要可編輯權限才能查看或還原備份。", backupLoading:"正在載入備份…", backupEmpty:"目前沒有可用的復原快照。", createBackup:"立即建立備份", refresh:"重新整理", backupCreated:"備份已建立。", backupCreateError:"無法建立備份。", backupBackendMissing:"備份資料庫尚未就緒。請執行隨附的 v9 Supabase SQL，等待數秒後重新載入。", backupAutomatic:"修改前", backupScheduled:"定時備份", backupManual:"手動備份", backupRestorePoint:"還原前", backupVersion:"版本 {version}", backupBy:"由 {name}", server:"伺服器", restore:"還原", downloadJson:"下載 JSON", confirmRestore:"要還原此備份嗎？目前的旅程會先另存為一個復原點。", restoring:"正在還原備份…", restored:"備份已還原。", restoreError:"無法還原備份。",
   attachImage:"附加圖片", removeSelectedImage:"移除已選圖片", imageTooLarge:"圖片大小不可超過 8 MB。", imageTypeUnsupported:"請使用 JPEG、PNG、WebP 或 GIF 圖片。", imageUploadError:"圖片上傳失敗。", unsend:"收回", removeMessage:"移除", confirmUnsend:"要收回這則訊息嗎？", confirmRemoveMessage:"要移除此成員的訊息嗎？", messageUnsent:"訊息已收回", messageRemoved:"訊息已由管理者移除", messageRemoveError:"無法移除訊息。"
 });
 Object.assign(COLLAB_I18N.ja, {
-  backups:"バックアップ", backupsTitle:"旅行のバックアップ", backupHelp:"クラウド変更の直前と6時間ごとにサーバー復元スナップショットを作成します。旅行ごとに最大1,000件を保持します。", backupNeedsSignIn:"サーバーバックアップを使うにはサインインしてください。", backupNeedsSharedTrip:"サーバーバックアップを使う前に旅行を共有してください。", backupNoPermission:"バックアップの表示と復元には編集権限が必要です。", backupLoading:"バックアップを読み込んでいます…", backupEmpty:"復元スナップショットはまだありません。", createBackup:"今すぐバックアップ", refresh:"更新", backupCreated:"バックアップを作成しました。", backupCreateError:"バックアップを作成できませんでした。", backupBackendMissing:"バックアップ用データベースの準備ができていません。付属の v5 Supabase SQL を実行し、数秒待ってから再読み込みしてください。", backupAutomatic:"変更前", backupScheduled:"定期", backupManual:"手動", backupRestorePoint:"復元前", backupVersion:"バージョン {version}", backupBy:"{name}", server:"サーバー", restore:"復元", downloadJson:"JSONをダウンロード", confirmRestore:"このバックアップを復元しますか？現在の旅行は先に別の復元ポイントとして保存されます。", restoring:"バックアップを復元中…", restored:"バックアップを復元しました。", restoreError:"バックアップを復元できませんでした。",
+  backups:"バックアップ", backupsTitle:"旅行のバックアップ", backupHelp:"クラウド変更の直前と6時間ごとにサーバー復元スナップショットを作成します。旅行ごとに最大1,000件を保持します。", backupNeedsSignIn:"サーバーバックアップを使うにはサインインしてください。", backupNeedsSharedTrip:"サーバーバックアップを使う前に旅行を共有してください。", backupNoPermission:"バックアップの表示と復元には編集権限が必要です。", backupLoading:"バックアップを読み込んでいます…", backupEmpty:"復元スナップショットはまだありません。", createBackup:"今すぐバックアップ", refresh:"更新", backupCreated:"バックアップを作成しました。", backupCreateError:"バックアップを作成できませんでした。", backupBackendMissing:"バックアップ用データベースの準備ができていません。付属の v9 Supabase SQL を実行し、数秒待ってから再読み込みしてください。", backupAutomatic:"変更前", backupScheduled:"定期", backupManual:"手動", backupRestorePoint:"復元前", backupVersion:"バージョン {version}", backupBy:"{name}", server:"サーバー", restore:"復元", downloadJson:"JSONをダウンロード", confirmRestore:"このバックアップを復元しますか？現在の旅行は先に別の復元ポイントとして保存されます。", restoring:"バックアップを復元中…", restored:"バックアップを復元しました。", restoreError:"バックアップを復元できませんでした。",
   attachImage:"画像を添付", removeSelectedImage:"選択した画像を削除", imageTooLarge:"画像は8 MB以下にしてください。", imageTypeUnsupported:"JPEG、PNG、WebP、GIF画像を使用してください。", imageUploadError:"画像をアップロードできませんでした。", unsend:"送信取消", removeMessage:"削除", confirmUnsend:"このメッセージの送信を取り消しますか？", confirmRemoveMessage:"このメンバーのメッセージを削除しますか？", messageUnsent:"メッセージの送信が取り消されました", messageRemoved:"管理者がメッセージを削除しました", messageRemoveError:"メッセージを削除できませんでした。"
 });
 
@@ -5334,6 +5339,41 @@ document.getElementById("email-invite-btn").addEventListener("click", () => {
 
 
 // ---------------------------------------------------------------------------
+// Image lightbox — tap any chat/album photo to view it full-screen in-app
+// instead of navigating to a new tab. Since it's a real <img> element with a
+// direct src, long-press-to-save keeps working natively on iOS/Android.
+// ---------------------------------------------------------------------------
+function openImageLightbox(url, alt) {
+  if (!url) return;
+  const overlay = document.getElementById("image-lightbox");
+  const img = document.getElementById("image-lightbox-img");
+  if (!overlay || !img) return;
+  img.src = url;
+  img.alt = alt || "";
+  overlay.classList.add("show");
+}
+function closeImageLightbox() {
+  const overlay = document.getElementById("image-lightbox");
+  const img = document.getElementById("image-lightbox-img");
+  overlay?.classList.remove("show");
+  if (img) img.removeAttribute("src");
+}
+document.getElementById("image-lightbox-close")?.addEventListener("click", closeImageLightbox);
+document.getElementById("image-lightbox")?.addEventListener("click", event => {
+  if (event.target.id === "image-lightbox") closeImageLightbox();
+});
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeImageLightbox();
+});
+document.addEventListener("click", event => {
+  const link = event.target.closest(".chat-image-link, .chat-album-card a");
+  if (!link) return;
+  event.preventDefault();
+  const img = link.querySelector("img");
+  openImageLightbox(link.getAttribute("href"), img?.alt || "");
+});
+
+// ---------------------------------------------------------------------------
 // Init
 // ---------------------------------------------------------------------------
 initDragHandlers();
@@ -5347,5 +5387,9 @@ attachAutocomplete("f-to", () => PLACE_SUGGESTIONS[selectedKind()] || PLACE_SUGG
 renderAll();
 initCollaboration();
 </script>
+<div class="image-lightbox" id="image-lightbox">
+  <button class="image-lightbox-close" id="image-lightbox-close" type="button" aria-label="Close">✕</button>
+  <img id="image-lightbox-img" src="" alt="">
+</div>
 </body>
 </html>
