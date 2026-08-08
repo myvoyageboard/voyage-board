@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v18 — complete IANA timezone directory and preserved global airport coverage -->
+<!-- Voyage Board v19 — two-line flight route layout -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -1414,12 +1414,24 @@
     flex:1 1 auto;
   }
   .flight-route-line {
-    display:flex;
+    display:grid;
+    grid-template-columns:26px auto minmax(0, 1fr) auto;
     align-items:center;
-    gap:6px;
+    column-gap:6px;
     min-width:0;
     color:var(--text-hi);
     font-weight:700;
+  }
+  .flight-route-marker {
+    width:26px;
+    min-width:26px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    line-height:1;
+  }
+  .flight-route-icon {
+    font-size:19px;
   }
   .flight-airport-code {
     color:var(--amber);
@@ -1427,12 +1439,16 @@
   }
   .flight-route-arrow {
     color:var(--text-lo);
-    flex:0 0 auto;
+    font-size:17px;
+    font-weight:700;
   }
   .flight-local-time {
     color:var(--text-hi);
     font-weight:500;
     white-space:nowrap;
+  }
+  .flight-route-arrival {
+    margin-top:2px;
   }
   .flight-duration-line {
     color:var(--text-lo);
@@ -1451,11 +1467,25 @@
       padding:8px;
     }
     .flight-route-line {
-      flex-wrap:wrap;
-      gap:4px;
+      grid-template-columns:23px auto minmax(0, 1fr) auto;
+      column-gap:5px;
+    }
+    .flight-route-marker {
+      width:23px;
+      min-width:23px;
+    }
+    .flight-route-icon {
+      font-size:17px;
+    }
+    .flight-route-arrow {
+      font-size:15px;
+    }
+    .flight-local-time {
+      white-space:normal;
     }
     .flight-duration-line {
       font-size:9px;
+      padding-left:28px;
     }
   }
 
@@ -3963,7 +3993,7 @@ function eventRowHtml(item, config, isLast) {
 }
 
 
-function flightRouteDisplay(item) {
+function flightRouteDisplay(item, flightIcon = "✈️") {
   const departureAirport = effectiveFlightAirport(item, "departure");
   const arrivalAirport = effectiveFlightAirport(item, "arrival");
   const departureCode = item.departureAirportCode
@@ -3991,13 +4021,18 @@ function flightRouteDisplay(item) {
   const durationText = durationSeconds
     ? formatDurationSeconds(durationSeconds)
     : t("flightTimezoneRequiredShort");
+
   return {
     duration:durationSeconds ? formatDurationSeconds(durationSeconds) : null,
     html:`<span class="flight-route-block">
-      <span class="flight-route-line">
+      <span class="flight-route-line flight-route-departure">
+        <span class="flight-route-marker flight-route-icon">${flightIcon}</span>
         <span class="flight-airport-code">${esc(departureCode)}</span>
         <span class="flight-local-time">${esc(fmtShortDate(item.date))} ${esc(fmtTime(item.startTime))}</span>
-        <span class="flight-route-arrow">→</span>
+        <span></span>
+      </span>
+      <span class="flight-route-line flight-route-arrival">
+        <span class="flight-route-marker flight-route-arrow">→</span>
         <span class="flight-airport-code">${esc(arrivalCode)}</span>
         <span class="flight-local-time">${esc(fmtShortDate(arrivalDate))} ${esc(fmtTime(item.endTime))}</span>
         ${offsetLabel}
@@ -4012,7 +4047,7 @@ function flightRouteDisplay(item) {
 
 function transportRowHtml(item, config, isLast) {
   const dayDiff = item.endDate && item.endDate !== item.date ? diffDaysDateStr(item.date, item.endDate) : null;
-  const flightDisplay = item.kind === "flight" ? flightRouteDisplay(item) : null;
+  const flightDisplay = item.kind === "flight" ? flightRouteDisplay(item, config.icon) : null;
   const duration = item.kind === "flight"
     ? flightDisplay?.duration
     : fmtDuration(item.startTime, item.endTime, dayDiff);
@@ -4029,10 +4064,9 @@ function transportRowHtml(item, config, isLast) {
       <div style="flex:1; min-width:0; display:flex; align-items:center; gap:10px;">
         <div class="transport-line" style="--dash-color:${rgba(displayColor, 0.62)};"></div>
         <div class="transport-chip ${item.kind === "flight" ? "flight-chip" : ""}" style="--dash-border:${rgba(displayColor, 0.42)}; --dash-bg:${rgba(displayColor, 0.11)}; border-color:${rgba(displayColor, 0.42)}; background:${rgba(displayColor, 0.11)};">
-          <span>${config.icon}</span>
           ${flightDisplay
             ? flightDisplay.html
-            : `<span class="transport-title" title="${esc(item.location || item.title)}">${esc(item.title)}</span>${duration ? `<span class="transport-meta">· ${duration}</span>` : ""}`
+            : `<span>${config.icon}</span><span class="transport-title" title="${esc(item.location || item.title)}">${esc(item.title)}</span>${duration ? `<span class="transport-meta">· ${duration}</span>` : ""}`
           }
           ${price ? `<span class="transport-price">· ${price}</span>` : ""}
           ${mapUrl ? `<a href="${esc(mapUrl)}" target="_blank" rel="noopener noreferrer" class="icon-btn" title="${esc(item.location || "Open map")}" aria-label="${esc(item.location || "Open map")}">${iconSvg("map")}</a>` : ""}
