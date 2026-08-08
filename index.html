@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v9 — per-trip chat backups and font-size preferences -->
+<!-- Voyage Board v10 — compact chat controls, inline modification visibility, and image viewer -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -210,11 +210,6 @@
 
   /* Modal */
   .overlay { position: fixed; inset: 0; background: var(--overlay-bg); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; backdrop-filter: blur(2px); }
-  .image-lightbox { position: fixed; inset: 0; background: rgba(4,5,7,0.94); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; }
-  .image-lightbox.show { display: flex; }
-  .image-lightbox img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 6px; }
-  .image-lightbox-close { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); background: rgba(0,0,0,0.45); color: #fff; font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-  .image-lightbox-close:hover { background: rgba(0,0,0,0.65); }
   .overlay.show { display: flex; }
   .modal { width: 100%; max-width: 480px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 20px 60px var(--shadow); }
   .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 0; }
@@ -746,13 +741,65 @@
     font-size:9px; vertical-align:middle;
   }
   .chat-toolbar-v8 { align-items:center; flex-wrap:wrap; }
-  .chat-toolbar-left { display:flex; align-items:center; gap:10px; min-width:0; flex:1 1 auto; }
-  .chat-date-jump { display:flex; align-items:center; gap:6px; flex:0 1 auto; }
+  .chat-toolbar-left {
+    display:flex; align-items:center; gap:8px; min-width:0; flex:1 1 auto;
+    flex-wrap:nowrap;
+  }
+  .chat-filter { flex:0 1 auto; min-width:0; white-space:nowrap; }
+  .chat-date-jump {
+    display:flex; align-items:center; gap:5px; flex:0 1 auto;
+    margin-left:auto; min-width:0;
+  }
   .chat-date-jump label { color:var(--text-lo); font-size:10px; white-space:nowrap; }
-  .chat-date-input { width:auto; min-width:145px; padding:6px 8px; font-size:12px; }
-  .chat-date-go { min-height:32px; padding:6px 10px; font-size:10.5px; }
+  .chat-date-input {
+    width:124px; min-width:112px; max-width:124px; min-height:32px;
+    padding:4px 6px; font-size:12px;
+  }
+  .chat-date-go { min-height:32px; padding:5px 8px; font-size:10.5px; }
+  /* Long conversations must scroll rather than compressing activity cards.
+     Without this, flex-shrink collapsed modification logs to their borders. */
+  .chat-body > .chat-message,
+  .chat-body > .chat-system,
+  .chat-body > .chat-date-divider,
+  .chat-activity-body > .chat-system,
+  .chat-activity-body > .chat-date-divider {
+    flex:0 0 auto;
+  }
+  .chat-body .chat-system-inline {
+    width:calc(100% - 18px); max-width:none; align-self:center;
+    margin:4px 9px; border-style:solid;
+    background:linear-gradient(135deg,
+      color-mix(in srgb, #63C7FF 11%, var(--panel)),
+      color-mix(in srgb, #63C7FF 4%, var(--panel)));
+  }
+  .chat-filter-log-count {
+    display:inline-grid; place-items:center; min-width:18px; height:18px;
+    margin-left:3px; padding:0 5px; border-radius:999px;
+    background:color-mix(in srgb, #63C7FF 12%, var(--panel-2));
+    color:#63C7FF; font-size:9px;
+  }
   .chat-view-panel { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
   .chat-view-panel[hidden] { display:none; }
+  .chat-activity-summary {
+    display:flex; align-items:center; gap:9px; width:auto; margin:8px 20px 0;
+    min-height:44px; padding:8px 10px; border:1px solid color-mix(in srgb, #63C7FF 42%, var(--border));
+    border-radius:11px; background:color-mix(in srgb, #63C7FF 9%, var(--panel));
+    color:var(--text-hi); cursor:pointer; text-align:left; font-family:inherit;
+  }
+  .chat-activity-summary[hidden] { display:none; }
+  .chat-activity-summary:hover { background:color-mix(in srgb, #63C7FF 14%, var(--panel)); }
+  .chat-activity-summary-icon {
+    width:30px; height:30px; border-radius:9px; display:grid; place-items:center;
+    flex:0 0 auto; color:#63C7FF; background:color-mix(in srgb, #63C7FF 15%, var(--panel-2));
+  }
+  .chat-activity-summary-main { flex:1; min-width:0; }
+  .chat-activity-summary-title { display:block; font-size:10.5px; font-weight:800; color:#63C7FF; letter-spacing:.04em; }
+  .chat-activity-summary-meta { display:block; margin-top:2px; color:var(--text-lo); font-size:9.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .chat-activity-summary-arrow { color:var(--text-lo); font-size:19px; }
+  #chat-activity-panel {
+    border-top:1px solid color-mix(in srgb, #63C7FF 25%, var(--border));
+    background:linear-gradient(180deg, color-mix(in srgb, #63C7FF 4%, var(--panel)), var(--panel));
+  }
   .chat-date-divider {
     position:sticky; top:-1px; z-index:3; align-self:stretch; display:flex;
     align-items:center; gap:9px; margin:5px 0 2px; color:var(--text-lo);
@@ -814,18 +861,93 @@
   .member-email-visible::before { content:"✉ "; }
   @media (max-width:720px) {
     .chat-workspace-tabs { padding:0 12px 8px; overflow-x:auto; }
+    .chat-activity-summary { margin:7px 12px 0; min-height:42px; }
     .chat-workspace-tab { flex:1 0 auto; min-height:40px; font-size:11px; }
-    .chat-toolbar-v8 { padding:8px 12px; }
-    .chat-toolbar-left { width:100%; flex-wrap:wrap; }
-    .chat-date-jump { width:auto; flex:0 1 auto; }
-    .chat-date-input { flex:0 1 auto; width:130px; min-width:0; font-size:16px !important; padding:5px 7px; }
-    .chat-date-go { min-height:32px; padding:5px 9px; }
+    .chat-toolbar-v8 { padding:7px 12px; }
+    .chat-toolbar-left { width:100%; flex-wrap:nowrap; gap:6px; }
+    .chat-filter { flex:0 1 auto; font-size:10px; gap:5px; }
+    .chat-filter span:not(.chat-filter-log-count) {
+      overflow:hidden; text-overflow:ellipsis;
+    }
+    .chat-date-jump {
+      width:auto; margin-left:auto; flex:0 1 156px; gap:4px;
+    }
+    .chat-date-jump label { display:none; }
+    .chat-date-input {
+      flex:1 1 auto; width:112px; min-width:96px; max-width:118px;
+      min-height:34px; height:34px; padding:2px 5px;
+      font-size:16px !important;
+    }
+    .chat-date-go {
+      min-height:34px; height:34px; padding:4px 7px; font-size:10px;
+    }
     .chat-activity-body, .chat-album-body {
       flex:1 1 auto; min-height:0; max-height:none; padding:13px 12px;
     }
     .chat-album-grid { grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
   }
 
+
+
+  /* Full-screen viewer: click opens at screen width; the direct IMG preserves
+     the browser's native long-press Save Image / Save to Photos menu. */
+  .chat-image-link, .chat-album-card a {
+    cursor:zoom-in;
+    -webkit-touch-callout:default;
+  }
+  .chat-image-viewer {
+    position:fixed; inset:0; z-index:140; display:none;
+    background:rgba(2,5,10,.94); backdrop-filter:blur(8px); color:#fff;
+  }
+  .chat-image-viewer.show { display:flex; flex-direction:column; }
+  .chat-image-viewer-head {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    flex:0 0 auto; min-height:56px; padding:10px 14px;
+    border-bottom:1px solid rgba(255,255,255,.14);
+  }
+  .chat-image-viewer-title {
+    min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font-size:12px; font-weight:700;
+  }
+  .chat-image-viewer-close {
+    width:40px; height:40px; flex:0 0 auto; border:0; border-radius:10px;
+    background:rgba(255,255,255,.08); color:#fff; cursor:pointer; font-size:18px;
+  }
+  .chat-image-viewer-stage {
+    flex:1 1 auto; min-height:0; display:flex; align-items:center;
+    justify-content:center; overflow:auto; padding:12px; touch-action:pinch-zoom;
+  }
+  .chat-image-viewer-stage img {
+    display:block; width:auto; height:auto; max-width:100%; max-height:100%;
+    object-fit:contain; user-select:auto; -webkit-user-select:auto;
+    -webkit-touch-callout:default;
+  }
+  .chat-image-viewer-foot {
+    flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+    gap:12px; padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    border-top:1px solid rgba(255,255,255,.14);
+  }
+  .chat-image-viewer-meta {
+    min-width:0; color:rgba(255,255,255,.72); font-size:10.5px;
+    line-height:1.4; overflow:hidden; text-overflow:ellipsis;
+  }
+  .chat-image-viewer-save {
+    flex:0 0 auto; min-height:36px; padding:8px 11px; border-radius:9px;
+    border:1px solid rgba(255,255,255,.22); color:#fff;
+    text-decoration:none; background:rgba(255,255,255,.08);
+    font:600 10.5px var(--font-ui);
+  }
+  .chat-image-viewer-hint {
+    display:block; margin-top:2px; color:rgba(255,255,255,.52); font-size:9px;
+  }
+  @media (max-width:720px) {
+    .chat-image-viewer-stage { padding:6px; }
+    .chat-image-viewer-stage img {
+      width:100%; max-width:100%; max-height:calc(100dvh - 132px);
+    }
+    .chat-image-viewer-head { min-height:50px; padding:6px 10px; }
+    .chat-image-viewer-foot { padding:8px 10px calc(8px + env(safe-area-inset-bottom)); }
+  }
 
   /* App-wide font-size preference. Editable schedule fields remain at least
      16px on phones to prevent iOS focus zoom. */
@@ -841,7 +963,7 @@
   @media (max-width:720px) {
     /* The active-trip title is deliberately a little smaller and denser. */
     #mobile-trip-select {
-      font-size:14px !important;
+      font-size:13px !important;
       letter-spacing:-0.025em;
       font-weight:500;
     }
@@ -1256,9 +1378,18 @@
         <button id="chat-tab-activity" class="chat-workspace-tab" type="button" role="tab" data-chat-view="activity" aria-selected="false"><span id="chat-tab-activity-label">Activity</span><span id="chat-activity-count" class="chat-tab-count">0</span></button>
         <button id="chat-tab-album" class="chat-workspace-tab" type="button" role="tab" data-chat-view="album" aria-selected="false"><span id="chat-tab-album-label">Album</span><span id="chat-album-count" class="chat-tab-count">0</span></button>
       </div>
+      <button id="chat-activity-summary" class="chat-activity-summary" type="button" hidden>
+        <span class="chat-activity-summary-icon">☷</span>
+        <span class="chat-activity-summary-main">
+          <span id="chat-activity-summary-title" class="chat-activity-summary-title">Activity log</span>
+          <span id="chat-activity-summary-meta" class="chat-activity-summary-meta"></span>
+        </span>
+        <span id="chat-activity-summary-count" class="chat-tab-count">0</span>
+        <span class="chat-activity-summary-arrow">›</span>
+      </button>
       <div class="chat-toolbar chat-toolbar-v8">
         <div class="chat-toolbar-left">
-          <label id="chat-filter-wrap" class="chat-filter"><input type="checkbox" id="chat-show-modifications" checked><span id="chat-filter-label">Show modification log</span></label>
+          <label id="chat-filter-wrap" class="chat-filter"><input type="checkbox" id="chat-show-modifications" checked><span id="chat-filter-label">Show modification log</span><span id="chat-filter-log-count" class="chat-filter-log-count">0</span></label>
           <div class="chat-date-jump">
             <label id="chat-jump-label" for="chat-jump-date">Go to date</label>
             <input id="chat-jump-date" class="field-input chat-date-input" type="date">
@@ -1291,6 +1422,24 @@
   </div>
 </div>
 
+
+
+<div id="chat-image-viewer" class="chat-image-viewer" aria-hidden="true">
+  <div class="chat-image-viewer-head">
+    <div id="chat-image-viewer-title" class="chat-image-viewer-title">Photo</div>
+    <button id="chat-image-viewer-close" class="chat-image-viewer-close" type="button" aria-label="Close">✕</button>
+  </div>
+  <div class="chat-image-viewer-stage">
+    <img id="chat-image-viewer-img" alt="" draggable="true">
+  </div>
+  <div class="chat-image-viewer-foot">
+    <div id="chat-image-viewer-meta" class="chat-image-viewer-meta">
+      <span id="chat-image-viewer-caption"></span>
+      <span id="chat-image-viewer-hint" class="chat-image-viewer-hint">Long-press the photo to save it.</span>
+    </div>
+    <a id="chat-image-viewer-save" class="chat-image-viewer-save" href="#" target="_blank" rel="noopener noreferrer" download>Save image</a>
+  </div>
+</div>
 
 <div class="overlay" id="backup-overlay">
   <div class="modal backup-modal">
@@ -3700,7 +3849,7 @@ const COLLAB_I18N = {
 };
 Object.assign(COLLAB_I18N.en, {
   chatTitle:"Trip chat", chat:"Chat", send:"Send", messagePlaceholder:"Write a message…", showModifications:"Show modification log",
-  chatNeedsSignIn:"Sign in to use trip chat.", chatNeedsSharedTrip:"Publish this trip before using chat.", chatLoading:"Loading conversation…", chatEmpty:"No messages yet. Start the conversation.", chatSendError:"Message could not be sent.", chatBackendMissing:"The chat database is not ready. Run the supplied v9 Supabase SQL, wait a few seconds, then reload this page.",
+  chatNeedsSignIn:"Sign in to use trip chat.", chatNeedsSharedTrip:"Publish this trip before using chat.", chatLoading:"Loading conversation…", chatEmpty:"No messages yet. Start the conversation.", chatSendError:"Message could not be sent.", chatBackendMissing:"The chat database is not ready. Run the supplied v5 Supabase SQL, wait a few seconds, then reload this page.",
   tripModified:"Trip modified", modificationBy:"Modified by {name}", modificationDetails:"Modification details", hiddenMember:"Hidden member", unknownMember:"Trip member",
   profileTitle:"Member identity", profileHelp:"Choose how your identity appears to people who share a trip with you.", displayName:"Display name", showMeAs:"Show me as", showName:"Display name", showEmail:"Email address", showHidden:"Hidden member", saveIdentity:"Save identity", profileSaved:"Identity preference saved.", profileNameRequired:"Enter a display name before choosing Display name.",
   memberDirectory:"Trip members", memberDirectoryHelp:"Each member controls whether their display name, email address, or no identity is shown.",
@@ -3709,7 +3858,7 @@ Object.assign(COLLAB_I18N.en, {
 });
 Object.assign(COLLAB_I18N["zh-TW"], {
   chatTitle:"旅程聊天", chat:"聊天", send:"傳送", messagePlaceholder:"輸入訊息…", showModifications:"顯示修改紀錄",
-  chatNeedsSignIn:"請先登入才能使用旅程聊天。", chatNeedsSharedTrip:"請先發布此旅程，才能使用聊天。", chatLoading:"正在載入對話…", chatEmpty:"目前沒有訊息，開始聊天吧。", chatSendError:"訊息傳送失敗。", chatBackendMissing:"聊天資料庫尚未就緒。請執行隨附的 v9 Supabase SQL，等待數秒後重新載入此頁面。",
+  chatNeedsSignIn:"請先登入才能使用旅程聊天。", chatNeedsSharedTrip:"請先發布此旅程，才能使用聊天。", chatLoading:"正在載入對話…", chatEmpty:"目前沒有訊息，開始聊天吧。", chatSendError:"訊息傳送失敗。", chatBackendMissing:"聊天資料庫尚未就緒。請執行隨附的 v5 Supabase SQL，等待數秒後重新載入此頁面。",
   tripModified:"旅程已修改", modificationBy:"由 {name} 修改", modificationDetails:"修改內容", hiddenMember:"隱藏成員", unknownMember:"旅程成員",
   profileTitle:"成員身分", profileHelp:"選擇與您共享旅程的人可看到您的名稱、電子郵件，或不顯示身分。", displayName:"顯示名稱", showMeAs:"顯示方式", showName:"顯示名稱", showEmail:"電子郵件", showHidden:"隱藏成員", saveIdentity:"儲存身分設定", profileSaved:"身分顯示設定已儲存。", profileNameRequired:"選擇顯示名稱前，請先輸入名稱。",
   memberDirectory:"旅程成員", memberDirectoryHelp:"每位成員可自行選擇顯示名稱、電子郵件，或不顯示身分。",
@@ -3718,7 +3867,7 @@ Object.assign(COLLAB_I18N["zh-TW"], {
 });
 Object.assign(COLLAB_I18N.ja, {
   chatTitle:"旅行チャット", chat:"チャット", send:"送信", messagePlaceholder:"メッセージを書く…", showModifications:"変更履歴を表示",
-  chatNeedsSignIn:"旅行チャットを使うにはサインインしてください。", chatNeedsSharedTrip:"チャットを使う前にこの旅行を共有してください。", chatLoading:"会話を読み込んでいます…", chatEmpty:"まだメッセージはありません。会話を始めましょう。", chatSendError:"メッセージを送信できませんでした。", chatBackendMissing:"チャット用データベースの準備ができていません。付属の v9 Supabase SQL を実行し、数秒待ってからページを再読み込みしてください。",
+  chatNeedsSignIn:"旅行チャットを使うにはサインインしてください。", chatNeedsSharedTrip:"チャットを使う前にこの旅行を共有してください。", chatLoading:"会話を読み込んでいます…", chatEmpty:"まだメッセージはありません。会話を始めましょう。", chatSendError:"メッセージを送信できませんでした。", chatBackendMissing:"チャット用データベースの準備ができていません。付属の v5 Supabase SQL を実行し、数秒待ってからページを再読み込みしてください。",
   tripModified:"旅行が変更されました", modificationBy:"{name} が変更", modificationDetails:"変更内容", hiddenMember:"非表示のメンバー", unknownMember:"旅行メンバー",
   profileTitle:"メンバー表示", profileHelp:"同じ旅行のメンバーに、表示名・メール・非表示のどれで見せるか選べます。", displayName:"表示名", showMeAs:"表示方法", showName:"表示名", showEmail:"メールアドレス", showHidden:"非表示のメンバー", saveIdentity:"表示設定を保存", profileSaved:"表示設定を保存しました。", profileNameRequired:"表示名を選ぶ前に名前を入力してください。",
   memberDirectory:"旅行メンバー", memberDirectoryHelp:"各メンバーは表示名、メール、非表示を自分で選べます。",
@@ -3727,19 +3876,21 @@ Object.assign(COLLAB_I18N.ja, {
 });
 
 Object.assign(COLLAB_I18N.en, {
-  backups:"Backups", backupsTitle:"Trip backups", backupHelp:"Server recovery snapshots are created before every cloud change and every six hours. Up to 1,000 snapshots are retained for each trip.", backupNeedsSignIn:"Sign in to use server backups.", backupNeedsSharedTrip:"Publish this trip before using server backups.", backupNoPermission:"Editing access is required to view or restore backups.", backupLoading:"Loading backups…", backupEmpty:"No recovery snapshots are available yet.", createBackup:"Create backup now", refresh:"Refresh", backupCreated:"Backup created.", backupCreateError:"The backup could not be created.", backupBackendMissing:"The backup database is not ready. Run the supplied v9 Supabase SQL, wait a few seconds, and reload this page.", backupAutomatic:"Before change", backupScheduled:"Scheduled", backupManual:"Manual", backupRestorePoint:"Before restore", backupVersion:"Version {version}", backupBy:"by {name}", server:"Server", restore:"Restore", downloadJson:"Download JSON", confirmRestore:"Restore this backup? The current trip will first be saved as another recovery point.", restoring:"Restoring backup…", restored:"Backup restored.", restoreError:"The backup could not be restored.",
+  backups:"Backups", backupsTitle:"Trip backups", backupHelp:"Server recovery snapshots are created before every cloud change and every six hours. Up to 1,000 snapshots are retained for each trip.", backupNeedsSignIn:"Sign in to use server backups.", backupNeedsSharedTrip:"Publish this trip before using server backups.", backupNoPermission:"Editing access is required to view or restore backups.", backupLoading:"Loading backups…", backupEmpty:"No recovery snapshots are available yet.", createBackup:"Create backup now", refresh:"Refresh", backupCreated:"Backup created.", backupCreateError:"The backup could not be created.", backupBackendMissing:"The backup database is not ready. Run the supplied v5 Supabase SQL, wait a few seconds, and reload this page.", backupAutomatic:"Before change", backupScheduled:"Scheduled", backupManual:"Manual", backupRestorePoint:"Before restore", backupVersion:"Version {version}", backupBy:"by {name}", server:"Server", restore:"Restore", downloadJson:"Download JSON", confirmRestore:"Restore this backup? The current trip will first be saved as another recovery point.", restoring:"Restoring backup…", restored:"Backup restored.", restoreError:"The backup could not be restored.",
   attachImage:"Attach image", removeSelectedImage:"Remove selected image", imageTooLarge:"Images must be 8 MB or smaller.", imageTypeUnsupported:"Use a JPEG, PNG, WebP, or GIF image.", imageUploadError:"The image could not be uploaded.", unsend:"Unsend", removeMessage:"Remove", confirmUnsend:"Unsend this message?", confirmRemoveMessage:"Remove this member's message?", messageUnsent:"Message unsent", messageRemoved:"Message removed by an administrator", messageRemoveError:"The message could not be removed."
 });
 Object.assign(COLLAB_I18N["zh-TW"], {
-  backups:"備份", backupsTitle:"旅程備份", backupHelp:"伺服器會在每次雲端修改前及每六小時建立復原快照；每個旅程最多保留 1,000 份。", backupNeedsSignIn:"請先登入才能使用伺服器備份。", backupNeedsSharedTrip:"請先發布此旅程，才能使用伺服器備份。", backupNoPermission:"需要可編輯權限才能查看或還原備份。", backupLoading:"正在載入備份…", backupEmpty:"目前沒有可用的復原快照。", createBackup:"立即建立備份", refresh:"重新整理", backupCreated:"備份已建立。", backupCreateError:"無法建立備份。", backupBackendMissing:"備份資料庫尚未就緒。請執行隨附的 v9 Supabase SQL，等待數秒後重新載入。", backupAutomatic:"修改前", backupScheduled:"定時備份", backupManual:"手動備份", backupRestorePoint:"還原前", backupVersion:"版本 {version}", backupBy:"由 {name}", server:"伺服器", restore:"還原", downloadJson:"下載 JSON", confirmRestore:"要還原此備份嗎？目前的旅程會先另存為一個復原點。", restoring:"正在還原備份…", restored:"備份已還原。", restoreError:"無法還原備份。",
+  backups:"備份", backupsTitle:"旅程備份", backupHelp:"伺服器會在每次雲端修改前及每六小時建立復原快照；每個旅程最多保留 1,000 份。", backupNeedsSignIn:"請先登入才能使用伺服器備份。", backupNeedsSharedTrip:"請先發布此旅程，才能使用伺服器備份。", backupNoPermission:"需要可編輯權限才能查看或還原備份。", backupLoading:"正在載入備份…", backupEmpty:"目前沒有可用的復原快照。", createBackup:"立即建立備份", refresh:"重新整理", backupCreated:"備份已建立。", backupCreateError:"無法建立備份。", backupBackendMissing:"備份資料庫尚未就緒。請執行隨附的 v5 Supabase SQL，等待數秒後重新載入。", backupAutomatic:"修改前", backupScheduled:"定時備份", backupManual:"手動備份", backupRestorePoint:"還原前", backupVersion:"版本 {version}", backupBy:"由 {name}", server:"伺服器", restore:"還原", downloadJson:"下載 JSON", confirmRestore:"要還原此備份嗎？目前的旅程會先另存為一個復原點。", restoring:"正在還原備份…", restored:"備份已還原。", restoreError:"無法還原備份。",
   attachImage:"附加圖片", removeSelectedImage:"移除已選圖片", imageTooLarge:"圖片大小不可超過 8 MB。", imageTypeUnsupported:"請使用 JPEG、PNG、WebP 或 GIF 圖片。", imageUploadError:"圖片上傳失敗。", unsend:"收回", removeMessage:"移除", confirmUnsend:"要收回這則訊息嗎？", confirmRemoveMessage:"要移除此成員的訊息嗎？", messageUnsent:"訊息已收回", messageRemoved:"訊息已由管理者移除", messageRemoveError:"無法移除訊息。"
 });
 Object.assign(COLLAB_I18N.ja, {
-  backups:"バックアップ", backupsTitle:"旅行のバックアップ", backupHelp:"クラウド変更の直前と6時間ごとにサーバー復元スナップショットを作成します。旅行ごとに最大1,000件を保持します。", backupNeedsSignIn:"サーバーバックアップを使うにはサインインしてください。", backupNeedsSharedTrip:"サーバーバックアップを使う前に旅行を共有してください。", backupNoPermission:"バックアップの表示と復元には編集権限が必要です。", backupLoading:"バックアップを読み込んでいます…", backupEmpty:"復元スナップショットはまだありません。", createBackup:"今すぐバックアップ", refresh:"更新", backupCreated:"バックアップを作成しました。", backupCreateError:"バックアップを作成できませんでした。", backupBackendMissing:"バックアップ用データベースの準備ができていません。付属の v9 Supabase SQL を実行し、数秒待ってから再読み込みしてください。", backupAutomatic:"変更前", backupScheduled:"定期", backupManual:"手動", backupRestorePoint:"復元前", backupVersion:"バージョン {version}", backupBy:"{name}", server:"サーバー", restore:"復元", downloadJson:"JSONをダウンロード", confirmRestore:"このバックアップを復元しますか？現在の旅行は先に別の復元ポイントとして保存されます。", restoring:"バックアップを復元中…", restored:"バックアップを復元しました。", restoreError:"バックアップを復元できませんでした。",
+  backups:"バックアップ", backupsTitle:"旅行のバックアップ", backupHelp:"クラウド変更の直前と6時間ごとにサーバー復元スナップショットを作成します。旅行ごとに最大1,000件を保持します。", backupNeedsSignIn:"サーバーバックアップを使うにはサインインしてください。", backupNeedsSharedTrip:"サーバーバックアップを使う前に旅行を共有してください。", backupNoPermission:"バックアップの表示と復元には編集権限が必要です。", backupLoading:"バックアップを読み込んでいます…", backupEmpty:"復元スナップショットはまだありません。", createBackup:"今すぐバックアップ", refresh:"更新", backupCreated:"バックアップを作成しました。", backupCreateError:"バックアップを作成できませんでした。", backupBackendMissing:"バックアップ用データベースの準備ができていません。付属の v5 Supabase SQL を実行し、数秒待ってから再読み込みしてください。", backupAutomatic:"変更前", backupScheduled:"定期", backupManual:"手動", backupRestorePoint:"復元前", backupVersion:"バージョン {version}", backupBy:"{name}", server:"サーバー", restore:"復元", downloadJson:"JSONをダウンロード", confirmRestore:"このバックアップを復元しますか？現在の旅行は先に別の復元ポイントとして保存されます。", restoring:"バックアップを復元中…", restored:"バックアップを復元しました。", restoreError:"バックアップを復元できませんでした。",
   attachImage:"画像を添付", removeSelectedImage:"選択した画像を削除", imageTooLarge:"画像は8 MB以下にしてください。", imageTypeUnsupported:"JPEG、PNG、WebP、GIF画像を使用してください。", imageUploadError:"画像をアップロードできませんでした。", unsend:"送信取消", removeMessage:"削除", confirmUnsend:"このメッセージの送信を取り消しますか？", confirmRemoveMessage:"このメンバーのメッセージを削除しますか？", messageUnsent:"メッセージの送信が取り消されました", messageRemoved:"管理者がメッセージを削除しました", messageRemoveError:"メッセージを削除できませんでした。"
 });
 
 Object.assign(COLLAB_I18N.en, {
+  activitySummaryTitle:"Activity log",
+  activitySummaryMeta:"{count} modifications · latest {time}",
   backupsTitle:"Trip & chat backups",
   backupHelp:"Each trip is backed up independently. Snapshots include the itinerary, conversation, activity log, and photo references. The server creates one for every trip every six hours; up to 1,000 are retained per trip.",
   backupCreated:"Trip and chat backup created.",
@@ -3755,6 +3906,8 @@ Object.assign(COLLAB_I18N.en, {
   chatRestoreError:"The chat backup could not be restored."
 });
 Object.assign(COLLAB_I18N["zh-TW"], {
+  activitySummaryTitle:"修改紀錄",
+  activitySummaryMeta:"{count} 筆修改 · 最新 {time}",
   backupsTitle:"旅程與聊天備份",
   backupHelp:"每個旅程都會獨立備份。快照包含行程、對話、活動紀錄及照片參照；伺服器每六小時為每個旅程建立一次備份，每個旅程最多保留 1,000 份。",
   backupCreated:"已建立旅程與聊天備份。",
@@ -3770,6 +3923,8 @@ Object.assign(COLLAB_I18N["zh-TW"], {
   chatRestoreError:"無法還原聊天備份。"
 });
 Object.assign(COLLAB_I18N.ja, {
+  activitySummaryTitle:"変更履歴",
+  activitySummaryMeta:"変更 {count} 件 · 最新 {time}",
   backupsTitle:"旅行とチャットのバックアップ",
   backupHelp:"旅行ごとに独立してバックアップします。スナップショットには予定、会話、アクティビティ履歴、写真参照が含まれます。サーバーは旅行ごとに6時間ごとに保存し、最大1,000件保持します。",
   backupCreated:"旅行とチャットのバックアップを作成しました。",
@@ -3783,6 +3938,26 @@ Object.assign(COLLAB_I18N.ja, {
   restoringChat:"チャットを復元中…",
   chatRestored:"チャットを復元しました。",
   chatRestoreError:"チャットのバックアップを復元できませんでした。"
+});
+
+
+Object.assign(COLLAB_I18N.en, {
+  photoViewerTitle:"Shared photo",
+  photoViewerHint:"Long-press the photo to save it to your device.",
+  saveImage:"Save image",
+  modificationLogsShown:"Showing {count} modification records"
+});
+Object.assign(COLLAB_I18N["zh-TW"], {
+  photoViewerTitle:"共享照片",
+  photoViewerHint:"長按照片即可儲存到裝置相簿。",
+  saveImage:"儲存照片",
+  modificationLogsShown:"顯示 {count} 筆修改紀錄"
+});
+Object.assign(COLLAB_I18N.ja, {
+  photoViewerTitle:"共有写真",
+  photoViewerHint:"写真を長押しすると端末に保存できます。",
+  saveImage:"画像を保存",
+  modificationLogsShown:"変更履歴 {count} 件を表示"
 });
 
 function ct(key, variables = {}) {
@@ -4274,6 +4449,27 @@ async function loadChatImageUrls(messages = chatMessagesCache) {
     if (path && signedUrl) chatImageUrls.set(path, signedUrl);
   });
 }
+async function loadAllChangeLogs(remoteId, requestId) {
+  const pageSize = 1000;
+  const maxRows = 20000;
+  const rows = [];
+  for (let from = 0; from < maxRows; from += pageSize) {
+    const result = await supabaseClient.from("voyage_change_logs")
+      .select("id,trip_id,user_id,action_id,details,is_active,created_at")
+      .eq("trip_id", remoteId).eq("is_active", true)
+      .order("created_at", { ascending:true })
+      .range(from, from + pageSize - 1);
+    if (result.error) return result;
+    if (requestId !== chatLoadRequestId || activeTrip()?.remoteId !== remoteId) {
+      return { data:[], error:null, cancelled:true };
+    }
+    const page = result.data || [];
+    rows.push(...page);
+    if (page.length < pageSize) break;
+  }
+  return { data:rows, error:null };
+}
+
 async function loadChatData(options = {}) {
   const trip = activeTrip();
   if (!supabaseClient || !collabUser || !trip?.remoteId) return false;
@@ -4302,10 +4498,7 @@ async function loadChatData(options = {}) {
         supabaseClient.from("voyage_chat_messages")
           .select("id,trip_id,user_id,body,message_kind,image_path,image_name,image_mime,image_size,deleted_at,deleted_by,deletion_kind,created_at")
           .eq("trip_id", remoteId).order("created_at", { ascending:false }).limit(1000),
-        supabaseClient.from("voyage_change_logs")
-          .select("id,trip_id,user_id,action_id,details,is_active,created_at")
-          .eq("trip_id", remoteId).eq("is_active", true)
-          .order("created_at", { ascending:false }).limit(1000)
+        loadAllChangeLogs(remoteId, requestId)
       ]);
 
       if (requestId !== chatLoadRequestId || activeTrip()?.remoteId !== remoteId) return false;
@@ -4318,7 +4511,7 @@ async function loadChatData(options = {}) {
 
       chatBackendReady = true;
       chatMessagesCache = (messagesResult.data || []).slice().reverse();
-      changeLogsCache = (logsResult.data || []).slice().reverse();
+      changeLogsCache = (logsResult.data || []).slice().sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
       chatDataLoadedTripId = remoteId;
       await loadChatImageUrls(chatMessagesCache);
       if (requestId !== chatLoadRequestId || activeTrip()?.remoteId !== remoteId) return false;
@@ -4380,18 +4573,83 @@ function chatMessageHtml(entry) {
   }
   const signedUrl = entry.image_path ? chatImageUrls.get(entry.image_path) : "";
   const imageHtml = signedUrl
-    ? `<a class="chat-image-link" href="${esc(signedUrl)}" target="_blank" rel="noopener noreferrer"><img src="${esc(signedUrl)}" alt="${esc(entry.image_name || ct("attachImage"))}" loading="lazy"></a>`
+    ? `<a class="chat-image-link" href="${esc(signedUrl)}" data-chat-image-open="${esc(entry.id)}"><img src="${esc(signedUrl)}" alt="${esc(entry.image_name || ct("attachImage"))}" loading="lazy"></a>`
     : "";
   const bodyHtml = entry.body ? `<div class="chat-message-text ${imageHtml ? "chat-image-caption" : ""}">${esc(entry.body)}</div>` : "";
   return `<article class="chat-message ${own ? "is-own" : ""}" data-message-id="${esc(entry.id)}"><div class="chat-message-head"><span class="chat-message-head-main"><span class="chat-message-author">${esc(author)}</span><time>${esc(time)}</time></span>${actions}</div>${imageHtml}${bodyHtml}</article>`;
 }
-function chatLogHtml(entry) {
+function chatLogHtml(entry, context = "activity") {
   const author = participantName(entry.user_id);
   const time = formatChatTime(entry.created_at);
   const changes = Array.isArray(entry.details?.changes) ? entry.details.changes : [];
   const expanded = expandedChangeLogIds.has(String(entry.id));
-  return `<article class="chat-system ${expanded ? "expanded" : ""}" data-log-id="${esc(entry.id)}"><button class="chat-system-toggle" type="button"><span class="chat-system-icon">☷</span><span class="chat-system-main"><span class="chat-system-kicker">${esc(ct("activityLog"))}</span><span class="chat-system-title">${esc(ct("tripModified"))}</span><span class="chat-system-meta">${esc(ct("modificationBy", { name:author }))} · ${esc(time)}</span></span><span class="chat-system-chevron">${expanded ? "⌃" : "⌄"}</span></button><div class="chat-system-details"><ol>${changes.map(change => `<li>${esc(modificationLine(change))}</li>`).join("") || `<li>${esc(ct("tripModified"))}</li>`}</ol></div></article>`;
+  const inlineClass = context === "conversation" ? " chat-system-inline" : "";
+  return `<article class="chat-system${inlineClass} ${expanded ? "expanded" : ""}" data-chat-entry="modification" data-log-id="${esc(entry.id)}"><button class="chat-system-toggle" type="button"><span class="chat-system-icon">☷</span><span class="chat-system-main"><span class="chat-system-kicker">${esc(ct("activityLog"))}</span><span class="chat-system-title">${esc(ct("tripModified"))}</span><span class="chat-system-meta">${esc(ct("modificationBy", { name:author }))} · ${esc(time)}</span></span><span class="chat-system-chevron">${expanded ? "⌃" : "⌄"}</span></button><div class="chat-system-details"><ol>${changes.map(change => `<li>${esc(modificationLine(change))}</li>`).join("") || `<li>${esc(ct("tripModified"))}</li>`}</ol></div></article>`;
 }
+
+function chatImageMessageById(messageId) {
+  return chatMessagesCache.find(message => String(message.id) === String(messageId)) || null;
+}
+function safeDownloadName(name = "voyage-photo") {
+  const cleaned = String(name || "voyage-photo").replace(/[\\/:*?"<>|]+/g, "-").trim();
+  return cleaned || "voyage-photo";
+}
+function openChatImageViewer(messageId) {
+  const message = chatImageMessageById(messageId);
+  if (!message?.image_path) return;
+  const url = chatImageUrls.get(message.image_path);
+  if (!url) return;
+  const viewer = document.getElementById("chat-image-viewer");
+  const image = document.getElementById("chat-image-viewer-img");
+  const title = document.getElementById("chat-image-viewer-title");
+  const caption = document.getElementById("chat-image-viewer-caption");
+  const hint = document.getElementById("chat-image-viewer-hint");
+  const save = document.getElementById("chat-image-viewer-save");
+  image.src = url;
+  image.alt = message.image_name || ct("photoViewerTitle");
+  title.textContent = message.image_name || ct("photoViewerTitle");
+  caption.textContent = [participantName(message.user_id), formatChatTime(message.created_at), message.body || ""].filter(Boolean).join(" · ");
+  hint.textContent = ct("photoViewerHint");
+  save.textContent = ct("saveImage");
+  save.href = url;
+  save.download = safeDownloadName(message.image_name || "voyage-photo");
+  viewer.classList.add("show");
+  viewer.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+function closeChatImageViewer() {
+  const viewer = document.getElementById("chat-image-viewer");
+  const image = document.getElementById("chat-image-viewer-img");
+  viewer.classList.remove("show");
+  viewer.setAttribute("aria-hidden", "true");
+  image.removeAttribute("src");
+  document.body.style.overflow = "";
+}
+function scrollConversationToLatestModification() {
+  const feed = document.getElementById("chat-feed");
+  if (!feed) return;
+  const logs = feed.querySelectorAll('[data-chat-entry="modification"]');
+  const target = logs[logs.length - 1];
+  if (!target) return;
+  const feedRect = feed.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const centeredTop = feed.scrollTop
+    + (targetRect.top - feedRect.top)
+    - Math.max(24, (feed.clientHeight - targetRect.height) / 2);
+  const top = Math.max(0, Math.min(centeredTop, feed.scrollHeight - feed.clientHeight));
+  feed.scrollTop = top;
+  chatScrollPositions.conversation = top;
+}
+function handleModificationFilterChange() {
+  renderConversationFeed({ keepPosition:true });
+  const checked = document.getElementById("chat-show-modifications")?.checked !== false;
+  if (checked && changeLogsCache.length) {
+    const status = document.getElementById("chat-status");
+    if (status) status.textContent = ct("modificationLogsShown", { count:changeLogsCache.length });
+    requestAnimationFrame(scrollConversationToLatestModification);
+  }
+}
+
 function bindChatInteractiveElements(root) {
   if (!root) return;
   root.querySelectorAll(".chat-system-toggle").forEach(button => button.addEventListener("click", () => {
@@ -4417,6 +4675,11 @@ function bindChatInteractiveElements(root) {
     openChatMessageMenuId = null;
     deleteChatMessageSilently(button.dataset.chatDeleteSilent);
   }));
+  root.querySelectorAll("[data-chat-image-open]").forEach(link => link.addEventListener("click", event => {
+    event.preventDefault();
+    event.stopPropagation();
+    openChatImageViewer(link.dataset.chatImageOpen);
+  }));
 }
 function renderConversationFeed(options = {}) {
   const feed = document.getElementById("chat-feed");
@@ -4435,7 +4698,7 @@ function renderConversationFeed(options = {}) {
   }
   feed.innerHTML = groupChatEntriesByDate(entries).map(group =>
     chatDateDividerHtml(group.dateKey) + group.entries.map(entry =>
-      entry.entryType === "message" ? chatMessageHtml(entry) : chatLogHtml(entry)
+      entry.entryType === "message" ? chatMessageHtml(entry) : chatLogHtml(entry, "conversation")
     ).join("")
   ).join("");
   bindChatInteractiveElements(feed);
@@ -4451,7 +4714,8 @@ function renderActivityFeed() {
     feed.innerHTML = `<div class="chat-activity-empty">${esc(ct("activityEmpty"))}</div>`;
     return;
   }
-  feed.innerHTML = groupChatEntriesByDate(changeLogsCache).map(group =>
+  const newestFirst = changeLogsCache.slice().sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+  feed.innerHTML = groupChatEntriesByDate(newestFirst).map(group =>
     chatDateDividerHtml(group.dateKey) + group.entries.map(chatLogHtml).join("")
   ).join("");
   bindChatInteractiveElements(feed);
@@ -4472,12 +4736,13 @@ function renderAlbumFeed() {
     const cards = group.entries.map(message => {
       const url = chatImageUrls.get(message.image_path);
       const media = url
-        ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer"><img src="${esc(url)}" alt="${esc(message.image_name || ct("attachImage"))}" loading="lazy"></a>`
+        ? `<a href="${esc(url)}" data-chat-image-open="${esc(message.id)}"><img src="${esc(url)}" alt="${esc(message.image_name || ct("attachImage"))}" loading="lazy"></a>`
         : `<div class="chat-album-placeholder">${esc(ct("imageUnavailable"))}</div>`;
       return `<article class="chat-album-card" data-message-id="${esc(message.id)}">${media}<div class="chat-album-meta"><span class="chat-album-author">${esc(participantName(message.user_id))}</span><time class="chat-album-time">${esc(formatChatTime(message.created_at))}</time>${message.body ? `<div class="chat-album-caption">${esc(message.body)}</div>` : ""}</div></article>`;
     }).join("");
     return `<section class="chat-album-date-section" data-chat-date="${esc(group.dateKey)}">${chatDateDividerHtml(group.dateKey)}<div class="chat-album-grid">${cards}</div></section>`;
   }).join("");
+  bindChatInteractiveElements(feed);
   feed.scrollTop = previousScrollTop;
   chatScrollPositions.album = feed.scrollTop;
 }
@@ -4488,12 +4753,30 @@ function updateChatDateBounds() {
   input.min = dates[0] || "";
   input.max = dates[dates.length - 1] || "";
 }
+function renderActivitySummary() {
+  const summary = document.getElementById("chat-activity-summary");
+  const title = document.getElementById("chat-activity-summary-title");
+  const meta = document.getElementById("chat-activity-summary-meta");
+  const count = document.getElementById("chat-activity-summary-count");
+  if (!summary || !title || !meta || !count) return;
+  const visible = activeChatView === "conversation" && changeLogsCache.length > 0;
+  summary.hidden = !visible;
+  title.textContent = ct("activitySummaryTitle");
+  count.textContent = String(changeLogsCache.length);
+  const latest = changeLogsCache[changeLogsCache.length - 1];
+  meta.textContent = latest
+    ? ct("activitySummaryMeta", { count:changeLogsCache.length, time:formatChatTime(latest.created_at) })
+    : "";
+}
 function updateChatMeta() {
   updateChatDateBounds();
   const activityCount = document.getElementById("chat-activity-count");
   const albumCount = document.getElementById("chat-album-count");
   if (activityCount) activityCount.textContent = String(changeLogsCache.length);
+  const inlineCount = document.getElementById("chat-filter-log-count");
+  if (inlineCount) inlineCount.textContent = String(changeLogsCache.length);
   if (albumCount) albumCount.textContent = String(chatMessagesCache.filter(message => !message.deleted_at && message.image_path).length);
+  renderActivitySummary();
 }
 function renderMessageViews(options = {}) {
   renderConversationFeed(options);
@@ -4525,6 +4808,7 @@ function setChatView(view) {
   const composer = document.getElementById("chat-composer");
   if (filter) filter.style.display = activeChatView === "conversation" ? "inline-flex" : "none";
   if (composer) composer.style.display = activeChatView === "conversation" ? "flex" : "none";
+  renderActivitySummary();
 }
 function jumpChatToDate() {
   const date = document.getElementById("chat-jump-date")?.value;
@@ -4700,6 +4984,7 @@ async function openChatModal() {
 }
 async function closeChatModal() {
   document.getElementById("chat-overlay").classList.remove("show");
+  if (document.getElementById("chat-image-viewer")?.classList.contains("show")) closeChatImageViewer();
   clearSelectedChatImage();
 }
 
@@ -4722,7 +5007,7 @@ async function loadBackups() {
     .select("id,trip_id,created_by,source,label,version,snapshot_hash,chat_included,message_count,log_count,image_count,created_at")
     .eq("trip_id", trip.remoteId)
     .order("created_at", { ascending:false })
-    .limit(300);
+    .limit(1000);
   if (error) {
     backupCache = [];
     setBackupStatus(isMissingChatRelation(error) ? ct("backupBackendMissing") : error.message, true);
@@ -5204,6 +5489,11 @@ async function initCollaboration() {
 document.getElementById("undo-btn").addEventListener("click", undoLastChange);
 document.getElementById("redo-btn").addEventListener("click", redoLastChange);
 document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && document.getElementById("chat-image-viewer")?.classList.contains("show")) {
+    event.preventDefault();
+    closeChatImageViewer();
+    return;
+  }
   const target = event.target;
   if (target instanceof HTMLElement && (target.matches("input, textarea, select") || target.isContentEditable)) return;
   if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
@@ -5240,11 +5530,20 @@ document.getElementById("chat-send-btn").addEventListener("click", sendChatMessa
 document.getElementById("chat-image-btn").addEventListener("click", () => document.getElementById("chat-image-input").click());
 document.getElementById("chat-image-input").addEventListener("change", event => selectChatImage(event.target.files?.[0] || null));
 document.getElementById("chat-image-remove-btn").addEventListener("click", clearSelectedChatImage);
+document.getElementById("chat-image-viewer-close").addEventListener("click", closeChatImageViewer);
+document.getElementById("chat-image-viewer").addEventListener("click", event => {
+  if (event.target.id === "chat-image-viewer") closeChatImageViewer();
+});
 document.getElementById("chat-message-input").addEventListener("keydown", event => {
   if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendChatMessage(); }
 });
-document.getElementById("chat-show-modifications").addEventListener("change", renderChatFeed);
+document.getElementById("chat-show-modifications").addEventListener("change", handleModificationFilterChange);
 document.querySelectorAll("[data-chat-view]").forEach(button => button.addEventListener("click", () => setChatView(button.dataset.chatView)));
+document.getElementById("chat-activity-summary").addEventListener("click", () => {
+  setChatView("activity");
+  const feed = document.getElementById("chat-activity-feed");
+  if (feed) feed.scrollTop = 0;
+});
 document.getElementById("chat-jump-btn").addEventListener("click", jumpChatToDate);
 document.getElementById("chat-jump-date").addEventListener("keydown", event => {
   if (event.key === "Enter") { event.preventDefault(); jumpChatToDate(); }
@@ -5339,41 +5638,6 @@ document.getElementById("email-invite-btn").addEventListener("click", () => {
 
 
 // ---------------------------------------------------------------------------
-// Image lightbox — tap any chat/album photo to view it full-screen in-app
-// instead of navigating to a new tab. Since it's a real <img> element with a
-// direct src, long-press-to-save keeps working natively on iOS/Android.
-// ---------------------------------------------------------------------------
-function openImageLightbox(url, alt) {
-  if (!url) return;
-  const overlay = document.getElementById("image-lightbox");
-  const img = document.getElementById("image-lightbox-img");
-  if (!overlay || !img) return;
-  img.src = url;
-  img.alt = alt || "";
-  overlay.classList.add("show");
-}
-function closeImageLightbox() {
-  const overlay = document.getElementById("image-lightbox");
-  const img = document.getElementById("image-lightbox-img");
-  overlay?.classList.remove("show");
-  if (img) img.removeAttribute("src");
-}
-document.getElementById("image-lightbox-close")?.addEventListener("click", closeImageLightbox);
-document.getElementById("image-lightbox")?.addEventListener("click", event => {
-  if (event.target.id === "image-lightbox") closeImageLightbox();
-});
-document.addEventListener("keydown", event => {
-  if (event.key === "Escape") closeImageLightbox();
-});
-document.addEventListener("click", event => {
-  const link = event.target.closest(".chat-image-link, .chat-album-card a");
-  if (!link) return;
-  event.preventDefault();
-  const img = link.querySelector("img");
-  openImageLightbox(link.getAttribute("href"), img?.alt || "");
-});
-
-// ---------------------------------------------------------------------------
 // Init
 // ---------------------------------------------------------------------------
 initDragHandlers();
@@ -5387,9 +5651,5 @@ attachAutocomplete("f-to", () => PLACE_SUGGESTIONS[selectedKind()] || PLACE_SUGG
 renderAll();
 initCollaboration();
 </script>
-<div class="image-lightbox" id="image-lightbox">
-  <button class="image-lightbox-close" id="image-lightbox-close" type="button" aria-label="Close">✕</button>
-  <img id="image-lightbox-img" src="" alt="">
-</div>
 </body>
 </html>
