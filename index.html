@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v16 — timezone-aware flights and searchable airport directory -->
+<!-- Voyage Board v18 — complete IANA timezone directory and preserved global airport coverage -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -2085,6 +2085,9 @@ Object.assign(I18N.en, {
   flightTimeInvalid:"Check the departure/arrival date, time, and time-zone values.",
   flightArrivalBeforeDeparture:"The arrival instant is before the departure instant. Check the local dates, times, or time zones.",
   airportDataCredit:"Airport suggestions use the airportsdata directory; manual entries are always allowed.",
+  flightTimezoneRequiredShort:"Set airports or time zones",
+  airportDirectoryCached:"Airport directory ready from this device: {count} IATA airports.",
+  allTimeZonesAvailable:"All {count} IANA timezone names are available, including Japan and Korea.",
 });
 Object.assign(I18N["zh-TW"], {
   departureDate:"出發日期",
@@ -2102,6 +2105,9 @@ Object.assign(I18N["zh-TW"], {
   flightTimeInvalid:"請檢查出發／抵達日期、時間與時區。",
   flightArrivalBeforeDeparture:"抵達時間點早於出發時間點。請檢查當地日期、時間或時區。",
   airportDataCredit:"機場建議使用 airportsdata 清單；使用者可隨時手動輸入。",
+  flightTimezoneRequiredShort:"請設定機場或時區",
+  airportDirectoryCached:"已從此裝置載入機場清單：{count} 個 IATA 機場。",
+  allTimeZonesAvailable:"可選擇全部 {count} 個 IANA 時區名稱，包括日本與韓國。",
 });
 Object.assign(I18N.ja, {
   departureDate:"出発日",
@@ -2119,6 +2125,9 @@ Object.assign(I18N.ja, {
   flightTimeInvalid:"出発・到着の日付、時刻、タイムゾーンを確認してください。",
   flightArrivalBeforeDeparture:"到着時点が出発時点より前です。現地の日付、時刻、タイムゾーンを確認してください。",
   airportDataCredit:"空港候補は airportsdata を使用し、手動入力にも対応しています。",
+  flightTimezoneRequiredShort:"空港またはタイムゾーンを設定",
+  airportDirectoryCached:"端末のキャッシュから空港一覧を読み込みました：{count} 件。",
+  allTimeZonesAvailable:"日本・韓国を含む {count} 件の IANA タイムゾーン名を選択できます。",
 });
 
 const CATEGORY_META = {
@@ -2133,16 +2142,109 @@ const CATEGORY_META = {
 };
 const CATEGORY_ORDER = ["flight", "transport", "hotel", "food", "activity", "shopping", "meeting", "other"];
 
-const AIRPORT_DATA_URL = "https://raw.githubusercontent.com/mborsetti/airportsdata/main/airportsdata/airports.csv";
-const POPULAR_AIRPORT_ROWS = [["TPE","RCTP","Taiwan Taoyuan International Airport","Taipei","TW","Asia/Taipei"],["TSA","RCSS","Taipei Songshan Airport","Taipei","TW","Asia/Taipei"],["KHH","RCKH","Kaohsiung International Airport","Kaohsiung","TW","Asia/Taipei"],["NRT","RJAA","Narita International Airport","Tokyo","JP","Asia/Tokyo"],["HND","RJTT","Tokyo Haneda Airport","Tokyo","JP","Asia/Tokyo"],["KIX","RJBB","Kansai International Airport","Osaka","JP","Asia/Tokyo"],["ITM","RJOO","Osaka Itami Airport","Osaka","JP","Asia/Tokyo"],["NGO","RJGG","Chubu Centrair International Airport","Nagoya","JP","Asia/Tokyo"],["FUK","RJFF","Fukuoka Airport","Fukuoka","JP","Asia/Tokyo"],["CTS","RJCC","New Chitose Airport","Sapporo","JP","Asia/Tokyo"],["ICN","RKSI","Incheon International Airport","Seoul","KR","Asia/Seoul"],["GMP","RKSS","Gimpo International Airport","Seoul","KR","Asia/Seoul"],["HKG","VHHH","Hong Kong International Airport","Hong Kong","HK","Asia/Hong_Kong"],["MFM","VMMC","Macau International Airport","Macau","MO","Asia/Macau"],["SIN","WSSS","Singapore Changi Airport","Singapore","SG","Asia/Singapore"],["BKK","VTBS","Suvarnabhumi Airport","Bangkok","TH","Asia/Bangkok"],["DMK","VTBD","Don Mueang International Airport","Bangkok","TH","Asia/Bangkok"],["KUL","WMKK","Kuala Lumpur International Airport","Kuala Lumpur","MY","Asia/Kuala_Lumpur"],["MNL","RPLL","Ninoy Aquino International Airport","Manila","PH","Asia/Manila"],["SGN","VVTS","Tan Son Nhat International Airport","Ho Chi Minh City","VN","Asia/Ho_Chi_Minh"],["HAN","VVNB","Noi Bai International Airport","Hanoi","VN","Asia/Ho_Chi_Minh"],["PEK","ZBAA","Beijing Capital International Airport","Beijing","CN","Asia/Shanghai"],["PKX","ZBAD","Beijing Daxing International Airport","Beijing","CN","Asia/Shanghai"],["PVG","ZSPD","Shanghai Pudong International Airport","Shanghai","CN","Asia/Shanghai"],["SHA","ZSSS","Shanghai Hongqiao International Airport","Shanghai","CN","Asia/Shanghai"],["CAN","ZGGG","Guangzhou Baiyun International Airport","Guangzhou","CN","Asia/Shanghai"],["SZX","ZGSZ","Shenzhen Bao'an International Airport","Shenzhen","CN","Asia/Shanghai"],["LAX","KLAX","Los Angeles International Airport","Los Angeles","US","America/Los_Angeles"],["SFO","KSFO","San Francisco International Airport","San Francisco","US","America/Los_Angeles"],["SEA","KSEA","Seattle–Tacoma International Airport","Seattle","US","America/Los_Angeles"],["JFK","KJFK","John F. Kennedy International Airport","New York","US","America/New_York"],["EWR","KEWR","Newark Liberty International Airport","Newark","US","America/New_York"],["BOS","KBOS","Logan International Airport","Boston","US","America/New_York"],["IAD","KIAD","Washington Dulles International Airport","Washington","US","America/New_York"],["ATL","KATL","Hartsfield–Jackson Atlanta International Airport","Atlanta","US","America/New_York"],["MIA","KMIA","Miami International Airport","Miami","US","America/New_York"],["ORD","KORD","O'Hare International Airport","Chicago","US","America/Chicago"],["DFW","KDFW","Dallas/Fort Worth International Airport","Dallas","US","America/Chicago"],["DEN","KDEN","Denver International Airport","Denver","US","America/Denver"],["HNL","PHNL","Daniel K. Inouye International Airport","Honolulu","US","Pacific/Honolulu"],["YVR","CYVR","Vancouver International Airport","Vancouver","CA","America/Vancouver"],["YYZ","CYYZ","Toronto Pearson International Airport","Toronto","CA","America/Toronto"],["MEX","MMMX","Mexico City International Airport","Mexico City","MX","America/Mexico_City"],["GRU","SBGR","São Paulo/Guarulhos International Airport","São Paulo","BR","America/Sao_Paulo"],["EZE","SAEZ","Ministro Pistarini International Airport","Buenos Aires","AR","America/Argentina/Buenos_Aires"],["LHR","EGLL","London Heathrow Airport","London","GB","Europe/London"],["LGW","EGKK","London Gatwick Airport","London","GB","Europe/London"],["CDG","LFPG","Paris Charles de Gaulle Airport","Paris","FR","Europe/Paris"],["FRA","EDDF","Frankfurt Airport","Frankfurt","DE","Europe/Berlin"],["AMS","EHAM","Amsterdam Airport Schiphol","Amsterdam","NL","Europe/Amsterdam"],["MAD","LEMD","Adolfo Suárez Madrid–Barajas Airport","Madrid","ES","Europe/Madrid"],["BCN","LEBL","Barcelona–El Prat Airport","Barcelona","ES","Europe/Madrid"],["FCO","LIRF","Rome Fiumicino Airport","Rome","IT","Europe/Rome"],["ZRH","LSZH","Zurich Airport","Zurich","CH","Europe/Zurich"],["VIE","LOWW","Vienna International Airport","Vienna","AT","Europe/Vienna"],["IST","LTFM","Istanbul Airport","Istanbul","TR","Europe/Istanbul"],["DXB","OMDB","Dubai International Airport","Dubai","AE","Asia/Dubai"],["AUH","OMAA","Zayed International Airport","Abu Dhabi","AE","Asia/Dubai"],["DOH","OTHH","Hamad International Airport","Doha","QA","Asia/Qatar"],["DEL","VIDP","Indira Gandhi International Airport","Delhi","IN","Asia/Kolkata"],["BOM","VABB","Chhatrapati Shivaji Maharaj International Airport","Mumbai","IN","Asia/Kolkata"],["BLR","VOBL","Kempegowda International Airport","Bengaluru","IN","Asia/Kolkata"],["CGK","WIII","Soekarno–Hatta International Airport","Jakarta","ID","Asia/Jakarta"],["DPS","WADD","I Gusti Ngurah Rai International Airport","Denpasar","ID","Asia/Makassar"],["SYD","YSSY","Sydney Airport","Sydney","AU","Australia/Sydney"],["MEL","YMML","Melbourne Airport","Melbourne","AU","Australia/Melbourne"],["BNE","YBBN","Brisbane Airport","Brisbane","AU","Australia/Brisbane"],["AKL","NZAA","Auckland Airport","Auckland","NZ","Pacific/Auckland"],["JNB","FAOR","O. R. Tambo International Airport","Johannesburg","ZA","Africa/Johannesburg"],["CAI","HECA","Cairo International Airport","Cairo","EG","Africa/Cairo"],["NBO","HKJK","Jomo Kenyatta International Airport","Nairobi","KE","Africa/Nairobi"]];
-const POPULAR_AIRPORTS = POPULAR_AIRPORT_ROWS.map(([iata, icao, name, city, country, tz]) => ({
-  iata, icao, name, city, country, tz,
-  search: `${iata} ${icao} ${name} ${city} ${country}`.toLowerCase(),
-}));
-const AIRPORT_OPTIONS = POPULAR_AIRPORTS.map(airport => `${airport.iata} — ${airport.name}`);
-let airportDirectory = [...POPULAR_AIRPORTS];
+const AIRPORT_DATA_URLS = [
+  "https://cdn.jsdelivr.net/gh/mborsetti/airportsdata@main/airportsdata/airports.csv",
+  "https://raw.githubusercontent.com/mborsetti/airportsdata/main/airportsdata/airports.csv"
+];
+const AIRPORT_DIRECTORY_CACHE_KEY = "voyage-airport-directory-v18";
+const ALL_IANA_TIME_ZONES = ["Africa/Abidjan","Africa/Accra","Africa/Addis_Ababa","Africa/Algiers","Africa/Asmara","Africa/Asmera","Africa/Bamako","Africa/Bangui","Africa/Banjul","Africa/Bissau","Africa/Blantyre","Africa/Brazzaville","Africa/Bujumbura","Africa/Cairo","Africa/Casablanca","Africa/Ceuta","Africa/Conakry","Africa/Dakar","Africa/Dar_es_Salaam","Africa/Djibouti","Africa/Douala","Africa/El_Aaiun","Africa/Freetown","Africa/Gaborone","Africa/Harare","Africa/Johannesburg","Africa/Juba","Africa/Kampala","Africa/Khartoum","Africa/Kigali","Africa/Kinshasa","Africa/Lagos","Africa/Libreville","Africa/Lome","Africa/Luanda","Africa/Lubumbashi","Africa/Lusaka","Africa/Malabo","Africa/Maputo","Africa/Maseru","Africa/Mbabane","Africa/Mogadishu","Africa/Monrovia","Africa/Nairobi","Africa/Ndjamena","Africa/Niamey","Africa/Nouakchott","Africa/Ouagadougou","Africa/Porto-Novo","Africa/Sao_Tome","Africa/Timbuktu","Africa/Tripoli","Africa/Tunis","Africa/Windhoek","America/Adak","America/Anchorage","America/Anguilla","America/Antigua","America/Araguaina","America/Argentina/Buenos_Aires","America/Argentina/Catamarca","America/Argentina/ComodRivadavia","America/Argentina/Cordoba","America/Argentina/Jujuy","America/Argentina/La_Rioja","America/Argentina/Mendoza","America/Argentina/Rio_Gallegos","America/Argentina/Salta","America/Argentina/San_Juan","America/Argentina/San_Luis","America/Argentina/Tucuman","America/Argentina/Ushuaia","America/Aruba","America/Asuncion","America/Atikokan","America/Atka","America/Bahia","America/Bahia_Banderas","America/Barbados","America/Belem","America/Belize","America/Blanc-Sablon","America/Boa_Vista","America/Bogota","America/Boise","America/Buenos_Aires","America/Cambridge_Bay","America/Campo_Grande","America/Cancun","America/Caracas","America/Catamarca","America/Cayenne","America/Cayman","America/Chicago","America/Chihuahua","America/Ciudad_Juarez","America/Coral_Harbour","America/Cordoba","America/Costa_Rica","America/Coyhaique","America/Creston","America/Cuiaba","America/Curacao","America/Danmarkshavn","America/Dawson","America/Dawson_Creek","America/Denver","America/Detroit","America/Dominica","America/Edmonton","America/Eirunepe","America/El_Salvador","America/Ensenada","America/Fort_Nelson","America/Fort_Wayne","America/Fortaleza","America/Glace_Bay","America/Godthab","America/Goose_Bay","America/Grand_Turk","America/Grenada","America/Guadeloupe","America/Guatemala","America/Guayaquil","America/Guyana","America/Halifax","America/Havana","America/Hermosillo","America/Indiana/Indianapolis","America/Indiana/Knox","America/Indiana/Marengo","America/Indiana/Petersburg","America/Indiana/Tell_City","America/Indiana/Vevay","America/Indiana/Vincennes","America/Indiana/Winamac","America/Indianapolis","America/Inuvik","America/Iqaluit","America/Jamaica","America/Jujuy","America/Juneau","America/Kentucky/Louisville","America/Kentucky/Monticello","America/Knox_IN","America/Kralendijk","America/La_Paz","America/Lima","America/Los_Angeles","America/Louisville","America/Lower_Princes","America/Maceio","America/Managua","America/Manaus","America/Marigot","America/Martinique","America/Matamoros","America/Mazatlan","America/Mendoza","America/Menominee","America/Merida","America/Metlakatla","America/Mexico_City","America/Miquelon","America/Moncton","America/Monterrey","America/Montevideo","America/Montreal","America/Montserrat","America/Nassau","America/New_York","America/Nipigon","America/Nome","America/Noronha","America/North_Dakota/Beulah","America/North_Dakota/Center","America/North_Dakota/New_Salem","America/Nuuk","America/Ojinaga","America/Panama","America/Pangnirtung","America/Paramaribo","America/Phoenix","America/Port-au-Prince","America/Port_of_Spain","America/Porto_Acre","America/Porto_Velho","America/Puerto_Rico","America/Punta_Arenas","America/Rainy_River","America/Rankin_Inlet","America/Recife","America/Regina","America/Resolute","America/Rio_Branco","America/Rosario","America/Santa_Isabel","America/Santarem","America/Santiago","America/Santo_Domingo","America/Sao_Paulo","America/Scoresbysund","America/Shiprock","America/Sitka","America/St_Barthelemy","America/St_Johns","America/St_Kitts","America/St_Lucia","America/St_Thomas","America/St_Vincent","America/Swift_Current","America/Tegucigalpa","America/Thule","America/Thunder_Bay","America/Tijuana","America/Toronto","America/Tortola","America/Vancouver","America/Virgin","America/Whitehorse","America/Winnipeg","America/Yakutat","America/Yellowknife","Antarctica/Casey","Antarctica/Davis","Antarctica/DumontDUrville","Antarctica/Macquarie","Antarctica/Mawson","Antarctica/McMurdo","Antarctica/Palmer","Antarctica/Rothera","Antarctica/South_Pole","Antarctica/Syowa","Antarctica/Troll","Antarctica/Vostok","Arctic/Longyearbyen","Asia/Aden","Asia/Almaty","Asia/Amman","Asia/Anadyr","Asia/Aqtau","Asia/Aqtobe","Asia/Ashgabat","Asia/Ashkhabad","Asia/Atyrau","Asia/Baghdad","Asia/Bahrain","Asia/Baku","Asia/Bangkok","Asia/Barnaul","Asia/Beirut","Asia/Bishkek","Asia/Brunei","Asia/Calcutta","Asia/Chita","Asia/Choibalsan","Asia/Chongqing","Asia/Chungking","Asia/Colombo","Asia/Dacca","Asia/Damascus","Asia/Dhaka","Asia/Dili","Asia/Dubai","Asia/Dushanbe","Asia/Famagusta","Asia/Gaza","Asia/Harbin","Asia/Hebron","Asia/Ho_Chi_Minh","Asia/Hong_Kong","Asia/Hovd","Asia/Irkutsk","Asia/Istanbul","Asia/Jakarta","Asia/Jayapura","Asia/Jerusalem","Asia/Kabul","Asia/Kamchatka","Asia/Karachi","Asia/Kashgar","Asia/Kathmandu","Asia/Katmandu","Asia/Khandyga","Asia/Kolkata","Asia/Krasnoyarsk","Asia/Kuala_Lumpur","Asia/Kuching","Asia/Kuwait","Asia/Macao","Asia/Macau","Asia/Magadan","Asia/Makassar","Asia/Manila","Asia/Muscat","Asia/Nicosia","Asia/Novokuznetsk","Asia/Novosibirsk","Asia/Omsk","Asia/Oral","Asia/Phnom_Penh","Asia/Pontianak","Asia/Pyongyang","Asia/Qatar","Asia/Qostanay","Asia/Qyzylorda","Asia/Rangoon","Asia/Riyadh","Asia/Saigon","Asia/Sakhalin","Asia/Samarkand","Asia/Seoul","Asia/Shanghai","Asia/Singapore","Asia/Srednekolymsk","Asia/Taipei","Asia/Tashkent","Asia/Tbilisi","Asia/Tehran","Asia/Tel_Aviv","Asia/Thimbu","Asia/Thimphu","Asia/Tokyo","Asia/Tomsk","Asia/Ujung_Pandang","Asia/Ulaanbaatar","Asia/Ulan_Bator","Asia/Urumqi","Asia/Ust-Nera","Asia/Vientiane","Asia/Vladivostok","Asia/Yakutsk","Asia/Yangon","Asia/Yekaterinburg","Asia/Yerevan","Atlantic/Azores","Atlantic/Bermuda","Atlantic/Canary","Atlantic/Cape_Verde","Atlantic/Faeroe","Atlantic/Faroe","Atlantic/Jan_Mayen","Atlantic/Madeira","Atlantic/Reykjavik","Atlantic/South_Georgia","Atlantic/St_Helena","Atlantic/Stanley","Australia/ACT","Australia/Adelaide","Australia/Brisbane","Australia/Broken_Hill","Australia/Canberra","Australia/Currie","Australia/Darwin","Australia/Eucla","Australia/Hobart","Australia/LHI","Australia/Lindeman","Australia/Lord_Howe","Australia/Melbourne","Australia/NSW","Australia/North","Australia/Perth","Australia/Queensland","Australia/South","Australia/Sydney","Australia/Tasmania","Australia/Victoria","Australia/West","Australia/Yancowinna","Brazil/Acre","Brazil/DeNoronha","Brazil/East","Brazil/West","CET","CST6CDT","Canada/Atlantic","Canada/Central","Canada/Eastern","Canada/Mountain","Canada/Newfoundland","Canada/Pacific","Canada/Saskatchewan","Canada/Yukon","Chile/Continental","Chile/EasterIsland","Cuba","EET","EST","EST5EDT","Egypt","Eire","Etc/GMT","Etc/GMT+0","Etc/GMT+1","Etc/GMT+10","Etc/GMT+11","Etc/GMT+12","Etc/GMT+2","Etc/GMT+3","Etc/GMT+4","Etc/GMT+5","Etc/GMT+6","Etc/GMT+7","Etc/GMT+8","Etc/GMT+9","Etc/GMT-0","Etc/GMT-1","Etc/GMT-10","Etc/GMT-11","Etc/GMT-12","Etc/GMT-13","Etc/GMT-14","Etc/GMT-2","Etc/GMT-3","Etc/GMT-4","Etc/GMT-5","Etc/GMT-6","Etc/GMT-7","Etc/GMT-8","Etc/GMT-9","Etc/GMT0","Etc/Greenwich","Etc/UCT","Etc/UTC","Etc/Universal","Etc/Zulu","Europe/Amsterdam","Europe/Andorra","Europe/Astrakhan","Europe/Athens","Europe/Belfast","Europe/Belgrade","Europe/Berlin","Europe/Bratislava","Europe/Brussels","Europe/Bucharest","Europe/Budapest","Europe/Busingen","Europe/Chisinau","Europe/Copenhagen","Europe/Dublin","Europe/Gibraltar","Europe/Guernsey","Europe/Helsinki","Europe/Isle_of_Man","Europe/Istanbul","Europe/Jersey","Europe/Kaliningrad","Europe/Kiev","Europe/Kirov","Europe/Kyiv","Europe/Lisbon","Europe/Ljubljana","Europe/London","Europe/Luxembourg","Europe/Madrid","Europe/Malta","Europe/Mariehamn","Europe/Minsk","Europe/Monaco","Europe/Moscow","Europe/Nicosia","Europe/Oslo","Europe/Paris","Europe/Podgorica","Europe/Prague","Europe/Riga","Europe/Rome","Europe/Samara","Europe/San_Marino","Europe/Sarajevo","Europe/Saratov","Europe/Simferopol","Europe/Skopje","Europe/Sofia","Europe/Stockholm","Europe/Tallinn","Europe/Tirane","Europe/Tiraspol","Europe/Ulyanovsk","Europe/Uzhgorod","Europe/Vaduz","Europe/Vatican","Europe/Vienna","Europe/Vilnius","Europe/Volgograd","Europe/Warsaw","Europe/Zagreb","Europe/Zaporozhye","Europe/Zurich","Factory","GB","GB-Eire","GMT","GMT+0","GMT-0","GMT0","Greenwich","HST","Hongkong","Iceland","Indian/Antananarivo","Indian/Chagos","Indian/Christmas","Indian/Cocos","Indian/Comoro","Indian/Kerguelen","Indian/Mahe","Indian/Maldives","Indian/Mauritius","Indian/Mayotte","Indian/Reunion","Iran","Israel","Jamaica","Japan","Kwajalein","Libya","MET","MST","MST7MDT","Mexico/BajaNorte","Mexico/BajaSur","Mexico/General","NZ","NZ-CHAT","Navajo","PRC","PST8PDT","Pacific/Apia","Pacific/Auckland","Pacific/Bougainville","Pacific/Chatham","Pacific/Chuuk","Pacific/Easter","Pacific/Efate","Pacific/Enderbury","Pacific/Fakaofo","Pacific/Fiji","Pacific/Funafuti","Pacific/Galapagos","Pacific/Gambier","Pacific/Guadalcanal","Pacific/Guam","Pacific/Honolulu","Pacific/Johnston","Pacific/Kanton","Pacific/Kiritimati","Pacific/Kosrae","Pacific/Kwajalein","Pacific/Majuro","Pacific/Marquesas","Pacific/Midway","Pacific/Nauru","Pacific/Niue","Pacific/Norfolk","Pacific/Noumea","Pacific/Pago_Pago","Pacific/Palau","Pacific/Pitcairn","Pacific/Pohnpei","Pacific/Ponape","Pacific/Port_Moresby","Pacific/Rarotonga","Pacific/Saipan","Pacific/Samoa","Pacific/Tahiti","Pacific/Tarawa","Pacific/Tongatapu","Pacific/Truk","Pacific/Wake","Pacific/Wallis","Pacific/Yap","Poland","Portugal","ROC","ROK","Singapore","Turkey","UCT","US/Alaska","US/Aleutian","US/Arizona","US/Central","US/East-Indiana","US/Eastern","US/Hawaii","US/Indiana-Starke","US/Michigan","US/Mountain","US/Pacific","US/Samoa","UTC","Universal","W-SU","WET","Zulu"];
+const POPULAR_AIRPORT_ROWS = [["TPE","RCTP","Taiwan Taoyuan International Airport","Taipei","TW","Asia/Taipei"],["TSA","RCSS","Taipei Songshan Airport","Taipei","TW","Asia/Taipei"],["KHH","RCKH","Kaohsiung International Airport","Kaohsiung","TW","Asia/Taipei"],["NRT","RJAA","Narita International Airport","Tokyo","JP","Asia/Tokyo"],["HND","RJTT","Tokyo Haneda Airport","Tokyo","JP","Asia/Tokyo"],["KIX","RJBB","Kansai International Airport","Osaka","JP","Asia/Tokyo"],["ITM","RJOO","Osaka Itami Airport","Osaka","JP","Asia/Tokyo"],["NGO","RJGG","Chubu Centrair International Airport","Nagoya","JP","Asia/Tokyo"],["FUK","RJFF","Fukuoka Airport","Fukuoka","JP","Asia/Tokyo"],["CTS","RJCC","New Chitose Airport","Sapporo","JP","Asia/Tokyo"],["ICN","RKSI","Incheon International Airport","Seoul","KR","Asia/Seoul"],["GMP","RKSS","Gimpo International Airport","Seoul","KR","Asia/Seoul"],["HKG","VHHH","Hong Kong International Airport","Hong Kong","HK","Asia/Hong_Kong"],["MFM","VMMC","Macau International Airport","Macau","MO","Asia/Macau"],["SIN","WSSS","Singapore Changi Airport","Singapore","SG","Asia/Singapore"],["BKK","VTBS","Suvarnabhumi Airport","Bangkok","TH","Asia/Bangkok"],["DMK","VTBD","Don Mueang International Airport","Bangkok","TH","Asia/Bangkok"],["KUL","WMKK","Kuala Lumpur International Airport","Kuala Lumpur","MY","Asia/Kuala_Lumpur"],["MNL","RPLL","Ninoy Aquino International Airport","Manila","PH","Asia/Manila"],["SGN","VVTS","Tan Son Nhat International Airport","Ho Chi Minh City","VN","Asia/Ho_Chi_Minh"],["HAN","VVNB","Noi Bai International Airport","Hanoi","VN","Asia/Ho_Chi_Minh"],["PEK","ZBAA","Beijing Capital International Airport","Beijing","CN","Asia/Shanghai"],["PKX","ZBAD","Beijing Daxing International Airport","Beijing","CN","Asia/Shanghai"],["PVG","ZSPD","Shanghai Pudong International Airport","Shanghai","CN","Asia/Shanghai"],["SHA","ZSSS","Shanghai Hongqiao International Airport","Shanghai","CN","Asia/Shanghai"],["CAN","ZGGG","Guangzhou Baiyun International Airport","Guangzhou","CN","Asia/Shanghai"],["SZX","ZGSZ","Shenzhen Bao'an International Airport","Shenzhen","CN","Asia/Shanghai"],["LAX","KLAX","Los Angeles International Airport","Los Angeles","US","America/Los_Angeles"],["SFO","KSFO","San Francisco International Airport","San Francisco","US","America/Los_Angeles"],["SEA","KSEA","Seattle–Tacoma International Airport","Seattle","US","America/Los_Angeles"],["JFK","KJFK","John F. Kennedy International Airport","New York","US","America/New_York"],["EWR","KEWR","Newark Liberty International Airport","Newark","US","America/New_York"],["BOS","KBOS","Logan International Airport","Boston","US","America/New_York"],["IAD","KIAD","Washington Dulles International Airport","Washington","US","America/New_York"],["ATL","KATL","Hartsfield–Jackson Atlanta International Airport","Atlanta","US","America/New_York"],["MIA","KMIA","Miami International Airport","Miami","US","America/New_York"],["ORD","KORD","O'Hare International Airport","Chicago","US","America/Chicago"],["DFW","KDFW","Dallas/Fort Worth International Airport","Dallas","US","America/Chicago"],["DEN","KDEN","Denver International Airport","Denver","US","America/Denver"],["HNL","PHNL","Daniel K. Inouye International Airport","Honolulu","US","Pacific/Honolulu"],["YVR","CYVR","Vancouver International Airport","Vancouver","CA","America/Vancouver"],["YYZ","CYYZ","Toronto Pearson International Airport","Toronto","CA","America/Toronto"],["MEX","MMMX","Mexico City International Airport","Mexico City","MX","America/Mexico_City"],["GRU","SBGR","São Paulo/Guarulhos International Airport","São Paulo","BR","America/Sao_Paulo"],["EZE","SAEZ","Ministro Pistarini International Airport","Buenos Aires","AR","America/Argentina/Buenos_Aires"],["LHR","EGLL","London Heathrow Airport","London","GB","Europe/London"],["LGW","EGKK","London Gatwick Airport","London","GB","Europe/London"],["CDG","LFPG","Paris Charles de Gaulle Airport","Paris","FR","Europe/Paris"],["FRA","EDDF","Frankfurt Airport","Frankfurt","DE","Europe/Berlin"],["AMS","EHAM","Amsterdam Airport Schiphol","Amsterdam","NL","Europe/Amsterdam"],["MAD","LEMD","Adolfo Suárez Madrid–Barajas Airport","Madrid","ES","Europe/Madrid"],["BCN","LEBL","Barcelona–El Prat Airport","Barcelona","ES","Europe/Madrid"],["FCO","LIRF","Rome Fiumicino Airport","Rome","IT","Europe/Rome"],["ZRH","LSZH","Zurich Airport","Zurich","CH","Europe/Zurich"],["VIE","LOWW","Vienna International Airport","Vienna","AT","Europe/Vienna"],["IST","LTFM","Istanbul Airport","Istanbul","TR","Europe/Istanbul"],["DXB","OMDB","Dubai International Airport","Dubai","AE","Asia/Dubai"],["AUH","OMAA","Zayed International Airport","Abu Dhabi","AE","Asia/Dubai"],["DOH","OTHH","Hamad International Airport","Doha","QA","Asia/Qatar"],["DEL","VIDP","Indira Gandhi International Airport","Delhi","IN","Asia/Kolkata"],["BOM","VABB","Chhatrapati Shivaji Maharaj International Airport","Mumbai","IN","Asia/Kolkata"],["BLR","VOBL","Kempegowda International Airport","Bengaluru","IN","Asia/Kolkata"],["CGK","WIII","Soekarno–Hatta International Airport","Jakarta","ID","Asia/Jakarta"],["DPS","WADD","I Gusti Ngurah Rai International Airport","Denpasar","ID","Asia/Makassar"],["SYD","YSSY","Sydney Airport","Sydney","AU","Australia/Sydney"],["MEL","YMML","Melbourne Airport","Melbourne","AU","Australia/Melbourne"],["BNE","YBBN","Brisbane Airport","Brisbane","AU","Australia/Brisbane"],["AKL","NZAA","Auckland Airport","Auckland","NZ","Pacific/Auckland"],["JNB","FAOR","O. R. Tambo International Airport","Johannesburg","ZA","Africa/Johannesburg"],["CAI","HECA","Cairo International Airport","Cairo","EG","Africa/Cairo"],["NBO","HKJK","Jomo Kenyatta International Airport","Nairobi","KE","Africa/Nairobi"],["OKA","ROAH","Naha Airport","Okinawa","JP","Asia/Tokyo"],["KOJ","RJFK","Kagoshima Airport","Kagoshima","JP","Asia/Tokyo"],["KMQ","RJNK","Komatsu Airport","Kanazawa","JP","Asia/Tokyo"],["SDJ","RJSS","Sendai Airport","Sendai","JP","Asia/Tokyo"],["HIJ","RJOA","Hiroshima Airport","Hiroshima","JP","Asia/Tokyo"],["TAK","RJOT","Takamatsu Airport","Takamatsu","JP","Asia/Tokyo"],["MYJ","RJOM","Matsuyama Airport","Matsuyama","JP","Asia/Tokyo"],["HKD","RJCH","Hakodate Airport","Hakodate","JP","Asia/Tokyo"],["KIJ","RJSN","Niigata Airport","Niigata","JP","Asia/Tokyo"],["CJU","RKPC","Jeju International Airport","Jeju","KR","Asia/Seoul"],["PUS","RKPK","Gimhae International Airport","Busan","KR","Asia/Seoul"],["TAE","RKTN","Daegu International Airport","Daegu","KR","Asia/Seoul"],["CJJ","RKTU","Cheongju International Airport","Cheongju","KR","Asia/Seoul"],["CTU","ZUUU","Chengdu Shuangliu International Airport","Chengdu","CN","Asia/Shanghai"],["TFU","ZUTF","Chengdu Tianfu International Airport","Chengdu","CN","Asia/Shanghai"],["CKG","ZUCK","Chongqing Jiangbei International Airport","Chongqing","CN","Asia/Shanghai"],["XIY","ZLXY","Xi'an Xianyang International Airport","Xi'an","CN","Asia/Shanghai"],["HGH","ZSHC","Hangzhou Xiaoshan International Airport","Hangzhou","CN","Asia/Shanghai"],["NKG","ZSNJ","Nanjing Lukou International Airport","Nanjing","CN","Asia/Shanghai"],["WUH","ZHHH","Wuhan Tianhe International Airport","Wuhan","CN","Asia/Shanghai"],["XMN","ZSAM","Xiamen Gaoqi International Airport","Xiamen","CN","Asia/Shanghai"],["TAO","ZSQD","Qingdao Jiaodong International Airport","Qingdao","CN","Asia/Shanghai"],["TSN","ZBTJ","Tianjin Binhai International Airport","Tianjin","CN","Asia/Shanghai"],["KMG","ZPPP","Kunming Changshui International Airport","Kunming","CN","Asia/Shanghai"],["CSX","ZGHA","Changsha Huanghua International Airport","Changsha","CN","Asia/Shanghai"],["CGO","ZHCC","Zhengzhou Xinzheng International Airport","Zhengzhou","CN","Asia/Shanghai"],["HAK","ZJHK","Haikou Meilan International Airport","Haikou","CN","Asia/Shanghai"],["SYX","ZJSY","Sanya Phoenix International Airport","Sanya","CN","Asia/Shanghai"],["FOC","ZSFZ","Fuzhou Changle International Airport","Fuzhou","CN","Asia/Shanghai"],["DLC","ZYTL","Dalian Zhoushuizi International Airport","Dalian","CN","Asia/Shanghai"],["SHE","ZYTX","Shenyang Taoxian International Airport","Shenyang","CN","Asia/Shanghai"],["HRB","ZYHB","Harbin Taiping International Airport","Harbin","CN","Asia/Shanghai"],["KWE","ZUGY","Guiyang Longdongbao International Airport","Guiyang","CN","Asia/Shanghai"],["NNG","ZGNN","Nanning Wuxu International Airport","Nanning","CN","Asia/Shanghai"],["TNA","ZSJN","Jinan Yaoqiang International Airport","Jinan","CN","Asia/Shanghai"],["UBN","ZMCK","Chinggis Khaan International Airport","Ulaanbaatar","MN","Asia/Ulaanbaatar"],["CNX","VTCC","Chiang Mai International Airport","Chiang Mai","TH","Asia/Bangkok"],["HKT","VTSP","Phuket International Airport","Phuket","TH","Asia/Bangkok"],["KBV","VTSG","Krabi International Airport","Krabi","TH","Asia/Bangkok"],["USM","VTSM","Samui International Airport","Koh Samui","TH","Asia/Bangkok"],["PNH","VDPP","Phnom Penh International Airport","Phnom Penh","KH","Asia/Phnom_Penh"],["SAI","VDSA","Siem Reap–Angkor International Airport","Siem Reap","KH","Asia/Phnom_Penh"],["VTE","VLVT","Wattay International Airport","Vientiane","LA","Asia/Vientiane"],["LPQ","VLLB","Luang Prabang International Airport","Luang Prabang","LA","Asia/Vientiane"],["RGN","VYYY","Yangon International Airport","Yangon","MM","Asia/Yangon"],["MDL","VYMD","Mandalay International Airport","Mandalay","MM","Asia/Yangon"],["BWN","WBSB","Brunei International Airport","Bandar Seri Begawan","BN","Asia/Brunei"],["PEN","WMKP","Penang International Airport","Penang","MY","Asia/Kuala_Lumpur"],["LGK","WMKL","Langkawi International Airport","Langkawi","MY","Asia/Kuala_Lumpur"],["JHB","WMKJ","Senai International Airport","Johor Bahru","MY","Asia/Kuala_Lumpur"],["KCH","WBGG","Kuching International Airport","Kuching","MY","Asia/Kuching"],["BKI","WBKK","Kota Kinabalu International Airport","Kota Kinabalu","MY","Asia/Kuching"],["CEB","RPVM","Mactan–Cebu International Airport","Cebu","PH","Asia/Manila"],["CRK","RPLC","Clark International Airport","Clark","PH","Asia/Manila"],["DVO","RPMD","Francisco Bangoy International Airport","Davao","PH","Asia/Manila"],["PPS","RPVP","Puerto Princesa International Airport","Puerto Princesa","PH","Asia/Manila"],["ILO","RPVI","Iloilo International Airport","Iloilo","PH","Asia/Manila"],["DAD","VVDN","Da Nang International Airport","Da Nang","VN","Asia/Ho_Chi_Minh"],["CXR","VVCR","Cam Ranh International Airport","Nha Trang","VN","Asia/Ho_Chi_Minh"],["PQC","VVPQ","Phu Quoc International Airport","Phu Quoc","VN","Asia/Ho_Chi_Minh"],["SUB","WARR","Juanda International Airport","Surabaya","ID","Asia/Jakarta"],["UPG","WAAA","Sultan Hasanuddin International Airport","Makassar","ID","Asia/Makassar"],["KNO","WIMM","Kualanamu International Airport","Medan","ID","Asia/Jakarta"],["YIA","WAHI","Yogyakarta International Airport","Yogyakarta","ID","Asia/Jakarta"],["LOP","WADL","Lombok International Airport","Lombok","ID","Asia/Makassar"],["MAA","VOMM","Chennai International Airport","Chennai","IN","Asia/Kolkata"],["HYD","VOHS","Rajiv Gandhi International Airport","Hyderabad","IN","Asia/Kolkata"],["CCU","VECC","Netaji Subhas Chandra Bose International Airport","Kolkata","IN","Asia/Kolkata"],["COK","VOCI","Cochin International Airport","Kochi","IN","Asia/Kolkata"],["AMD","VAAH","Sardar Vallabhbhai Patel International Airport","Ahmedabad","IN","Asia/Kolkata"],["GOI","VOGO","Goa International Airport","Goa","IN","Asia/Kolkata"],["PNQ","VAPO","Pune Airport","Pune","IN","Asia/Kolkata"],["JAI","VIJP","Jaipur International Airport","Jaipur","IN","Asia/Kolkata"],["CMB","VCBI","Bandaranaike International Airport","Colombo","LK","Asia/Colombo"],["MLE","VRMM","Velana International Airport","Malé","MV","Indian/Maldives"],["DAC","VGHS","Hazrat Shahjalal International Airport","Dhaka","BD","Asia/Dhaka"],["KTM","VNKT","Tribhuvan International Airport","Kathmandu","NP","Asia/Kathmandu"],["ISB","OPIS","Islamabad International Airport","Islamabad","PK","Asia/Karachi"],["KHI","OPKC","Jinnah International Airport","Karachi","PK","Asia/Karachi"],["LHE","OPLA","Allama Iqbal International Airport","Lahore","PK","Asia/Karachi"],["RUH","OERK","King Khalid International Airport","Riyadh","SA","Asia/Riyadh"],["JED","OEJN","King Abdulaziz International Airport","Jeddah","SA","Asia/Riyadh"],["DMM","OEDF","King Fahd International Airport","Dammam","SA","Asia/Riyadh"],["KWI","OKKK","Kuwait International Airport","Kuwait City","KW","Asia/Kuwait"],["BAH","OBBI","Bahrain International Airport","Manama","BH","Asia/Bahrain"],["MCT","OOMS","Muscat International Airport","Muscat","OM","Asia/Muscat"],["TLV","LLBG","Ben Gurion Airport","Tel Aviv","IL","Asia/Jerusalem"],["AMM","OJAI","Queen Alia International Airport","Amman","JO","Asia/Amman"],["BEY","OLBA","Beirut–Rafic Hariri International Airport","Beirut","LB","Asia/Beirut"],["IKA","OIIE","Imam Khomeini International Airport","Tehran","IR","Asia/Tehran"],["MUC","EDDM","Munich Airport","Munich","DE","Europe/Berlin"],["BER","EDDB","Berlin Brandenburg Airport","Berlin","DE","Europe/Berlin"],["DUS","EDDL","Düsseldorf Airport","Düsseldorf","DE","Europe/Berlin"],["HAM","EDDH","Hamburg Airport","Hamburg","DE","Europe/Berlin"],["CPH","EKCH","Copenhagen Airport","Copenhagen","DK","Europe/Copenhagen"],["OSL","ENGM","Oslo Airport","Oslo","NO","Europe/Oslo"],["ARN","ESSA","Stockholm Arlanda Airport","Stockholm","SE","Europe/Stockholm"],["HEL","EFHK","Helsinki Airport","Helsinki","FI","Europe/Helsinki"],["BRU","EBBR","Brussels Airport","Brussels","BE","Europe/Brussels"],["LIS","LPPT","Humberto Delgado Airport","Lisbon","PT","Europe/Lisbon"],["OPO","LPPR","Francisco Sá Carneiro Airport","Porto","PT","Europe/Lisbon"],["ATH","LGAV","Athens International Airport","Athens","GR","Europe/Athens"],["DUB","EIDW","Dublin Airport","Dublin","IE","Europe/Dublin"],["MAN","EGCC","Manchester Airport","Manchester","GB","Europe/London"],["EDI","EGPH","Edinburgh Airport","Edinburgh","GB","Europe/London"],["GLA","EGPF","Glasgow Airport","Glasgow","GB","Europe/London"],["MXP","LIMC","Milan Malpensa Airport","Milan","IT","Europe/Rome"],["LIN","LIML","Milan Linate Airport","Milan","IT","Europe/Rome"],["VCE","LIPZ","Venice Marco Polo Airport","Venice","IT","Europe/Rome"],["NAP","LIRN","Naples International Airport","Naples","IT","Europe/Rome"],["PRG","LKPR","Václav Havel Airport Prague","Prague","CZ","Europe/Prague"],["BUD","LHBP","Budapest Ferenc Liszt International Airport","Budapest","HU","Europe/Budapest"],["WAW","EPWA","Warsaw Chopin Airport","Warsaw","PL","Europe/Warsaw"],["KRK","EPKK","John Paul II Kraków–Balice Airport","Kraków","PL","Europe/Warsaw"],["OTP","LROP","Henri Coandă International Airport","Bucharest","RO","Europe/Bucharest"],["SOF","LBSF","Sofia Airport","Sofia","BG","Europe/Sofia"],["BEG","LYBE","Belgrade Nikola Tesla Airport","Belgrade","RS","Europe/Belgrade"],["ZAG","LDZA","Zagreb Airport","Zagreb","HR","Europe/Zagreb"],["LJU","LJLJ","Ljubljana Jože Pučnik Airport","Ljubljana","SI","Europe/Ljubljana"],["GVA","LSGG","Geneva Airport","Geneva","CH","Europe/Zurich"],["BSL","LFSB","EuroAirport Basel Mulhouse Freiburg","Basel","CH","Europe/Paris"],["KEF","BIKF","Keflavík International Airport","Reykjavík","IS","Atlantic/Reykjavik"],["RIX","EVRA","Riga International Airport","Riga","LV","Europe/Riga"],["TLL","EETN","Tallinn Airport","Tallinn","EE","Europe/Tallinn"],["VNO","EYVI","Vilnius Airport","Vilnius","LT","Europe/Vilnius"],["KBP","UKBB","Boryspil International Airport","Kyiv","UA","Europe/Kyiv"],["MLA","LMML","Malta International Airport","Malta","MT","Europe/Malta"],["LCA","LCLK","Larnaca International Airport","Larnaca","CY","Asia/Nicosia"],["TBS","UGTB","Tbilisi International Airport","Tbilisi","GE","Asia/Tbilisi"],["DCA","KDCA","Ronald Reagan Washington National Airport","Washington","US","America/New_York"],["BWI","KBWI","Baltimore/Washington International Airport","Baltimore","US","America/New_York"],["PHL","KPHL","Philadelphia International Airport","Philadelphia","US","America/New_York"],["CLT","KCLT","Charlotte Douglas International Airport","Charlotte","US","America/New_York"],["DTW","KDTW","Detroit Metropolitan Airport","Detroit","US","America/Detroit"],["MSP","KMSP","Minneapolis–Saint Paul International Airport","Minneapolis","US","America/Chicago"],["IAH","KIAH","George Bush Intercontinental Airport","Houston","US","America/Chicago"],["HOU","KHOU","William P. Hobby Airport","Houston","US","America/Chicago"],["AUS","KAUS","Austin–Bergstrom International Airport","Austin","US","America/Chicago"],["SAT","KSAT","San Antonio International Airport","San Antonio","US","America/Chicago"],["PHX","KPHX","Phoenix Sky Harbor International Airport","Phoenix","US","America/Phoenix"],["LAS","KLAS","Harry Reid International Airport","Las Vegas","US","America/Los_Angeles"],["SAN","KSAN","San Diego International Airport","San Diego","US","America/Los_Angeles"],["SJC","KSJC","San José Mineta International Airport","San Jose","US","America/Los_Angeles"],["OAK","KOAK","San Francisco Bay Oakland International Airport","Oakland","US","America/Los_Angeles"],["PDX","KPDX","Portland International Airport","Portland","US","America/Los_Angeles"],["SLC","KSLC","Salt Lake City International Airport","Salt Lake City","US","America/Denver"],["MCO","KMCO","Orlando International Airport","Orlando","US","America/New_York"],["FLL","KFLL","Fort Lauderdale–Hollywood International Airport","Fort Lauderdale","US","America/New_York"],["TPA","KTPA","Tampa International Airport","Tampa","US","America/New_York"],["MSY","KMSY","Louis Armstrong New Orleans International Airport","New Orleans","US","America/Chicago"],["BNA","KBNA","Nashville International Airport","Nashville","US","America/Chicago"],["RDU","KRDU","Raleigh–Durham International Airport","Raleigh","US","America/New_York"],["PIT","KPIT","Pittsburgh International Airport","Pittsburgh","US","America/New_York"],["CLE","KCLE","Cleveland Hopkins International Airport","Cleveland","US","America/New_York"],["STL","KSTL","St. Louis Lambert International Airport","St. Louis","US","America/Chicago"],["MCI","KMCI","Kansas City International Airport","Kansas City","US","America/Chicago"],["IND","KIND","Indianapolis International Airport","Indianapolis","US","America/Indiana/Indianapolis"],["CMH","KCMH","John Glenn Columbus International Airport","Columbus","US","America/New_York"],["CVG","KCVG","Cincinnati/Northern Kentucky International Airport","Cincinnati","US","America/New_York"],["ANC","PANC","Ted Stevens Anchorage International Airport","Anchorage","US","America/Anchorage"],["OGG","PHOG","Kahului Airport","Maui","US","Pacific/Honolulu"],["KOA","PHKO","Ellison Onizuka Kona International Airport","Kona","US","Pacific/Honolulu"],["LIH","PHLI","Lihue Airport","Kauai","US","Pacific/Honolulu"],["YUL","CYUL","Montréal–Trudeau International Airport","Montreal","CA","America/Toronto"],["YOW","CYOW","Ottawa International Airport","Ottawa","CA","America/Toronto"],["YYC","CYYC","Calgary International Airport","Calgary","CA","America/Edmonton"],["YEG","CYEG","Edmonton International Airport","Edmonton","CA","America/Edmonton"],["YHZ","CYHZ","Halifax Stanfield International Airport","Halifax","CA","America/Halifax"],["YWG","CYWG","Winnipeg James Armstrong Richardson International Airport","Winnipeg","CA","America/Winnipeg"],["YQB","CYQB","Québec City Jean Lesage International Airport","Quebec City","CA","America/Toronto"],["CUN","MMUN","Cancún International Airport","Cancún","MX","America/Cancun"],["GDL","MMGL","Guadalajara International Airport","Guadalajara","MX","America/Mexico_City"],["MTY","MMMY","Monterrey International Airport","Monterrey","MX","America/Monterrey"],["SJD","MMSD","Los Cabos International Airport","Los Cabos","MX","America/Mazatlan"],["PVR","MMPR","Puerto Vallarta International Airport","Puerto Vallarta","MX","America/Bahia_Banderas"],["PTY","MPTO","Tocumen International Airport","Panama City","PA","America/Panama"],["SJO","MROC","Juan Santamaría International Airport","San José","CR","America/Costa_Rica"],["SAL","MSLP","El Salvador International Airport","San Salvador","SV","America/El_Salvador"],["GUA","MGGT","La Aurora International Airport","Guatemala City","GT","America/Guatemala"],["SJU","TJSJ","Luis Muñoz Marín International Airport","San Juan","PR","America/Puerto_Rico"],["NAS","MYNN","Lynden Pindling International Airport","Nassau","BS","America/Nassau"],["PUJ","MDPC","Punta Cana International Airport","Punta Cana","DO","America/Santo_Domingo"],["HAV","MUHA","José Martí International Airport","Havana","CU","America/Havana"],["AUA","TNCA","Queen Beatrix International Airport","Oranjestad","AW","America/Aruba"],["GIG","SBGL","Rio de Janeiro/Galeão International Airport","Rio de Janeiro","BR","America/Sao_Paulo"],["SDU","SBRJ","Santos Dumont Airport","Rio de Janeiro","BR","America/Sao_Paulo"],["BSB","SBBR","Brasília International Airport","Brasília","BR","America/Sao_Paulo"],["CNF","SBCF","Belo Horizonte International Airport","Belo Horizonte","BR","America/Sao_Paulo"],["LIM","SPJC","Jorge Chávez International Airport","Lima","PE","America/Lima"],["BOG","SKBO","El Dorado International Airport","Bogotá","CO","America/Bogota"],["MDE","SKRG","José María Córdova International Airport","Medellín","CO","America/Bogota"],["UIO","SEQM","Mariscal Sucre International Airport","Quito","EC","America/Guayaquil"],["GYE","SEGU","José Joaquín de Olmedo International Airport","Guayaquil","EC","America/Guayaquil"],["SCL","SCEL","Arturo Merino Benítez International Airport","Santiago","CL","America/Santiago"],["AEP","SABE","Jorge Newbery Airfield","Buenos Aires","AR","America/Argentina/Buenos_Aires"],["MVD","SUMU","Carrasco International Airport","Montevideo","UY","America/Montevideo"],["ASU","SGAS","Silvio Pettirossi International Airport","Asunción","PY","America/Asuncion"],["VVI","SLVR","Viru Viru International Airport","Santa Cruz","BO","America/La_Paz"],["LPB","SLLP","El Alto International Airport","La Paz","BO","America/La_Paz"],["CCS","SVMI","Simón Bolívar International Airport","Caracas","VE","America/Caracas"],["PER","YPPH","Perth Airport","Perth","AU","Australia/Perth"],["ADL","YPAD","Adelaide Airport","Adelaide","AU","Australia/Adelaide"],["CNS","YBCS","Cairns Airport","Cairns","AU","Australia/Brisbane"],["DRW","YPDN","Darwin International Airport","Darwin","AU","Australia/Darwin"],["OOL","YBCG","Gold Coast Airport","Gold Coast","AU","Australia/Brisbane"],["CHC","NZCH","Christchurch Airport","Christchurch","NZ","Pacific/Auckland"],["WLG","NZWN","Wellington International Airport","Wellington","NZ","Pacific/Auckland"],["ZQN","NZQN","Queenstown Airport","Queenstown","NZ","Pacific/Auckland"],["NAN","NFFN","Nadi International Airport","Nadi","FJ","Pacific/Fiji"],["PPT","NTAA","Faa'a International Airport","Papeete","PF","Pacific/Tahiti"],["GUM","PGUM","Antonio B. Won Pat International Airport","Guam","GU","Pacific/Guam"],["CPT","FACT","Cape Town International Airport","Cape Town","ZA","Africa/Johannesburg"],["DUR","FALE","King Shaka International Airport","Durban","ZA","Africa/Johannesburg"],["ADD","HAAB","Addis Ababa Bole International Airport","Addis Ababa","ET","Africa/Addis_Ababa"],["CMN","GMMN","Mohammed V International Airport","Casablanca","MA","Africa/Casablanca"],["RAK","GMMX","Marrakesh Menara Airport","Marrakesh","MA","Africa/Casablanca"],["ALG","DAAG","Houari Boumediene Airport","Algiers","DZ","Africa/Algiers"],["TUN","DTTA","Tunis–Carthage International Airport","Tunis","TN","Africa/Tunis"],["ACC","DGAA","Kotoka International Airport","Accra","GH","Africa/Accra"],["LOS","DNMM","Murtala Muhammed International Airport","Lagos","NG","Africa/Lagos"],["ABV","DNAA","Nnamdi Azikiwe International Airport","Abuja","NG","Africa/Lagos"],["DAR","HTDA","Julius Nyerere International Airport","Dar es Salaam","TZ","Africa/Dar_es_Salaam"],["ZNZ","HTZA","Abeid Amani Karume International Airport","Zanzibar","TZ","Africa/Dar_es_Salaam"],["MRU","FIMP","Sir Seewoosagur Ramgoolam International Airport","Mauritius","MU","Indian/Mauritius"],["SEZ","FSIA","Seychelles International Airport","Mahé","SC","Indian/Mahe"],["SSH","HESH","Sharm El Sheikh International Airport","Sharm El Sheikh","EG","Africa/Cairo"]];
+const PRIMARY_CITY_AIRPORTS = {"taipei":"TPE","taoyuan":"TPE","hsinchu":"TPE","kaohsiung":"KHH","tokyo":"NRT","narita":"NRT","haneda":"HND","osaka":"KIX","kyoto":"KIX","seoul":"ICN","busan":"PUS","jeju":"CJU","hong kong":"HKG","macau":"MFM","singapore":"SIN","bangkok":"BKK","kuala lumpur":"KUL","manila":"MNL","ho chi minh city":"SGN","saigon":"SGN","hanoi":"HAN","beijing":"PEK","shanghai":"PVG","guangzhou":"CAN","shenzhen":"SZX","chengdu":"TFU","seattle":"SEA","seatac":"SEA","seattle tacoma":"SEA","los angeles":"LAX","san francisco":"SFO","new york":"JFK","washington":"IAD","chicago":"ORD","dallas":"DFW","houston":"IAH","miami":"MIA","boston":"BOS","denver":"DEN","honolulu":"HNL","vancouver":"YVR","toronto":"YYZ","montreal":"YUL","london":"LHR","paris":"CDG","frankfurt":"FRA","amsterdam":"AMS","madrid":"MAD","barcelona":"BCN","rome":"FCO","milan":"MXP","munich":"MUC","berlin":"BER","zurich":"ZRH","vienna":"VIE","istanbul":"IST","dubai":"DXB","doha":"DOH","delhi":"DEL","new delhi":"DEL","mumbai":"BOM","bangalore":"BLR","bengaluru":"BLR","sydney":"SYD","melbourne":"MEL","brisbane":"BNE","auckland":"AKL","cape town":"CPT","johannesburg":"JNB","cairo":"CAI","nairobi":"NBO","mexico city":"MEX","sao paulo":"GRU","rio de janeiro":"GIG","buenos aires":"EZE","lima":"LIM","bogota":"BOG","santiago":"SCL"};
+function countrySearchAliases(countryCode) {
+  const code = String(countryCode || "").trim().toUpperCase();
+  const fixed = {
+    JP:"Japan Nippon 日本",
+    KR:"South Korea Korea Republic of Korea 대한민국 한국",
+    TW:"Taiwan Republic of China 臺灣 台灣",
+    CN:"China People's Republic of China 中国 中國",
+    HK:"Hong Kong 香港",
+    MO:"Macau Macao 澳門 澳门",
+    US:"United States United States of America USA",
+    GB:"United Kingdom Great Britain UK",
+    AE:"United Arab Emirates UAE",
+    VN:"Vietnam Viet Nam",
+    CZ:"Czechia Czech Republic",
+  };
+  let display = "";
+  try {
+    display = new Intl.DisplayNames(["en"], { type:"region" }).of(code) || "";
+  } catch {}
+  return `${code} ${display} ${fixed[code] || ""}`.trim();
+}
+function airportSearchText(airport) {
+  return normalizeAirportText([
+    airport.iata,
+    airport.icao,
+    airport.name,
+    airport.city,
+    countrySearchAliases(airport.country),
+    airport.tz,
+  ].filter(Boolean).join(" "));
+}
+function normalizeAirportRecord(airport) {
+  const normalized = {
+    iata:String(airport?.iata || "").trim().toUpperCase(),
+    icao:String(airport?.icao || "").trim().toUpperCase(),
+    name:String(airport?.name || "").trim(),
+    city:String(airport?.city || "").trim(),
+    country:String(airport?.country || "").trim().toUpperCase(),
+    tz:String(airport?.tz || "").trim(),
+  };
+  normalized.search = airportSearchText(normalized);
+  return normalized;
+}
+const POPULAR_AIRPORTS = POPULAR_AIRPORT_ROWS.map(
+  ([iata, icao, name, city, country, tz]) =>
+    normalizeAirportRecord({ iata, icao, name, city, country, tz })
+);
+const AIRPORT_OPTIONS = POPULAR_AIRPORTS.map(
+  airport => `${airport.iata} — ${airport.name}`
+);
+
+function mergeAirportDirectories(...directories) {
+  const byIata = new Map();
+
+  // Add downloaded/cached records first, then overwrite with the curated
+  // built-in record when the same IATA code exists. This protects known
+  // airport names and timezones and prevents a partial cache from deleting
+  // Japan, Korea, or any other embedded region.
+  directories.flat().filter(Boolean).forEach(raw => {
+    const airport = normalizeAirportRecord(raw);
+    if (/^[A-Z0-9]{3}$/.test(airport.iata) && airport.tz) {
+      byIata.set(airport.iata, airport);
+    }
+  });
+  POPULAR_AIRPORTS.forEach(airport => byIata.set(airport.iata, airport));
+
+  return [...byIata.values()].sort((a, b) =>
+    a.iata.localeCompare(b.iata) || a.name.localeCompare(b.name)
+  );
+}
+function readCachedAirportDirectory() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(AIRPORT_DIRECTORY_CACHE_KEY) || "null");
+    if (!Array.isArray(parsed) || parsed.length < 100) return null;
+    return mergeAirportDirectories(parsed);
+  } catch {
+    return null;
+  }
+}
+function cacheAirportDirectory(directory) {
+  try {
+    const compact = directory.map(({ iata, icao, name, city, country, tz }) => ({
+      iata, icao, name, city, country, tz
+    }));
+    localStorage.setItem(AIRPORT_DIRECTORY_CACHE_KEY, JSON.stringify(compact));
+  } catch (error) {
+    console.warn("Could not cache airport directory", error);
+  }
+}
+const CACHED_AIRPORT_DIRECTORY = readCachedAirportDirectory();
+let airportDirectory = mergeAirportDirectories(CACHED_AIRPORT_DIRECTORY || []);
 let airportDirectoryPromise = null;
-let airportDirectoryLoaded = false;
+let airportDirectoryLoaded = Boolean(
+  CACHED_AIRPORT_DIRECTORY && CACHED_AIRPORT_DIRECTORY.length >= 500
+);
 let airportDirectoryFailed = false;
 
 
@@ -2285,6 +2387,7 @@ function normalizeState(raw) {
     item.arrivalAirportName = item.arrivalAirportName || "";
     item.arrivalAirportIcao = item.arrivalAirportIcao || "";
     item.arrivalTimezone = item.arrivalTimezone || "";
+    if (item.kind === "flight") migrateFlightAirportMetadata(item);
     item.color = /^#[0-9a-f]{6}$/i.test(item.color || "") ? item.color : null;
   });
 
@@ -2723,20 +2826,17 @@ function timeZoneOffsetLabel(utcMs, timeZone) {
     return timeZone;
   }
 }
-function flightDurationSeconds(item) {
-  if (!item || item.kind !== "flight") return null;
-  const departureUtc = zonedLocalToUtcMs(
-    item.date,
-    item.startTime,
-    item.departureTimezone
-  );
-  const arrivalUtc = zonedLocalToUtcMs(
-    item.endDate || item.date,
-    item.endTime,
-    item.arrivalTimezone
-  );
-  if (departureUtc == null || arrivalUtc == null || arrivalUtc <= departureUtc) return null;
-  return Math.round((arrivalUtc - departureUtc) / 1000);
+function normalizeAirportText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[–—−]/g, "-")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(international|airport|airfield|aerodrome|terminal|flight)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 function airportCodeFromText(value) {
   const match = String(value || "").trim().toUpperCase().match(/^([A-Z0-9]{3,4})(?:\s|—|-|$)/);
@@ -2750,13 +2850,164 @@ function airportByCode(code) {
   if (!normalized) return null;
   return airportDirectory.find(airport =>
     airport.iata === normalized || airport.icao === normalized
+  ) || POPULAR_AIRPORTS.find(airport =>
+    airport.iata === normalized || airport.icao === normalized
   ) || null;
+}
+function airportByText(value) {
+  const code = airportCodeFromText(value);
+  if (code) {
+    const coded = airportByCode(code);
+    if (coded) return coded;
+  }
+
+  const normalized = normalizeAirportText(value);
+  if (!normalized || normalized.length < 2) return null;
+
+  const aliasCode = PRIMARY_CITY_AIRPORTS[normalized];
+  if (aliasCode) {
+    const aliased = airportByCode(aliasCode);
+    if (aliased) return aliased;
+  }
+
+  const candidates = airportDirectory
+    .map((airport, index) => {
+      const city = normalizeAirportText(airport.city);
+      const name = normalizeAirportText(airport.name);
+      const iata = String(airport.iata || "").toLowerCase();
+      const icao = String(airport.icao || "").toLowerCase();
+      let score = 0;
+
+      if (normalized === iata || normalized === icao) score = 1000;
+      else if (normalized === name) score = 900;
+      else if (normalized === city) score = 850;
+      else if (name.startsWith(normalized)) score = 700;
+      else if (city.startsWith(normalized)) score = 680;
+      else if (name.includes(normalized)) score = 520;
+      else if (city.includes(normalized)) score = 500;
+      else if (normalized.includes(name) && name.length >= 5) score = 450;
+      else if (normalized.includes(city) && city.length >= 4) score = 430;
+      else if (airport.search?.includes(normalized)) score = 300;
+
+      if (!score) return null;
+      const popularIndex = POPULAR_AIRPORTS.findIndex(item => item.iata === airport.iata);
+      if (popularIndex >= 0) score += Math.max(1, 100 - popularIndex / 3);
+      return { airport, score, index };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+
+  return candidates[0]?.airport || null;
 }
 function selectedAirportFromInput(input) {
   const datasetCode = input.dataset.airportCode || "";
   const byDataset = airportByCode(datasetCode);
   if (byDataset) return byDataset;
-  return airportByCode(airportCodeFromText(input.value));
+  return airportByText(input.value);
+}
+function flightAirportTextCandidates(item, side) {
+  const route = splitRoute(item?.location || "");
+  const title = String(item?.title || "");
+  const direct = side === "departure"
+    ? [item?.fromPlace, route[0]]
+    : [item?.toPlace, route[1]];
+
+  if (side === "departure") {
+    const match = title.match(/\bfrom\s+(.+?)(?:\s+(?:to|→)\s+|$)/i);
+    if (match?.[1]) direct.push(match[1]);
+  } else {
+    const match = title.match(/(?:\bto\s+|→\s*)([^→]+)$/i);
+    if (match?.[1]) direct.push(match[1]);
+  }
+  return direct.filter(Boolean);
+}
+function effectiveFlightAirport(item, side) {
+  const code = side === "departure"
+    ? item?.departureAirportCode
+    : item?.arrivalAirportCode;
+  const byCode = airportByCode(code);
+  if (byCode) return byCode;
+  for (const candidate of flightAirportTextCandidates(item, side)) {
+    const matched = airportByText(candidate);
+    if (matched) return matched;
+  }
+  return null;
+}
+function effectiveFlightTimezone(item, side) {
+  const stored = side === "departure"
+    ? item?.departureTimezone
+    : item?.arrivalTimezone;
+  if (validIanaTimeZone(stored)) return stored;
+  return effectiveFlightAirport(item, side)?.tz || "";
+}
+function migrateFlightAirportMetadata(item) {
+  if (!item || item.kind !== "flight") return false;
+  let changed = false;
+  const departure = effectiveFlightAirport(item, "departure");
+  const arrival = effectiveFlightAirport(item, "arrival");
+
+  if (departure) {
+    const updates = {
+      departureAirportCode:departure.iata || "",
+      departureAirportIcao:departure.icao || "",
+      departureAirportName:departure.name || "",
+      departureTimezone:validIanaTimeZone(item.departureTimezone)
+        ? item.departureTimezone
+        : departure.tz || "",
+    };
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value && item[key] !== value) {
+        item[key] = value;
+        changed = true;
+      }
+    });
+  }
+
+  if (arrival) {
+    const updates = {
+      arrivalAirportCode:arrival.iata || "",
+      arrivalAirportIcao:arrival.icao || "",
+      arrivalAirportName:arrival.name || "",
+      arrivalTimezone:validIanaTimeZone(item.arrivalTimezone)
+        ? item.arrivalTimezone
+        : arrival.tz || "",
+    };
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value && item[key] !== value) {
+        item[key] = value;
+        changed = true;
+      }
+    });
+  }
+  return changed;
+}
+function migrateAllFlightAirportMetadata() {
+  if (typeof state === "undefined" || !Array.isArray(state.items)) return false;
+  let changed = false;
+  state.items.forEach(item => {
+    if (migrateFlightAirportMetadata(item)) changed = true;
+  });
+  if (changed) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+  }
+  return changed;
+}
+function flightDurationSeconds(item) {
+  if (!item || item.kind !== "flight") return null;
+  const departureTimezone = effectiveFlightTimezone(item, "departure");
+  const arrivalTimezone = effectiveFlightTimezone(item, "arrival");
+  const departureUtc = zonedLocalToUtcMs(
+    item.date,
+    item.startTime,
+    departureTimezone
+  );
+  const arrivalUtc = zonedLocalToUtcMs(
+    item.endDate || item.date,
+    item.endTime,
+    arrivalTimezone
+  );
+  if (departureUtc == null || arrivalUtc == null || arrivalUtc <= departureUtc) return null;
+  return Math.round((arrivalUtc - departureUtc) / 1000);
 }
 function parseCsvRow(line) {
   const values = [];
@@ -2782,73 +3033,100 @@ function parseCsvRow(line) {
   return values;
 }
 function parseAirportDirectoryCsv(csvText) {
-  const byIata = new Map();
+  const parsed = [];
   String(csvText || "").split(/\r?\n/).slice(1).forEach(line => {
     if (!line.trim()) return;
     const row = parseCsvRow(line);
     const [icaoRaw, iataRaw, nameRaw, cityRaw, , countryRaw, , , , tzRaw] = row;
-    const iata = String(iataRaw || "").trim().toUpperCase();
-    const icao = String(icaoRaw || "").trim().toUpperCase();
-    const tz = String(tzRaw || "").trim();
-    if (!/^[A-Z0-9]{3}$/.test(iata) || !tz) return;
-    const airport = {
-      iata,
-      icao,
-      name:String(nameRaw || "").trim(),
-      city:String(cityRaw || "").trim(),
-      country:String(countryRaw || "").trim(),
-      tz,
-    };
-    airport.search = `${airport.iata} ${airport.icao} ${airport.name} ${airport.city} ${airport.country}`.toLowerCase();
-    if (!byIata.has(iata)) byIata.set(iata, airport);
+    const airport = normalizeAirportRecord({
+      iata:iataRaw,
+      icao:icaoRaw,
+      name:nameRaw,
+      city:cityRaw,
+      country:countryRaw,
+      tz:tzRaw,
+    });
+    if (/^[A-Z0-9]{3}$/.test(airport.iata) && airport.tz) parsed.push(airport);
   });
-  POPULAR_AIRPORTS.forEach(airport => byIata.set(airport.iata, airport));
-  return [...byIata.values()].sort((a, b) =>
-    a.iata.localeCompare(b.iata) || a.name.localeCompare(b.name)
-  );
+  return mergeAirportDirectories(parsed);
+}
+function availableIanaTimeZones() {
+  let browserZones = [];
+  try {
+    browserZones = typeof Intl.supportedValuesOf === "function"
+      ? Intl.supportedValuesOf("timeZone")
+      : [];
+  } catch {}
+
+  return [...new Set([
+    ...ALL_IANA_TIME_ZONES,
+    ...browserZones,
+    ...airportDirectory.map(airport => airport.tz).filter(Boolean),
+    "Asia/Tokyo",
+    "Asia/Seoul",
+    "Asia/Taipei",
+    "UTC",
+  ])].sort((a, b) => a.localeCompare(b));
 }
 function populateTimeZoneOptions() {
   const datalist = document.getElementById("flight-time-zone-options");
   if (!datalist) return;
-  let zones = [];
-  try {
-    zones = typeof Intl.supportedValuesOf === "function"
-      ? Intl.supportedValuesOf("timeZone")
-      : [];
-  } catch {}
-  if (!zones.length) zones = [...new Set(airportDirectory.map(airport => airport.tz).filter(Boolean))].sort();
-  datalist.innerHTML = zones.map(zone => `<option value="${esc(zone)}"></option>`).join("");
+  datalist.innerHTML = availableIanaTimeZones()
+    .map(zone => `<option value="${esc(zone)}"></option>`)
+    .join("");
 }
 function updateAirportDirectoryHelp() {
   const help = document.getElementById("flight-airport-help");
   if (!help) return;
+  const timezoneText = t("allTimeZonesAvailable", {
+    count:availableIanaTimeZones().length
+  });
   if (airportDirectoryLoaded) {
-    help.textContent = t("airportDirectoryReady", { count:airportDirectory.length });
+    help.textContent = `${CACHED_AIRPORT_DIRECTORY
+      ? t("airportDirectoryCached", { count:airportDirectory.length })
+      : t("airportDirectoryReady", { count:airportDirectory.length })} ${timezoneText}`;
   } else if (airportDirectoryFailed) {
-    help.textContent = t("airportDirectoryFallback");
+    help.textContent = `${t("airportDirectoryFallback")} ${timezoneText}`;
   } else {
-    help.textContent = t("airportDirectoryLoading");
+    help.textContent = `${t("airportDirectoryLoading")} ${timezoneText}`;
   }
 }
+async function fetchAirportDirectoryCsv() {
+  let lastError = null;
+  for (const url of AIRPORT_DATA_URLS) {
+    try {
+      const response = await fetch(url, { cache:"force-cache" });
+      if (!response.ok) throw new Error(`Airport directory HTTP ${response.status}`);
+      return await response.text();
+    } catch (error) {
+      lastError = error;
+      console.warn(`Airport directory source failed: ${url}`, error);
+    }
+  }
+  throw lastError || new Error("Airport directory unavailable");
+}
 async function loadAirportDirectory() {
-  if (airportDirectoryLoaded || airportDirectoryFailed) return airportDirectory;
+  if (airportDirectoryLoaded && airportDirectory.length >= 500) {
+    updateAirportDirectoryHelp();
+    return airportDirectory;
+  }
   if (airportDirectoryPromise) return airportDirectoryPromise;
   updateAirportDirectoryHelp();
-  airportDirectoryPromise = fetch(AIRPORT_DATA_URL, { cache:"force-cache" })
-    .then(response => {
-      if (!response.ok) throw new Error(`Airport directory HTTP ${response.status}`);
-      return response.text();
-    })
+  airportDirectoryPromise = fetchAirportDirectoryCsv()
     .then(text => {
       const parsed = parseAirportDirectoryCsv(text);
-      if (parsed.length < POPULAR_AIRPORTS.length) throw new Error("Airport directory was incomplete");
-      airportDirectory = parsed;
-      airportDirectoryLoaded = true;
+      if (parsed.length < 500) throw new Error("Airport directory was incomplete");
+      airportDirectory = mergeAirportDirectories(airportDirectory, parsed);
+      airportDirectoryLoaded = airportDirectory.length >= 500;
+      airportDirectoryFailed = false;
+      cacheAirportDirectory(parsed);
       populateTimeZoneOptions();
       updateAirportDirectoryHelp();
+      const changed = migrateAllFlightAirportMetadata();
       document.querySelectorAll("#f-from, #f-to").forEach(input => {
         recognizeAirportInput(input, input.id === "f-from" ? "f-departure-timezone" : "f-arrival-timezone");
       });
+      if (changed) renderAll();
       return airportDirectory;
     })
     .catch(error => {
@@ -2856,6 +3134,7 @@ async function loadAirportDirectory() {
       airportDirectoryFailed = true;
       updateAirportDirectoryHelp();
       populateTimeZoneOptions();
+      migrateAllFlightAirportMetadata();
       return airportDirectory;
     })
     .finally(() => {
@@ -2871,7 +3150,9 @@ function recognizeAirportInput(input, timezoneInputId) {
   input.dataset.airportName = airport.name || "";
   input.dataset.airportTimezone = airport.tz || "";
   const timezoneInput = document.getElementById(timezoneInputId);
-  if (timezoneInput && !timezoneInput.value) timezoneInput.value = airport.tz || "";
+  if (timezoneInput && !validIanaTimeZone(timezoneInput.value)) {
+    timezoneInput.value = airport.tz || "";
+  }
   return airport;
 }
 function setAirportInput(input, airport, timezoneInputId) {
@@ -2917,12 +3198,26 @@ function attachRouteAutocomplete(inputId, timezoneInputId) {
     }
 
     loadAirportDirectory();
-    const query = input.value.trim().toLowerCase();
+    const query = normalizeAirportText(input.value);
     const queryCode = airportCodeFromText(input.value).toLowerCase();
     const source = query
-      ? airportDirectory.filter(airport =>
-          airport.search.includes(query) || (queryCode && airport.iata.toLowerCase().startsWith(queryCode))
-        )
+      ? airportDirectory
+          .map((airport, index) => {
+            const city = normalizeAirportText(airport.city);
+            const name = normalizeAirportText(airport.name);
+            let score = 0;
+            if (airport.iata.toLowerCase() === query || airport.icao.toLowerCase() === query) score = 1000;
+            else if (city === query) score = 900;
+            else if (name === query) score = 880;
+            else if (city.startsWith(query)) score = 760;
+            else if (name.startsWith(query)) score = 740;
+            else if (airport.search.includes(query)) score = 500;
+            else if (queryCode && airport.iata.toLowerCase().startsWith(queryCode)) score = 450;
+            return score ? { airport, score, index } : null;
+          })
+          .filter(Boolean)
+          .sort((a, b) => b.score - a.score || a.index - b.index)
+          .map(result => result.airport)
       : POPULAR_AIRPORTS;
     const matches = source.slice(0, 12);
     if (!matches.length) {
@@ -2935,7 +3230,11 @@ function attachRouteAutocomplete(inputId, timezoneInputId) {
         <span class="airport-suggest-code">${esc(airport.iata)}</span>
         <span class="airport-suggest-main">
           <span class="airport-suggest-name">${esc(airport.name)}</span>
-          <span class="airport-suggest-meta">${esc([airport.city, airport.country, airport.tz].filter(Boolean).join(" · "))}</span>
+          <span class="airport-suggest-meta">${esc([
+            airport.city,
+            countrySearchAliases(airport.country).split(" ").slice(1, 4).join(" ") || airport.country,
+            airport.tz
+          ].filter(Boolean).join(" · "))}</span>
         </span>
       </button>`).join("");
     list.classList.add("show");
@@ -3665,18 +3964,33 @@ function eventRowHtml(item, config, isLast) {
 
 
 function flightRouteDisplay(item) {
-  const departureCode = item.departureAirportCode || airportCodeFromText(item.fromPlace) || item.fromPlace || "—";
-  const arrivalCode = item.arrivalAirportCode || airportCodeFromText(item.toPlace) || item.toPlace || "—";
+  const departureAirport = effectiveFlightAirport(item, "departure");
+  const arrivalAirport = effectiveFlightAirport(item, "arrival");
+  const departureCode = item.departureAirportCode
+    || departureAirport?.iata
+    || airportCodeFromText(item.fromPlace)
+    || item.fromPlace
+    || "—";
+  const arrivalCode = item.arrivalAirportCode
+    || arrivalAirport?.iata
+    || airportCodeFromText(item.toPlace)
+    || item.toPlace
+    || "—";
   const arrivalDate = item.endDate || item.date;
   const dayOffset = diffDaysDateStr(item.date, arrivalDate);
+  const departureTimezone = effectiveFlightTimezone(item, "departure");
+  const arrivalTimezone = effectiveFlightTimezone(item, "arrival");
   const durationSeconds = flightDurationSeconds(item);
-  const departureUtc = zonedLocalToUtcMs(item.date, item.startTime, item.departureTimezone);
-  const arrivalUtc = zonedLocalToUtcMs(arrivalDate, item.endTime, item.arrivalTimezone);
-  const departureZone = timeZoneOffsetLabel(departureUtc, item.departureTimezone);
-  const arrivalZone = timeZoneOffsetLabel(arrivalUtc, item.arrivalTimezone);
+  const departureUtc = zonedLocalToUtcMs(item.date, item.startTime, departureTimezone);
+  const arrivalUtc = zonedLocalToUtcMs(arrivalDate, item.endTime, arrivalTimezone);
+  const departureZone = timeZoneOffsetLabel(departureUtc, departureTimezone);
+  const arrivalZone = timeZoneOffsetLabel(arrivalUtc, arrivalTimezone);
   const offsetLabel = dayOffset
     ? `<span class="flight-day-offset">${dayOffset > 0 ? `+${dayOffset}` : dayOffset}</span>`
     : "";
+  const durationText = durationSeconds
+    ? formatDurationSeconds(durationSeconds)
+    : t("flightTimezoneRequiredShort");
   return {
     duration:durationSeconds ? formatDurationSeconds(durationSeconds) : null,
     html:`<span class="flight-route-block">
@@ -3689,7 +4003,7 @@ function flightRouteDisplay(item) {
         ${offsetLabel}
       </span>
       <span class="flight-duration-line">
-        ${durationSeconds ? esc(formatDurationSeconds(durationSeconds)) : esc(item.title)}
+        ${esc(durationText)}
         ${departureZone || arrivalZone ? ` · <span class="flight-timezone-label">${esc(departureZone)} → ${esc(arrivalZone)}</span>` : ""}
       </span>
     </span>`,
@@ -3699,7 +4013,9 @@ function flightRouteDisplay(item) {
 function transportRowHtml(item, config, isLast) {
   const dayDiff = item.endDate && item.endDate !== item.date ? diffDaysDateStr(item.date, item.endDate) : null;
   const flightDisplay = item.kind === "flight" ? flightRouteDisplay(item) : null;
-  const duration = flightDisplay?.duration || fmtDuration(item.startTime, item.endTime, dayDiff);
+  const duration = item.kind === "flight"
+    ? flightDisplay?.duration
+    : fmtDuration(item.startTime, item.endTime, dayDiff);
   const displayColor = item.color || config.color;
   const price = money(item.price, effectiveCurrency(item));
   const mapUrl = safeHttpUrl(item.mapUrl);
@@ -3964,8 +4280,13 @@ function openItemModal(itemId) {
     toInput.dataset.airportTimezone = item.arrivalTimezone || "";
   }
 
-  document.getElementById("f-departure-timezone").value = item?.departureTimezone || "";
-  document.getElementById("f-arrival-timezone").value = item?.arrivalTimezone || "";
+  if (item?.kind === "flight") migrateFlightAirportMetadata(item);
+  document.getElementById("f-departure-timezone").value = item?.kind === "flight"
+    ? effectiveFlightTimezone(item, "departure")
+    : (item?.departureTimezone || "");
+  document.getElementById("f-arrival-timezone").value = item?.kind === "flight"
+    ? effectiveFlightTimezone(item, "arrival")
+    : (item?.arrivalTimezone || "");
   document.getElementById("f-map-link").value = item?.mapUrl || "";
   document.getElementById("f-date").value = item?.date || TODAY;
   document.getElementById("f-start").value = item?.startTime || "";
