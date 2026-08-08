@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v20 — consistent card footers across schedule and hotel views -->
+<!-- Voyage Board v21 — divider-free card footers -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -1572,8 +1572,8 @@
   }
   .transport-chip > .card-footer-row {
     margin-top:10px;
-    padding-top:8px;
-    border-top:1px solid color-mix(in srgb, var(--dash-border) 62%, transparent);
+    padding-top:0;
+    border-top:0;
   }
   .transport-actions {
     opacity:1;
@@ -1586,9 +1586,9 @@
   }
   .hotel-menu-card-footer {
     grid-column:1 / -1;
-    margin-top:2px;
-    padding-top:9px;
-    border-top:1px solid color-mix(in srgb, #D78BFF 24%, var(--border));
+    margin-top:8px;
+    padding-top:0;
+    border-top:0;
   }
   .hotel-menu-card-side {
     display:none;
@@ -1610,10 +1610,10 @@
       padding-top:8px;
     }
     .transport-chip > .card-footer-row {
-      padding-top:7px;
+      padding-top:0;
     }
     .hotel-menu-card-footer {
-      padding-top:8px;
+      padding-top:0;
     }
   }
 
