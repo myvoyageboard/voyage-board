@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v10 — compact chat controls, inline modification visibility, and image viewer -->
+<!-- Voyage Board v11 — unified typography, responsive icon sizing, and compact chat composer -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -986,6 +986,221 @@
     .app-settings-modal #s-language { font-size:16px !important; }
   }
 
+
+  /* ---------------------------------------------------------------------
+     v11 unified typography
+     --------------------------------------------------------------------- */
+  :root {
+    --ui-font-size: 12.5px;
+    --ui-title-size: 14px;
+    --ui-date-size: 14px;
+    --ui-icon-button-size: 32px;
+    --ui-icon-glyph-size: 14px;
+    --ui-control-height: 36px;
+  }
+  html[data-font-size="small"] {
+    --ui-font-size: 11.5px;
+    --ui-title-size: 13px;
+    --ui-date-size: 13px;
+    --ui-icon-button-size: 28px;
+    --ui-icon-glyph-size: 12px;
+    --ui-control-height: 34px;
+  }
+  html[data-font-size="normal"] {
+    --ui-font-size: 12.5px;
+    --ui-title-size: 14px;
+    --ui-date-size: 14px;
+    --ui-icon-button-size: 32px;
+    --ui-icon-glyph-size: 14px;
+    --ui-control-height: 36px;
+  }
+  html[data-font-size="big"] {
+    --ui-font-size: 14.5px;
+    --ui-title-size: 16px;
+    --ui-date-size: 16px;
+    --ui-icon-button-size: 38px;
+    --ui-icon-glyph-size: 17px;
+    --ui-control-height: 42px;
+  }
+
+  /* One normal text size across the application. Importance is communicated
+     mainly with weight, contrast, spacing, and a small set of larger titles. */
+  body,
+  body * {
+    font-size: var(--ui-font-size) !important;
+  }
+  body,
+  button,
+  input,
+  select,
+  textarea {
+    font-family: var(--font-ui);
+    line-height: 1.45;
+  }
+
+  /* Important titles and dates remain slightly larger. */
+  .brand-title,
+  .ticket-name,
+  .event-title,
+  .date-full,
+  .modal-head h3,
+  .chat-activity-summary-title,
+  .chat-system-title,
+  .backup-row-title,
+  .hotel-menu-card-main strong,
+  .chat-image-viewer-title,
+  .empty-state .big {
+    font-size: var(--ui-title-size) !important;
+    line-height: 1.3;
+  }
+  .flip-day,
+  .date-dow,
+  .row-time,
+  #mobile-trip-select {
+    font-size: var(--ui-date-size) !important;
+  }
+  #spend-values,
+  #mobile-spend-values {
+    font-size: calc(var(--ui-title-size) * 1.18) !important;
+  }
+
+  /* Preserve intentionally visual symbols while still scaling with the
+     selected App Settings size. */
+  .brand-badge,
+  .history-glyph,
+  .mobile-nav-chevron,
+  .empty-state > div:first-child {
+    font-size: calc(var(--ui-icon-glyph-size) * 1.35) !important;
+  }
+  .font-size-preview.small { font-size: calc(var(--ui-font-size) * .86) !important; }
+  .font-size-preview.normal { font-size: var(--ui-font-size) !important; }
+  .font-size-preview.big { font-size: calc(var(--ui-font-size) * 1.22) !important; }
+
+  /* Edit/delete/map/history controls scale with the font-size setting.
+     Normal mode is deliberately smaller than v10. */
+  .icon-btn,
+  .transport-actions .icon-btn,
+  .event-actions .icon-btn,
+  .member-row .icon-btn {
+    width: var(--ui-icon-button-size) !important;
+    height: var(--ui-icon-button-size) !important;
+    min-width: var(--ui-icon-button-size) !important;
+    min-height: var(--ui-icon-button-size) !important;
+    border-radius: calc(var(--ui-icon-button-size) * .25) !important;
+  }
+  .icon-btn .ui-icon {
+    width: var(--ui-icon-glyph-size) !important;
+    height: var(--ui-icon-glyph-size) !important;
+  }
+  .history-btn {
+    width: var(--ui-icon-button-size);
+    min-width: var(--ui-icon-button-size);
+    min-height: var(--ui-icon-button-size);
+    height: var(--ui-icon-button-size);
+    padding: 0;
+  }
+  .history-glyph { line-height: 1 !important; }
+
+  /* Compact composer: preview above, then image button immediately beside
+     the message field and Send button. */
+  .chat-composer {
+    display: block;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  }
+  .chat-compose-row {
+    display: grid;
+    grid-template-columns: var(--ui-control-height) minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 7px;
+    width: 100%;
+  }
+  .chat-compose-row .chat-attach-btn {
+    width: var(--ui-control-height);
+    height: var(--ui-control-height);
+    min-width: var(--ui-control-height);
+    min-height: var(--ui-control-height);
+    padding: 0;
+    border-radius: 9px;
+    font-size: var(--ui-icon-glyph-size) !important;
+  }
+  .chat-compose-row textarea {
+    width: 100%;
+    min-width: 0;
+    min-height: var(--ui-control-height);
+    max-height: 110px;
+    padding: 8px 10px;
+    resize: vertical;
+  }
+  .chat-compose-row #chat-send-btn {
+    min-height: var(--ui-control-height);
+    padding: 7px 12px;
+  }
+  .chat-image-preview {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  .chat-image-remove,
+  .chat-image-viewer-close {
+    width: var(--ui-icon-button-size);
+    height: var(--ui-icon-button-size);
+    min-width: var(--ui-icon-button-size);
+    min-height: var(--ui-icon-button-size);
+    font-size: var(--ui-icon-glyph-size) !important;
+  }
+
+  /* Controls follow the selected typography size. */
+  .btn,
+  .field-action,
+  .field-input,
+  input,
+  select,
+  textarea,
+  .appearance-opt,
+  .font-size-opt,
+  .mobile-nav-toggle,
+  .mobile-nav-option {
+    font-size: var(--ui-font-size) !important;
+  }
+  .btn,
+  .field-action {
+    min-height: var(--ui-control-height);
+  }
+
+  /* Live size selection remains compact and readable. */
+  .font-size-opt {
+    min-height: calc(var(--ui-control-height) + 8px);
+    padding: 6px;
+  }
+
+  @media (max-width:720px) {
+    #mobile-trip-select {
+      letter-spacing: -0.015em;
+      font-weight: 500;
+    }
+    .chat-composer {
+      padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    }
+    .chat-compose-row {
+      grid-template-columns: var(--ui-control-height) minmax(0, 1fr) auto;
+      gap: 6px;
+    }
+    .chat-compose-row #chat-send-btn {
+      padding-inline: 10px;
+    }
+
+    /* Keep schedule-editing fields at 16px to prevent iPhone focus zoom.
+       The surrounding labels and all other interface text still follow the
+       selected global size. */
+    #item-overlay input,
+    #item-overlay select,
+    #item-overlay textarea,
+    #trip-overlay input,
+    #trip-overlay select,
+    #trip-overlay textarea {
+      font-size: 16px !important;
+    }
+  }
+
 </style>
 </head>
 <body>
@@ -1413,10 +1628,12 @@
           <div class="chat-image-preview-main"><span id="chat-image-preview-name" class="chat-image-preview-name"></span><span id="chat-image-preview-size" class="chat-image-preview-size"></span></div>
           <button id="chat-image-remove-btn" class="chat-image-remove" type="button" aria-label="Remove selected image">✕</button>
         </div>
-        <input id="chat-image-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
-        <button id="chat-image-btn" class="field-action chat-attach-btn" type="button" aria-label="Attach image" title="Attach image">▧</button>
-        <textarea class="field-input" id="chat-message-input" maxlength="2000" placeholder="Write a message…"></textarea>
-        <button class="btn btn-primary" id="chat-send-btn" type="button">Send</button>
+        <div class="chat-compose-row">
+          <input id="chat-image-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+          <button id="chat-image-btn" class="field-action chat-attach-btn" type="button" aria-label="Attach image" title="Attach image">▧</button>
+          <textarea class="field-input" id="chat-message-input" maxlength="2000" placeholder="Write a message…"></textarea>
+          <button class="btn btn-primary" id="chat-send-btn" type="button">Send</button>
+        </div>
       </div>
     </div>
   </div>
@@ -3330,10 +3547,11 @@ function openAppSettings() {
   });
   document.getElementById("app-overlay").classList.add("show");
 }
-function closeAppSettings() {
+function closeAppSettings({ keepPreview = false } = {}) {
   document.getElementById("app-overlay").classList.remove("show");
   draftThemeChoice = null;
   draftFontSizeChoice = null;
+  if (!keepPreview) applyTheme();
 }
 document.getElementById("app-settings-btn").addEventListener("click", openAppSettings);
 document.getElementById("app-close").addEventListener("click", closeAppSettings);
@@ -3348,6 +3566,7 @@ document.querySelectorAll("[data-theme-choice]").forEach(button => {
 document.querySelectorAll("[data-font-size-choice]").forEach(button => {
   button.addEventListener("click", () => {
     draftFontSizeChoice = button.dataset.fontSizeChoice;
+    document.documentElement.dataset.fontSize = draftFontSizeChoice;
     document.querySelectorAll("[data-font-size-choice]").forEach(candidate => candidate.classList.toggle("active", candidate === button));
   });
 });
@@ -3355,7 +3574,7 @@ document.getElementById("app-save").addEventListener("click", () => {
   state.settings.language = document.getElementById("s-language").value;
   state.settings.theme = draftThemeChoice || state.settings.theme || "dark";
   state.settings.fontSize = draftFontSizeChoice || state.settings.fontSize || "normal";
-  closeAppSettings();
+  closeAppSettings({ keepPreview:true });
   renderAll();
 });
 
