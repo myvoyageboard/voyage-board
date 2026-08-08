@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v12 — account-wide cross-device trip and preference synchronization -->
+<!-- Voyage Board v13 — compact mobile actions, multiline chat, and tab-wide font scaling -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -1078,6 +1078,192 @@
     }
   }
 
+
+  /* v13 compact mobile controls and font-size settings across all tabs */
+  :root {
+    --ui-tab-font: 11px;
+    --ui-modal-font: 11.5px;
+    --ui-modal-title-font: 14px;
+    --ui-chat-input-font: 12px;
+  }
+  html[data-font-size="small"] {
+    --ui-tab-font: 9.5px;
+    --ui-modal-font: 10px;
+    --ui-modal-title-font: 12.5px;
+    --ui-chat-input-font: 10.5px;
+  }
+  html[data-font-size="normal"] {
+    --ui-tab-font: 11px;
+    --ui-modal-font: 11.5px;
+    --ui-modal-title-font: 14px;
+    --ui-chat-input-font: 12px;
+  }
+  html[data-font-size="big"] {
+    --ui-tab-font: 13px;
+    --ui-modal-font: 13.5px;
+    --ui-modal-title-font: 16px;
+    --ui-chat-input-font: 14px;
+  }
+
+  .mobile-nav-toggle,
+  .mobile-nav-option,
+  .chat-workspace-tab,
+  .chat-filter,
+  .chat-date-jump label,
+  .chat-date-go,
+  .chat-tab-count,
+  .role-badge,
+  .appearance-opt,
+  .font-size-opt {
+    font-size:var(--ui-tab-font) !important;
+  }
+  .modal-body,
+  .modal-foot,
+  .collab-section-title,
+  .collab-message,
+  .member-email,
+  .member-email-visible,
+  .member-directory-name,
+  .profile-status,
+  .backup-help,
+  .backup-status,
+  .backup-row-meta,
+  .chat-status,
+  .chat-message-head,
+  .chat-message-text,
+  .chat-system-meta,
+  .chat-system-details,
+  .chat-album-author,
+  .chat-album-time,
+  .chat-album-caption {
+    font-size:var(--ui-modal-font) !important;
+  }
+  .modal-head h3,
+  .chat-system-title,
+  .backup-row-title,
+  .chat-activity-summary-title {
+    font-size:var(--ui-modal-title-font) !important;
+  }
+
+  .chat-composer {
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:7px;
+  }
+  .chat-compose-row {
+    display:grid;
+    grid-template-columns:36px minmax(0, 1fr) auto;
+    align-items:end;
+    gap:7px;
+    width:100%;
+  }
+  .chat-compose-row .chat-attach-btn {
+    width:36px;
+    height:36px;
+    min-width:36px;
+    min-height:36px;
+    padding:0;
+    align-self:end;
+    border-radius:8px;
+  }
+  .chat-compose-row #chat-message-input {
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    min-height:36px;
+    height:36px;
+    max-height:112px;
+    padding:8px 10px;
+    overflow-y:auto;
+    resize:none;
+    font-size:var(--ui-chat-input-font) !important;
+    line-height:1.35;
+  }
+  .chat-compose-row #chat-message-input::placeholder {
+    font-size:var(--ui-chat-input-font) !important;
+  }
+  .chat-compose-row #chat-send-btn {
+    min-height:36px;
+    height:36px;
+    padding:6px 11px;
+    align-self:end;
+    font-size:var(--ui-tab-font) !important;
+  }
+  .chat-image-preview {
+    width:100%;
+    margin:0;
+  }
+
+  @media (max-width:720px) {
+    .toolbar-primary-actions {
+      grid-template-columns:minmax(0, 1fr) 40px 40px;
+      gap:6px;
+    }
+    #add-entry-btn {
+      min-height:40px;
+      height:40px;
+      padding:7px 12px;
+      font-size:12px;
+    }
+    .history-btn {
+      width:40px;
+      min-width:40px;
+      height:40px;
+      min-height:40px;
+      padding:0;
+      border-radius:9px;
+    }
+    .history-glyph {
+      font-size:18px;
+    }
+
+    .icon-btn,
+    .transport-actions .icon-btn,
+    .event-actions .icon-btn,
+    .member-row .icon-btn {
+      width:31px !important;
+      height:31px !important;
+      min-width:31px !important;
+      min-height:31px !important;
+      border-radius:8px !important;
+    }
+    .icon-btn .ui-icon {
+      width:13px !important;
+      height:13px !important;
+    }
+    .event-actions,
+    .transport-actions {
+      gap:4px;
+    }
+
+    .chat-composer {
+      padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+    }
+    .chat-compose-row {
+      grid-template-columns:34px minmax(0, 1fr) auto;
+      gap:6px;
+    }
+    .chat-compose-row .chat-attach-btn {
+      width:34px;
+      height:34px;
+      min-width:34px;
+      min-height:34px;
+    }
+    .chat-compose-row #chat-message-input {
+      min-height:34px;
+      height:34px;
+      max-height:108px;
+      padding:7px 9px;
+      font-size:var(--ui-chat-input-font) !important;
+    }
+    .chat-compose-row #chat-send-btn {
+      min-height:34px;
+      height:34px;
+      padding:5px 9px;
+    }
+  }
+
 </style>
 </head>
 <body>
@@ -1505,10 +1691,12 @@
           <div class="chat-image-preview-main"><span id="chat-image-preview-name" class="chat-image-preview-name"></span><span id="chat-image-preview-size" class="chat-image-preview-size"></span></div>
           <button id="chat-image-remove-btn" class="chat-image-remove" type="button" aria-label="Remove selected image">✕</button>
         </div>
-        <input id="chat-image-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
-        <button id="chat-image-btn" class="field-action chat-attach-btn" type="button" aria-label="Attach image" title="Attach image">▧</button>
-        <textarea class="field-input" id="chat-message-input" maxlength="2000" placeholder="Write a message…"></textarea>
-        <button class="btn btn-primary" id="chat-send-btn" type="button">Send</button>
+        <div class="chat-compose-row">
+          <input id="chat-image-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+          <button id="chat-image-btn" class="field-action chat-attach-btn" type="button" aria-label="Attach image" title="Attach image">▧</button>
+          <textarea class="field-input" id="chat-message-input" rows="1" maxlength="2000" enterkeyhint="enter" placeholder="Write a message…"></textarea>
+          <button class="btn btn-primary" id="chat-send-btn" type="button">Send</button>
+        </div>
       </div>
     </div>
   </div>
@@ -3449,10 +3637,11 @@ function openAppSettings() {
   });
   document.getElementById("app-overlay").classList.add("show");
 }
-function closeAppSettings() {
+function closeAppSettings({ keepFontPreview = false } = {}) {
   document.getElementById("app-overlay").classList.remove("show");
   draftThemeChoice = null;
   draftFontSizeChoice = null;
+  if (!keepFontPreview) applyTheme();
 }
 document.getElementById("app-settings-btn").addEventListener("click", openAppSettings);
 document.getElementById("app-close").addEventListener("click", closeAppSettings);
@@ -3467,6 +3656,7 @@ document.querySelectorAll("[data-theme-choice]").forEach(button => {
 document.querySelectorAll("[data-font-size-choice]").forEach(button => {
   button.addEventListener("click", () => {
     draftFontSizeChoice = button.dataset.fontSizeChoice;
+    document.documentElement.dataset.fontSize = draftFontSizeChoice;
     document.querySelectorAll("[data-font-size-choice]").forEach(candidate => candidate.classList.toggle("active", candidate === button));
   });
 });
@@ -3474,7 +3664,7 @@ document.getElementById("app-save").addEventListener("click", async () => {
   state.settings.language = document.getElementById("s-language").value;
   state.settings.theme = draftThemeChoice || state.settings.theme || "dark";
   state.settings.fontSize = draftFontSizeChoice || state.settings.fontSize || "normal";
-  closeAppSettings();
+  closeAppSettings({ keepFontPreview:true });
   renderAll();
   await saveCloudAppSettings();
 });
@@ -5132,6 +5322,7 @@ async function sendChatMessage() {
   }
   chatBackendReady = true;
   input.value = "";
+  resizeChatMessageInput();
   clearSelectedChatImage();
   if (insertedMessage) upsertChatMessage(insertedMessage);
   document.getElementById("chat-status").textContent = "";
@@ -5155,6 +5346,7 @@ async function openChatModal() {
     await ensureChatRealtime(trip.remoteId);
     await loadChatData({ forceBottom:true });
   }
+  requestAnimationFrame(resizeChatMessageInput);
 }
 async function closeChatModal() {
   document.getElementById("chat-overlay").classList.remove("show");
@@ -5852,6 +6044,16 @@ document.getElementById("chat-overlay").addEventListener("click", event => {
     renderConversationFeed();
   }
 });
+function usesMobileChatKeyboard() {
+  return window.matchMedia("(max-width: 720px), (pointer: coarse)").matches;
+}
+function resizeChatMessageInput() {
+  const input = document.getElementById("chat-message-input");
+  if (!input) return;
+  const minimum = window.matchMedia("(max-width: 720px)").matches ? 34 : 36;
+  input.style.height = `${minimum}px`;
+  input.style.height = `${Math.min(Math.max(input.scrollHeight, minimum), 112)}px`;
+}
 document.getElementById("chat-send-btn").addEventListener("click", sendChatMessage);
 document.getElementById("chat-image-btn").addEventListener("click", () => document.getElementById("chat-image-input").click());
 document.getElementById("chat-image-input").addEventListener("change", event => selectChatImage(event.target.files?.[0] || null));
@@ -5860,8 +6062,22 @@ document.getElementById("chat-image-viewer-close").addEventListener("click", clo
 document.getElementById("chat-image-viewer").addEventListener("click", event => {
   if (event.target.id === "chat-image-viewer") closeChatImageViewer();
 });
+document.getElementById("chat-message-input").addEventListener("input", resizeChatMessageInput);
 document.getElementById("chat-message-input").addEventListener("keydown", event => {
-  if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendChatMessage(); }
+  if (event.key !== "Enter") return;
+
+  if (usesMobileChatKeyboard()) {
+    requestAnimationFrame(resizeChatMessageInput);
+    return;
+  }
+
+  if (event.shiftKey) {
+    requestAnimationFrame(resizeChatMessageInput);
+    return;
+  }
+
+  event.preventDefault();
+  sendChatMessage();
 });
 document.getElementById("chat-show-modifications").addEventListener("change", handleModificationFilterChange);
 document.querySelectorAll("[data-chat-view]").forEach(button => button.addEventListener("click", () => setChatView(button.dataset.chatView)));
