@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v14 — stable mobile chat tabs and viewport layout -->
+<!-- Voyage Board v15 — simplified conversation view and hidden modification logs by default -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -1276,7 +1276,6 @@
   }
 
   #chat-content > .chat-workspace-tabs,
-  #chat-content > .chat-activity-summary,
   #chat-content > .chat-toolbar,
   #chat-content > .chat-composer {
     flex:0 0 auto;
@@ -1347,10 +1346,6 @@
     .chat-tab-count {
       flex:0 0 auto;
       margin-left:2px;
-    }
-
-    #chat-content > .chat-activity-summary {
-      flex-shrink:0;
     }
 
     #chat-content > .chat-toolbar {
@@ -1754,18 +1749,9 @@
         <button id="chat-tab-activity" class="chat-workspace-tab" type="button" role="tab" data-chat-view="activity" aria-selected="false"><span id="chat-tab-activity-label">Activity</span><span id="chat-activity-count" class="chat-tab-count">0</span></button>
         <button id="chat-tab-album" class="chat-workspace-tab" type="button" role="tab" data-chat-view="album" aria-selected="false"><span id="chat-tab-album-label">Album</span><span id="chat-album-count" class="chat-tab-count">0</span></button>
       </div>
-      <button id="chat-activity-summary" class="chat-activity-summary" type="button" hidden>
-        <span class="chat-activity-summary-icon">☷</span>
-        <span class="chat-activity-summary-main">
-          <span id="chat-activity-summary-title" class="chat-activity-summary-title">Activity log</span>
-          <span id="chat-activity-summary-meta" class="chat-activity-summary-meta"></span>
-        </span>
-        <span id="chat-activity-summary-count" class="chat-tab-count">0</span>
-        <span class="chat-activity-summary-arrow">›</span>
-      </button>
       <div class="chat-toolbar chat-toolbar-v8">
         <div class="chat-toolbar-left">
-          <label id="chat-filter-wrap" class="chat-filter"><input type="checkbox" id="chat-show-modifications" checked><span id="chat-filter-label">Show modification log</span><span id="chat-filter-log-count" class="chat-filter-log-count">0</span></label>
+          <label id="chat-filter-wrap" class="chat-filter"><input type="checkbox" id="chat-show-modifications"><span id="chat-filter-label">Show modification log</span><span id="chat-filter-log-count" class="chat-filter-log-count">0</span></label>
           <div class="chat-date-jump">
             <label id="chat-jump-label" for="chat-jump-date">Go to date</label>
             <input id="chat-jump-date" class="field-input chat-date-input" type="date">
@@ -5216,19 +5202,8 @@ function updateChatDateBounds() {
   input.max = dates[dates.length - 1] || "";
 }
 function renderActivitySummary() {
-  const summary = document.getElementById("chat-activity-summary");
-  const title = document.getElementById("chat-activity-summary-title");
-  const meta = document.getElementById("chat-activity-summary-meta");
-  const count = document.getElementById("chat-activity-summary-count");
-  if (!summary || !title || !meta || !count) return;
-  const visible = activeChatView === "conversation" && changeLogsCache.length > 0;
-  summary.hidden = !visible;
-  title.textContent = ct("activitySummaryTitle");
-  count.textContent = String(changeLogsCache.length);
-  const latest = changeLogsCache[changeLogsCache.length - 1];
-  meta.textContent = latest
-    ? ct("activitySummaryMeta", { count:changeLogsCache.length, time:formatChatTime(latest.created_at) })
-    : "";
+  // Activity is available through its dedicated tab; the Conversation view
+  // no longer shows a separate summary bar.
 }
 function updateChatMeta() {
   updateChatDateBounds();
@@ -6191,11 +6166,6 @@ document.getElementById("chat-message-input").addEventListener("keydown", event 
 });
 document.getElementById("chat-show-modifications").addEventListener("change", handleModificationFilterChange);
 document.querySelectorAll("[data-chat-view]").forEach(button => button.addEventListener("click", () => setChatView(button.dataset.chatView)));
-document.getElementById("chat-activity-summary").addEventListener("click", () => {
-  setChatView("activity");
-  const feed = document.getElementById("chat-activity-feed");
-  if (feed) feed.scrollTop = 0;
-});
 document.getElementById("chat-jump-btn").addEventListener("click", jumpChatToDate);
 document.getElementById("chat-jump-date").addEventListener("keydown", event => {
   if (event.key === "Enter") { event.preventDefault(); jumpChatToDate(); }
