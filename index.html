@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v19 — two-line flight route layout -->
+<!-- Voyage Board v20 — consistent card footers across schedule and hotel views -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -1486,6 +1486,134 @@
     .flight-duration-line {
       font-size:9px;
       padding-left:28px;
+    }
+  }
+
+
+  /* v20 unified card footer:
+     price + location at bottom-left; edit + delete at bottom-right. */
+  .card-footer-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    width:100%;
+    margin-top:10px;
+  }
+  .card-footer-left {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    min-width:0;
+  }
+  .card-footer-actions {
+    display:flex;
+    align-items:center;
+    gap:5px;
+    margin-left:auto;
+    flex:0 0 auto;
+  }
+  .card-footer-price {
+    color:var(--amber);
+    font-family:var(--font-ui);
+    font-size:12px;
+    white-space:nowrap;
+  }
+  .card-footer-location {
+    flex:0 0 auto;
+  }
+  .card-footer-location.is-disabled {
+    opacity:.42;
+    cursor:default;
+    pointer-events:none;
+  }
+
+  /* Standard event cards no longer reserve a separate upper-right column. */
+  .event-top {
+    display:block;
+    min-width:0;
+  }
+  .event-main-content {
+    min-width:0;
+  }
+  .event-side {
+    display:none;
+  }
+  .event-card {
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+  }
+  .event-card > .card-footer-row {
+    margin-top:auto;
+    padding-top:10px;
+  }
+
+  /* Transport blocks use the same footer structure as event blocks. */
+  .transport-chip {
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:0;
+    min-width:0;
+  }
+  .transport-main-content {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+    width:100%;
+  }
+  .transport-main-content .transport-title {
+    flex:1 1 auto;
+  }
+  .transport-main-content .flight-route-block {
+    flex:1 1 auto;
+  }
+  .transport-chip > .card-footer-row {
+    margin-top:10px;
+    padding-top:8px;
+    border-top:1px solid color-mix(in srgb, var(--dash-border) 62%, transparent);
+  }
+  .transport-actions {
+    opacity:1;
+    margin-left:0;
+  }
+
+  /* Hotel tab cards use the same lower-left/lower-right action footer. */
+  .hotel-menu-card {
+    grid-template-columns:auto minmax(0, 1fr);
+  }
+  .hotel-menu-card-footer {
+    grid-column:1 / -1;
+    margin-top:2px;
+    padding-top:9px;
+    border-top:1px solid color-mix(in srgb, #D78BFF 24%, var(--border));
+  }
+  .hotel-menu-card-side {
+    display:none;
+  }
+  .hotel-menu-actions {
+    display:flex;
+    gap:5px;
+  }
+
+  @media (max-width:720px) {
+    .card-footer-row {
+      margin-top:9px;
+      gap:8px;
+    }
+    .card-footer-price {
+      font-size:11px;
+    }
+    .event-card > .card-footer-row {
+      padding-top:8px;
+    }
+    .transport-chip > .card-footer-row {
+      padding-top:7px;
+    }
+    .hotel-menu-card-footer {
+      padding-top:8px;
     }
   }
 
@@ -3707,13 +3835,20 @@ function renderHotelMenu() {
     const nights = Math.max(1, Number(item.nights) || 1);
     const range = `${fmtShortDate(item.date)} → ${fmtShortDate(item.endDate || addDaysToDateStr(item.date, nights))}`;
     const price = money(item.price, effectiveCurrency(item));
+    const locationControl = cardLocationControlHtml(item);
     return `<article class="hotel-menu-card" data-hotel-id="${item.id}">
       <div class="hotel-menu-card-icon">${iconSvg("hotel")}</div>
       <div class="hotel-menu-card-main"><strong>${esc(item.title)}</strong><span>${esc(item.location || "")}</span><small>${esc(range)} · ${esc(t("nightsCount", { n: nights }))}</small></div>
-      <div class="hotel-menu-card-side">${price ? `<span class="event-price">${price}</span>` : ""}<div class="hotel-menu-actions">
-        <button class="icon-btn" type="button" data-hotel-edit="${item.id}" title="${esc(t("edit"))}" aria-label="${esc(t("edit"))}">${iconSvg("edit")}</button>
-        <button class="icon-btn danger" type="button" data-hotel-delete="${item.id}" title="${esc(t("deleteAction"))}" aria-label="${esc(t("deleteAction"))}">${iconSvg("delete")}</button>
-      </div></div>
+      <div class="card-footer-row hotel-menu-card-footer">
+        <div class="card-footer-left">
+          ${price ? `<span class="card-footer-price">${price}</span>` : ""}
+          ${locationControl}
+        </div>
+        <div class="card-footer-actions hotel-menu-actions">
+          <button class="icon-btn" type="button" data-hotel-edit="${item.id}" title="${esc(t("edit"))}" aria-label="${esc(t("edit"))}">${iconSvg("edit")}</button>
+          <button class="icon-btn danger" type="button" data-hotel-delete="${item.id}" title="${esc(t("deleteAction"))}" aria-label="${esc(t("deleteAction"))}">${iconSvg("delete")}</button>
+        </div>
+      </div>
     </article>`;
   }).join("");
   list.querySelectorAll("[data-hotel-edit]").forEach(button => button.addEventListener("click", () => openHotelEditor(button.dataset.hotelEdit)));
@@ -3930,6 +4065,45 @@ function locationHtml(item) {
   return `<div class="event-loc">📍 ${content}</div>`;
 }
 
+
+function cardLocationControlHtml(item) {
+  const mapUrl = safeHttpUrl(item?.mapUrl);
+  const title = item?.location || t("openMaps");
+  if (mapUrl) {
+    return `<a href="${esc(mapUrl)}" target="_blank" rel="noopener noreferrer"
+      class="icon-btn card-footer-location"
+      title="${esc(title)}" aria-label="${esc(title)}">${iconSvg("map")}</a>`;
+  }
+  if (item?.location) {
+    return `<span class="icon-btn card-footer-location is-disabled"
+      title="${esc(item.location)}" aria-label="${esc(item.location)}">${iconSvg("map")}</span>`;
+  }
+  return "";
+}
+function cardFooterHtml(item, price, editAttribute = "data-edit", deleteAttribute = "data-del") {
+  const canEdit = canEditTrip(tripById(item.tripId));
+  const locationControl = cardLocationControlHtml(item);
+  const left = [
+    price ? `<span class="card-footer-price">${price}</span>` : "",
+    locationControl,
+  ].filter(Boolean).join("");
+
+  const actions = canEdit
+    ? `<div class="card-footer-actions">
+        <button class="icon-btn" ${editAttribute}="${item.id}"
+          title="${esc(t("edit"))}" aria-label="${esc(t("edit"))}">${iconSvg("edit")}</button>
+        <button class="icon-btn danger" ${deleteAttribute}="${item.id}"
+          title="${esc(t("deleteAction"))}" aria-label="${esc(t("deleteAction"))}">${iconSvg("delete")}</button>
+      </div>`
+    : "";
+
+  if (!left && !actions) return "";
+  return `<div class="card-footer-row">
+    <div class="card-footer-left">${left}</div>
+    ${actions}
+  </div>`;
+}
+
 function eventRowHtml(item, config, isLast) {
   const price = money(item.price, effectiveCurrency(item));
   const displayColor = item.color || config.color;
@@ -3972,7 +4146,7 @@ function eventRowHtml(item, config, isLast) {
       </div>
       <div class="event-card ${item.kind === "hotel" ? "hotel-card" : ""}" style="--hotel-color:${displayColor}; border-left:3px solid ${displayColor};">
         <div class="event-top">
-          <div style="min-width:0;">
+          <div class="event-main-content">
             <span class="kind-pill" style="background:${rgba(displayColor, 0.15)}; color:${displayColor};">${config.icon} ${esc(kindLabel(item.kind).toUpperCase())}</span>
             ${item.kind === "hotel" ? `<span class="staying-badge">${esc(t("stayingHere"))}</span>` : ""}
             ${untilLabel ? `<span class="event-until">${untilLabel}</span>` : ""}
@@ -3980,14 +4154,8 @@ function eventRowHtml(item, config, isLast) {
             ${locationHtml(item)}
             ${item.notes ? `<div class="event-notes">${esc(item.notes)}</div>` : ""}
           </div>
-          <div class="event-side">
-            ${price ? `<span class="event-price">${price}</span>` : ""}
-            ${canEditTrip(tripById(item.tripId)) ? `<div class="event-actions">
-              <button class="icon-btn" data-edit="${item.id}" title="${esc(t("edit"))}" aria-label="${esc(t("edit"))}">${iconSvg("edit")}</button>
-              <button class="icon-btn danger" data-del="${item.id}" title="${esc(t("deleteAction"))}" aria-label="${esc(t("deleteAction"))}">${iconSvg("delete")}</button>
-            </div>` : ""}
-          </div>
         </div>
+        ${cardFooterHtml(item, price)}
       </div>
     </div>`;
 }
@@ -4053,7 +4221,6 @@ function transportRowHtml(item, config, isLast) {
     : fmtDuration(item.startTime, item.endTime, dayDiff);
   const displayColor = item.color || config.color;
   const price = money(item.price, effectiveCurrency(item));
-  const mapUrl = safeHttpUrl(item.mapUrl);
   return `
     <div class="row transport-row" draggable="${canEditTrip(tripById(item.tripId)) ? "true" : "false"}" data-id="${item.id}" data-date="${item.date}">
       <div class="row-time">${fmtTime(item.startTime)}</div>
@@ -4064,16 +4231,13 @@ function transportRowHtml(item, config, isLast) {
       <div style="flex:1; min-width:0; display:flex; align-items:center; gap:10px;">
         <div class="transport-line" style="--dash-color:${rgba(displayColor, 0.62)};"></div>
         <div class="transport-chip ${item.kind === "flight" ? "flight-chip" : ""}" style="--dash-border:${rgba(displayColor, 0.42)}; --dash-bg:${rgba(displayColor, 0.11)}; border-color:${rgba(displayColor, 0.42)}; background:${rgba(displayColor, 0.11)};">
-          ${flightDisplay
-            ? flightDisplay.html
-            : `<span>${config.icon}</span><span class="transport-title" title="${esc(item.location || item.title)}">${esc(item.title)}</span>${duration ? `<span class="transport-meta">· ${duration}</span>` : ""}`
-          }
-          ${price ? `<span class="transport-price">· ${price}</span>` : ""}
-          ${mapUrl ? `<a href="${esc(mapUrl)}" target="_blank" rel="noopener noreferrer" class="icon-btn" title="${esc(item.location || "Open map")}" aria-label="${esc(item.location || "Open map")}">${iconSvg("map")}</a>` : ""}
-          ${canEditTrip(tripById(item.tripId)) ? `<span class="transport-actions">
-            <button class="icon-btn" data-edit="${item.id}" title="${esc(t("edit"))}" aria-label="${esc(t("edit"))}">${iconSvg("edit")}</button>
-            <button class="icon-btn danger" data-del="${item.id}" title="${esc(t("deleteAction"))}" aria-label="${esc(t("deleteAction"))}">${iconSvg("delete")}</button>
-          </span>` : ""}
+          <div class="transport-main-content">
+            ${flightDisplay
+              ? flightDisplay.html
+              : `<span>${config.icon}</span><span class="transport-title" title="${esc(item.location || item.title)}">${esc(item.title)}</span>${duration ? `<span class="transport-meta">· ${duration}</span>` : ""}`
+            }
+          </div>
+          ${cardFooterHtml(item, price)}
         </div>
         <div class="transport-line" style="--dash-color:${rgba(displayColor, 0.62)};"></div>
       </div>
