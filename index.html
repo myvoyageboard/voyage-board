@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board update: undo/redo, global account, per-trip share, mobile menu fix -->
+<!-- Voyage Board update: profiles, privacy-aware member directory, trip chat, modification log -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -524,6 +524,57 @@
     #item-overlay[data-hotel-editor="true"] .kind-opt:not([data-kind="hotel"]) { display: none; }
   }
 
+
+  /* Member identity preferences, trip chat, and modification activity */
+  .profile-settings { display:flex; flex-direction:column; gap:8px; }
+  .profile-status { min-height:18px; font-size:11px; color:var(--text-lo); }
+  .profile-status.success { color:#55E08A; }
+  .profile-status.error { color:var(--danger); }
+  .member-directory-list { display:flex; flex-direction:column; gap:7px; margin-top:8px; }
+  .member-directory-row { display:flex; align-items:center; gap:9px; border:1px solid var(--border); border-radius:9px; padding:9px 10px; background:var(--panel-2); }
+  .member-avatar { width:30px; height:30px; border-radius:50%; display:grid; place-items:center; flex:0 0 auto; background:var(--soft); color:var(--text-lo); font-size:12px; font-weight:700; }
+  .member-directory-name { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11.5px; }
+  .member-hidden { color:var(--text-lo); font-style:italic; }
+
+  .chat-modal { max-width:760px !important; }
+  .chat-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 20px 10px; border-bottom:1px solid var(--border); }
+  .chat-filter { display:inline-flex; align-items:center; gap:7px; color:var(--text-lo); font-size:11px; cursor:pointer; user-select:none; }
+  .chat-filter input { accent-color:var(--amber); }
+  .chat-status { color:var(--text-lo); font-size:10.5px; }
+  .chat-body { min-height:360px; max-height:58vh; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:10px; }
+  .chat-empty { margin:auto; color:var(--text-lo); text-align:center; font-size:12px; line-height:1.55; padding:30px; }
+  .chat-message { align-self:flex-start; max-width:min(78%, 520px); border:1px solid var(--border); border-radius:13px 13px 13px 4px; background:var(--panel-2); padding:9px 11px; }
+  .chat-message.is-own { align-self:flex-end; border-radius:13px 13px 4px 13px; background:color-mix(in srgb, var(--amber) 11%, var(--panel-2)); border-color:color-mix(in srgb, var(--amber) 32%, var(--border)); }
+  .chat-message-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:5px; color:var(--text-lo); font-size:9.5px; }
+  .chat-message-author { min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:700; }
+  .chat-message-text { white-space:pre-wrap; overflow-wrap:anywhere; font-size:12.5px; line-height:1.5; }
+  .chat-system { border:1px solid color-mix(in srgb, #63C7FF 32%, var(--border)); border-radius:11px; background:color-mix(in srgb, #63C7FF 8%, var(--panel)); overflow:hidden; }
+  .chat-system[hidden] { display:none; }
+  .chat-system-toggle { width:100%; border:0; background:transparent; color:var(--text-hi); display:flex; align-items:center; gap:9px; padding:9px 11px; cursor:pointer; font-family:inherit; text-align:left; }
+  .chat-system-icon { width:24px; height:24px; border-radius:7px; display:grid; place-items:center; flex:0 0 auto; background:color-mix(in srgb, #63C7FF 14%, var(--panel-2)); color:#63C7FF; }
+  .chat-system-main { flex:1; min-width:0; }
+  .chat-system-title { display:block; font-size:11.5px; font-weight:700; }
+  .chat-system-meta { display:block; margin-top:2px; color:var(--text-lo); font-size:9.5px; }
+  .chat-system-chevron { color:var(--text-lo); }
+  .chat-system-details { display:none; border-top:1px solid var(--border); padding:9px 12px 10px 44px; color:var(--text-lo); font-size:10.5px; line-height:1.55; }
+  .chat-system.expanded .chat-system-details { display:block; }
+  .chat-system-details ol { margin:0; padding-left:18px; }
+  .chat-system-details li + li { margin-top:5px; }
+  .chat-composer { display:flex; gap:8px; border-top:1px solid var(--border); padding:12px 20px calc(12px + env(safe-area-inset-bottom)); }
+  .chat-composer textarea { min-height:44px; max-height:120px; resize:vertical; }
+  .chat-composer .btn { align-self:flex-end; min-height:44px; }
+  .chat-auth-note { margin:16px 20px; }
+
+  @media (max-width:720px) {
+    .chat-modal { height:100dvh; }
+    .chat-toolbar { padding:0 16px 9px; flex-wrap:wrap; }
+    .chat-body { flex:1 1 auto; min-height:0; max-height:none; padding:13px 12px; }
+    .chat-message { max-width:88%; }
+    .chat-composer { padding:10px 12px calc(10px + env(safe-area-inset-bottom)); }
+    .chat-composer textarea { flex:1 1 auto; }
+    .chat-system-details { padding-left:12px; }
+  }
+
 </style>
 </head>
 <body>
@@ -561,6 +612,7 @@
         <button id="hotel-menu-btn" class="btn btn-ghost toolbar-settings">🛏 Hotels</button>
         <button id="app-settings-btn" class="btn btn-ghost toolbar-settings">◐ App settings</button>
         <button id="share-trip-btn" class="btn btn-ghost toolbar-settings">↗ Share</button>
+        <button id="chat-trip-btn" class="btn btn-ghost toolbar-settings" type="button">◌ Chat</button>
         <button id="account-btn" class="btn btn-ghost toolbar-settings" type="button">◎ Sign in</button>
         <span id="sync-status" class="sync-status" data-state="local">Local only</span>
         <span class="toolbar-hint" id="toolbar-hint">Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.</span>
@@ -789,6 +841,20 @@
           <button class="btn btn-ghost" id="collab-logout-btn">Sign out</button>
         </div>
         <div class="field-help" id="account-global-help">This sign-in is shared across every trip. Sharing permissions still remain separate for each trip.</div>
+        <div class="collab-section profile-settings">
+          <div class="collab-section-title" id="profile-title">Member identity</div>
+          <div class="field-help" id="profile-help">Choose how your identity appears to people who share a trip with you.</div>
+          <label class="field-label" id="profile-name-label" for="profile-display-name">Display name</label>
+          <input class="field-input" id="profile-display-name" maxlength="80" placeholder="Your name">
+          <label class="field-label" id="profile-visibility-label" for="profile-visibility">Show me as</label>
+          <select class="field-input" id="profile-visibility">
+            <option value="name">Display name</option>
+            <option value="email">Email address</option>
+            <option value="hidden">Hidden member</option>
+          </select>
+          <button class="btn btn-primary" id="profile-save-btn" type="button">Save identity</button>
+          <div id="profile-status" class="profile-status"></div>
+        </div>
       </div>
     </div>
     <div class="modal-foot" style="justify-content:flex-end;">
@@ -829,6 +895,12 @@
             <div class="field-help" id="shared-link-help">People must already be members of the trip. Use an invitation below for a new person.</div>
           </div>
 
+          <div id="member-directory-section" class="collab-section">
+            <div class="collab-section-title" id="member-directory-title">Trip members</div>
+            <div class="field-help" id="member-directory-help">Each member controls whether their display name, email address, or no identity is shown.</div>
+            <div id="member-directory-list" class="member-directory-list"></div>
+          </div>
+
           <div id="collab-admin-section" class="collab-section" style="display:none;">
             <div class="collab-section-title" id="invite-title">Invite a collaborator</div>
             <div class="invite-grid">
@@ -860,6 +932,26 @@
     </div>
     <div class="modal-foot" style="justify-content:flex-end;">
       <button class="btn btn-ghost" id="share-done">Done</button>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="overlay" id="chat-overlay">
+  <div class="modal chat-modal">
+    <div class="modal-head"><h3 id="chat-modal-title">Trip chat</h3><button class="modal-close" id="chat-close">✕</button></div>
+    <div id="chat-auth-note" class="muted-box chat-auth-note" style="display:none;"></div>
+    <div id="chat-content" style="display:none; min-height:0; flex:1 1 auto; flex-direction:column;">
+      <div class="chat-toolbar">
+        <label class="chat-filter"><input type="checkbox" id="chat-show-modifications" checked><span id="chat-filter-label">Show modification log</span></label>
+        <span id="chat-status" class="chat-status"></span>
+      </div>
+      <div id="chat-feed" class="chat-body scroll"></div>
+      <div class="chat-composer">
+        <textarea class="field-input" id="chat-message-input" maxlength="2000" placeholder="Write a message…"></textarea>
+        <button class="btn btn-primary" id="chat-send-btn" type="button">Send</button>
+      </div>
     </div>
   </div>
 </div>
@@ -915,7 +1007,7 @@ const OLD_TRIP_COLOR_MAP = {
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "TWD", "CNY", "HKD", "KRW", "SGD", "THB", "AUD", "CAD", "CHF", "NZD", "MYR", "IDR", "PHP", "VND", "INR", "AED"];
 const I18N = {
   en: {
-    trips:"TRIPS", tripSpend:"TRIP SPEND", newTrip:"+ New trip", addEntry:"+ Add entry", tripSettings:"⚙ Trip settings", appSettings:"◐ App settings", spending:"💰 Spending", schedule:"Schedule", share:"Share", signIn:"Sign in", account:"Account", undo:"Undo", redo:"Redo", hotelMenu:"Hotels", mobileMenu:"Menu",
+    trips:"TRIPS", tripSpend:"TRIP SPEND", newTrip:"+ New trip", addEntry:"+ Add entry", tripSettings:"⚙ Trip settings", appSettings:"◐ App settings", spending:"💰 Spending", schedule:"Schedule", share:"Share", chat:"Chat", signIn:"Sign in", account:"Account", undo:"Undo", redo:"Redo", hotelMenu:"Hotels", mobileMenu:"Menu",
     toolbarHint:"Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.", type:"Type", titleLabel:"Title", entryColor:"Entry color",
     useTypeDefault:"Use type default", colorDefaultHelp:"Uses the selected type's default color unless you choose a custom color.", colorCustomHelp:"Custom color override is active for this entry.",
     location:"Location", propertyLocation:"Property / location", from:"From", to:"To", departureAirport:"Departure airport", arrivalAirport:"Arrival airport",
@@ -940,7 +1032,7 @@ const I18N = {
     nightsCount:"{n} nights", nightOf:"Night {n} of {total}", invalidDuration:"Enter a duration like “1d 2h 30m 15s”, “90m”, or “1:30:00”.", stayingHere:"Staying here", addHotel:"＋ Add hotel", noHotels:"No hotels saved for this trip yet.", hotelMenuIntro:"Hotels saved here are automatically shown at the top of every applicable schedule day.", edit:"Edit", daysUnit:"DAY", hoursUnit:"HOUR", minutesUnit:"MIN", secondsUnit:"SEC", durationPickerHelp:"Use the four selectors or type the duration manually above."
   },
   "zh-TW": {
-    trips:"旅程", tripSpend:"旅程支出", newTrip:"＋ 新增旅程", addEntry:"＋ 新增項目", tripSettings:"⚙ 旅程設定", appSettings:"◐ App 設定", spending:"💰 支出", schedule:"行程", share:"分享", signIn:"登入", account:"帳號", undo:"復原", redo:"重做", hotelMenu:"住宿", mobileMenu:"選單",
+    trips:"旅程", tripSpend:"旅程支出", newTrip:"＋ 新增旅程", addEntry:"＋ 新增項目", tripSettings:"⚙ 旅程設定", appSettings:"◐ App 設定", spending:"💰 支出", schedule:"行程", share:"分享", chat:"聊天", signIn:"登入", account:"帳號", undo:"復原", redo:"重做", hotelMenu:"住宿", mobileMenu:"選單",
     toolbarHint:"拖曳時間軸項目可重新排序；拖曳左側旅程可調整旅程順序。", type:"類型", titleLabel:"標題", entryColor:"項目顏色",
     useTypeDefault:"使用類型預設色", colorDefaultHelp:"除非選擇自訂顏色，否則會使用所選類型的預設色。", colorCustomHelp:"此項目已啟用自訂顏色。",
     location:"地點", propertyLocation:"住宿／地點", from:"出發地", to:"目的地", departureAirport:"出發機場", arrivalAirport:"抵達機場",
@@ -965,7 +1057,7 @@ const I18N = {
     nightsCount:"{n} 晚", nightOf:"第 {n} 晚（共 {total} 晚）", invalidDuration:"請輸入如「1d 2h 30m 15s」、「90m」或「1:30:00」的時長格式。", stayingHere:"本日住宿", addHotel:"＋ 新增住宿", noHotels:"此旅程尚未設定住宿。", hotelMenuIntro:"在此設定的住宿會自動顯示於適用日期的行程最上方。", edit:"編輯", daysUnit:"天", hoursUnit:"小時", minutesUnit:"分", secondsUnit:"秒", durationPickerHelp:"可使用下方四個欄位選擇，或直接在上方手動輸入時長。"
   },
   ja: {
-    trips:"旅行", tripSpend:"旅行支出", newTrip:"＋ 新しい旅行", addEntry:"＋ 予定を追加", tripSettings:"⚙ 旅行設定", appSettings:"◐ アプリ設定", spending:"💰 支出", schedule:"予定", share:"共有", signIn:"サインイン", account:"アカウント", undo:"元に戻す", redo:"やり直す", hotelMenu:"ホテル", mobileMenu:"メニュー",
+    trips:"旅行", tripSpend:"旅行支出", newTrip:"＋ 新しい旅行", addEntry:"＋ 予定を追加", tripSettings:"⚙ 旅行設定", appSettings:"◐ アプリ設定", spending:"💰 支出", schedule:"予定", share:"共有", chat:"チャット", signIn:"サインイン", account:"アカウント", undo:"元に戻す", redo:"やり直す", hotelMenu:"ホテル", mobileMenu:"メニュー",
     toolbarHint:"タイムライン項目をドラッグして並べ替えます。左側の旅行もドラッグできます。", type:"種類", titleLabel:"タイトル", entryColor:"項目の色",
     useTypeDefault:"種類の既定色", colorDefaultHelp:"カスタム色を選ばない場合、種類の既定色を使用します。", colorCustomHelp:"この項目にはカスタム色が設定されています。",
     location:"場所", propertyLocation:"宿泊施設／場所", from:"出発地", to:"目的地", departureAirport:"出発空港", arrivalAirport:"到着空港",
@@ -1675,18 +1767,20 @@ const ICON_PATHS = {
   share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/>',
   app: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z"/>',
   account: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  chat: '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/>',
 };
 function iconSvg(name, extraClass = "") {
   return `<svg class="ui-icon ${extraClass}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ""}</svg>`;
 }
 
-const MOBILE_VIEWS = ["schedule", "spending", "tripSettings", "hotel", "share", "appSettings", "account"];
+const MOBILE_VIEWS = ["schedule", "spending", "tripSettings", "hotel", "share", "chat", "appSettings", "account"];
 const MOBILE_VIEW_META = {
   schedule: { label: "schedule", icon: "calendar" },
   spending: { label: "spending", icon: "wallet" },
   tripSettings: { label: "tripSettings", icon: "settings" },
   hotel: { label: "hotelMenu", icon: "hotel" },
   share: { label: "share", icon: "share" },
+  chat: { label: "chat", icon: "chat" },
   appSettings: { label: "appSettings", icon: "app" },
   account: { label: "signIn", icon: "account" },
 };
@@ -1755,7 +1849,7 @@ function attachMobileNavToOverlay(overlayId, activeView) {
   bindMobileNav(root, activeView);
 }
 function closeMobileSectionOverlays() {
-  ["spend-overlay", "trip-overlay", "app-overlay", "share-overlay", "account-overlay", "hotel-overlay", "item-overlay"].forEach(id => document.getElementById(id)?.classList.remove("show"));
+  ["spend-overlay", "trip-overlay", "app-overlay", "share-overlay", "chat-overlay", "account-overlay", "hotel-overlay", "item-overlay"].forEach(id => document.getElementById(id)?.classList.remove("show"));
   document.getElementById("f-trip")?.removeAttribute("disabled");
   editingItemId = null;
   editingTripId = null;
@@ -1771,6 +1865,7 @@ function navigateMobileView(view) {
   }
   if (view === "hotel") { openHotelMenu(); attachMobileNavToOverlay("hotel-overlay", view); return; }
   if (view === "share") { openShareModal(); attachMobileNavToOverlay("share-overlay", view); return; }
+  if (view === "chat") { openChatModal(); attachMobileNavToOverlay("chat-overlay", view); return; }
   if (view === "appSettings") { openAppSettings(); attachMobileNavToOverlay("app-overlay", view); return; }
   if (view === "account") { openAccountModal(); attachMobileNavToOverlay("account-overlay", view); }
 }
@@ -1844,7 +1939,10 @@ function renderAll() {
   document.body.classList.toggle("is-viewer", Boolean(trip?.remoteId) && !editable);
   updateSyncStatus();
   persist();
-  queueMicrotask(ensureRealtimeForActiveTrip);
+  queueMicrotask(async () => {
+    await ensureRealtimeForActiveTrip();
+    await registerCurrentParticipant().catch(() => false);
+  });
 }
 
 function renderSidebar() {
@@ -3167,6 +3265,33 @@ const COLLAB_I18N = {
     inviteBody:"{trip} の共同編集に招待されました。次のリンクを開き、{email} でサインインしてください。\n\n{link}"
   }
 };
+Object.assign(COLLAB_I18N.en, {
+  chatTitle:"Trip chat", chat:"Chat", send:"Send", messagePlaceholder:"Write a message…", showModifications:"Show modification log",
+  chatNeedsSignIn:"Sign in to use trip chat.", chatNeedsSharedTrip:"Publish this trip before using chat.", chatLoading:"Loading conversation…", chatEmpty:"No messages yet. Start the conversation.", chatSendError:"Message could not be sent.",
+  tripModified:"Trip modified", modificationBy:"Modified by {name}", modificationDetails:"Modification details", hiddenMember:"Hidden member", unknownMember:"Trip member",
+  profileTitle:"Member identity", profileHelp:"Choose how your identity appears to people who share a trip with you.", displayName:"Display name", showMeAs:"Show me as", showName:"Display name", showEmail:"Email address", showHidden:"Hidden member", saveIdentity:"Save identity", profileSaved:"Identity preference saved.", profileNameRequired:"Enter a display name before choosing Display name.",
+  memberDirectory:"Trip members", memberDirectoryHelp:"Each member controls whether their display name, email address, or no identity is shown.",
+  changeTripField:"Trip {field}: {before} → {after}", changeAdded:"Added {kind}: {title}", changeRemoved:"Removed {kind}: {title}", changeUpdated:"Updated {title}", changeItemField:"{field}: {before} → {after}",
+  fieldName:"name", fieldStartDate:"start date", fieldEndDate:"end date", fieldCurrency:"default currency", fieldColor:"color", fieldTitle:"title", fieldKind:"type", fieldLocation:"location", fieldDate:"date", fieldStartTime:"start time", fieldEndTime:"end time", fieldItemEndDate:"end date", fieldPrice:"price", fieldNotes:"notes", fieldNights:"nights", fieldDuration:"duration"
+});
+Object.assign(COLLAB_I18N["zh-TW"], {
+  chatTitle:"旅程聊天", chat:"聊天", send:"傳送", messagePlaceholder:"輸入訊息…", showModifications:"顯示修改紀錄",
+  chatNeedsSignIn:"請先登入才能使用旅程聊天。", chatNeedsSharedTrip:"請先發布此旅程，才能使用聊天。", chatLoading:"正在載入對話…", chatEmpty:"目前沒有訊息，開始聊天吧。", chatSendError:"訊息傳送失敗。",
+  tripModified:"旅程已修改", modificationBy:"由 {name} 修改", modificationDetails:"修改內容", hiddenMember:"隱藏成員", unknownMember:"旅程成員",
+  profileTitle:"成員身分", profileHelp:"選擇與您共享旅程的人可看到您的名稱、電子郵件，或不顯示身分。", displayName:"顯示名稱", showMeAs:"顯示方式", showName:"顯示名稱", showEmail:"電子郵件", showHidden:"隱藏成員", saveIdentity:"儲存身分設定", profileSaved:"身分顯示設定已儲存。", profileNameRequired:"選擇顯示名稱前，請先輸入名稱。",
+  memberDirectory:"旅程成員", memberDirectoryHelp:"每位成員可自行選擇顯示名稱、電子郵件，或不顯示身分。",
+  changeTripField:"旅程{field}：{before} → {after}", changeAdded:"新增{kind}：{title}", changeRemoved:"刪除{kind}：{title}", changeUpdated:"更新 {title}", changeItemField:"{field}：{before} → {after}",
+  fieldName:"名稱", fieldStartDate:"開始日期", fieldEndDate:"結束日期", fieldCurrency:"預設幣別", fieldColor:"顏色", fieldTitle:"標題", fieldKind:"類型", fieldLocation:"地點", fieldDate:"日期", fieldStartTime:"開始時間", fieldEndTime:"結束時間", fieldItemEndDate:"結束日期", fieldPrice:"價格", fieldNotes:"備註", fieldNights:"住宿晚數", fieldDuration:"時長"
+});
+Object.assign(COLLAB_I18N.ja, {
+  chatTitle:"旅行チャット", chat:"チャット", send:"送信", messagePlaceholder:"メッセージを書く…", showModifications:"変更履歴を表示",
+  chatNeedsSignIn:"旅行チャットを使うにはサインインしてください。", chatNeedsSharedTrip:"チャットを使う前にこの旅行を共有してください。", chatLoading:"会話を読み込んでいます…", chatEmpty:"まだメッセージはありません。会話を始めましょう。", chatSendError:"メッセージを送信できませんでした。",
+  tripModified:"旅行が変更されました", modificationBy:"{name} が変更", modificationDetails:"変更内容", hiddenMember:"非表示のメンバー", unknownMember:"旅行メンバー",
+  profileTitle:"メンバー表示", profileHelp:"同じ旅行のメンバーに、表示名・メール・非表示のどれで見せるか選べます。", displayName:"表示名", showMeAs:"表示方法", showName:"表示名", showEmail:"メールアドレス", showHidden:"非表示のメンバー", saveIdentity:"表示設定を保存", profileSaved:"表示設定を保存しました。", profileNameRequired:"表示名を選ぶ前に名前を入力してください。",
+  memberDirectory:"旅行メンバー", memberDirectoryHelp:"各メンバーは表示名、メール、非表示を自分で選べます。",
+  changeTripField:"旅行の{field}：{before} → {after}", changeAdded:"{kind}を追加：{title}", changeRemoved:"{kind}を削除：{title}", changeUpdated:"{title}を更新", changeItemField:"{field}：{before} → {after}",
+  fieldName:"名前", fieldStartDate:"開始日", fieldEndDate:"終了日", fieldCurrency:"既定通貨", fieldColor:"色", fieldTitle:"タイトル", fieldKind:"種類", fieldLocation:"場所", fieldDate:"日付", fieldStartTime:"開始時刻", fieldEndTime:"終了時刻", fieldItemEndDate:"終了日", fieldPrice:"価格", fieldNotes:"メモ", fieldNights:"宿泊数", fieldDuration:"所要時間"
+});
 function ct(key, variables = {}) {
   let value = (COLLAB_I18N[currentLanguage()] || COLLAB_I18N.en)[key] ?? COLLAB_I18N.en[key] ?? key;
   Object.entries(variables).forEach(([name, replacement]) => { value = value.replaceAll(`{${name}}`, String(replacement)); });
@@ -3174,8 +3299,8 @@ function ct(key, variables = {}) {
 }
 function applyCollabTranslations() {
   const set = (id, key) => { const element = document.getElementById(id); if (element) element.textContent = ct(key); };
-  set("share-trip-btn", "share"); set("readonly-banner", "viewOnlyBanner"); set("share-modal-title", "shareTitle"); set("share-done", "done");
-  set("account-modal-title", "accountTitle"); set("account-done", "done"); set("collab-email-label", "email"); set("collab-auth-help", "authHelp"); set("share-auth-help", "shareAuthHelp"); set("account-global-help", "globalAccountHelp"); set("share-open-account-btn", "signIn"); set("collab-session-note", "sessionNote"); set("collab-login-btn", "sendSignIn"); set("collab-logout-btn", "signOut");
+  set("share-trip-btn", "share"); set("chat-trip-btn", "chat"); set("readonly-banner", "viewOnlyBanner"); set("share-modal-title", "shareTitle"); set("share-done", "done"); set("chat-modal-title", "chatTitle"); set("chat-send-btn", "send"); set("chat-filter-label", "showModifications");
+  set("account-modal-title", "accountTitle"); set("account-done", "done"); set("profile-title", "profileTitle"); set("profile-help", "profileHelp"); set("profile-name-label", "displayName"); set("profile-visibility-label", "showMeAs"); set("profile-save-btn", "saveIdentity"); set("member-directory-title", "memberDirectory"); set("member-directory-help", "memberDirectoryHelp"); set("collab-email-label", "email"); set("collab-auth-help", "authHelp"); set("share-auth-help", "shareAuthHelp"); set("account-global-help", "globalAccountHelp"); set("share-open-account-btn", "signIn"); set("collab-session-note", "sessionNote"); set("collab-login-btn", "sendSignIn"); set("collab-logout-btn", "signOut");
   const accountButton = document.getElementById("account-btn");
   if (accountButton) accountButton.textContent = `◎ ${ct(collabUser ? "account" : "signIn")}`;
   set("publish-title", "publishTitle"); set("publish-help", "publishHelp"); set("publish-trip-btn", "publish"); set("access-label", "yourAccess");
@@ -3187,6 +3312,14 @@ function applyCollabTranslations() {
     inviteRole.querySelector('[value="editor"]').textContent = ct("roleEditor");
     inviteRole.querySelector('[value="admin"]').textContent = ct("roleAdmin");
   }
+  const visibilitySelect = document.getElementById("profile-visibility");
+  if (visibilitySelect) {
+    visibilitySelect.querySelector('[value="name"]').textContent = ct("showName");
+    visibilitySelect.querySelector('[value="email"]').textContent = ct("showEmail");
+    visibilitySelect.querySelector('[value="hidden"]').textContent = ct("showHidden");
+  }
+  const chatInput = document.getElementById("chat-message-input");
+  if (chatInput) chatInput.placeholder = ct("messagePlaceholder");
   updateSyncStatus();
 }
 
@@ -3198,6 +3331,12 @@ let suppressRemoteSave = false;
 let realtimeChannel = null;
 let realtimeTripId = null;
 let lastInvite = null;
+let ownProfile = null;
+let participantProfiles = new Map();
+let chatRealtimeChannel = null;
+let chatRealtimeTripId = null;
+let chatMessagesCache = [];
+let changeLogsCache = [];
 
 function collabConfigured() {
   let validUrl = false;
@@ -3244,6 +3383,259 @@ function updateSyncStatus(forcedState = "") {
   element.dataset.state = stateName;
   element.textContent = text;
 }
+
+function safeJsonParse(value, fallback = null) {
+  try { return JSON.parse(value); } catch { return fallback; }
+}
+function normalizeProfileVisibility(value) {
+  return ["name", "email", "hidden"].includes(value) ? value : "email";
+}
+async function ensureOwnProfile() {
+  if (!supabaseClient || !collabUser) return null;
+  const { data, error } = await supabaseClient.from("voyage_user_profiles").select("user_id,email,display_name,visibility").eq("user_id", collabUser.id).maybeSingle();
+  if (error) { console.warn("Could not load identity profile", error); return null; }
+  if (data) {
+    ownProfile = data;
+    if (collabUser.email && data.email !== collabUser.email) {
+      await supabaseClient.from("voyage_user_profiles").update({ email: collabUser.email, updated_at: new Date().toISOString() }).eq("user_id", collabUser.id);
+      ownProfile.email = collabUser.email;
+    }
+  } else {
+    const created = { user_id: collabUser.id, email: collabUser.email || "", display_name: "", visibility: "email" };
+    const { data: inserted, error: insertError } = await supabaseClient.from("voyage_user_profiles").insert(created).select("user_id,email,display_name,visibility").single();
+    if (insertError) { console.warn("Could not create identity profile", insertError); return null; }
+    ownProfile = inserted;
+  }
+  const nameInput = document.getElementById("profile-display-name");
+  const visibility = document.getElementById("profile-visibility");
+  if (nameInput) nameInput.value = ownProfile.display_name || "";
+  if (visibility) visibility.value = normalizeProfileVisibility(ownProfile.visibility);
+  return ownProfile;
+}
+function setProfileStatus(message = "", isError = false) {
+  const element = document.getElementById("profile-status");
+  if (!element) return;
+  element.textContent = message;
+  element.className = `profile-status${message ? (isError ? " error" : " success") : ""}`;
+}
+async function saveOwnProfile() {
+  if (!supabaseClient || !collabUser) return;
+  const displayName = document.getElementById("profile-display-name").value.trim();
+  const visibility = normalizeProfileVisibility(document.getElementById("profile-visibility").value);
+  if (visibility === "name" && !displayName) return setProfileStatus(ct("profileNameRequired"), true);
+  const payload = { user_id: collabUser.id, email: collabUser.email || "", display_name: displayName, visibility, updated_at: new Date().toISOString() };
+  const { data, error } = await supabaseClient.from("voyage_user_profiles").upsert(payload, { onConflict: "user_id" }).select("user_id,email,display_name,visibility").single();
+  if (error) return setProfileStatus(error.message, true);
+  ownProfile = data;
+  setProfileStatus(ct("profileSaved"));
+  await registerCurrentParticipant().catch(() => false);
+  await loadParticipantProfiles(activeTrip()?.remoteId).catch(() => []);
+  renderMemberDirectory();
+  renderChatFeed();
+}
+async function registerCurrentParticipant(trip = activeTrip()) {
+  if (!supabaseClient || !collabUser || !trip?.remoteId) return false;
+  const role = await fetchRole(trip.remoteId).catch(() => trip.remoteRole || null);
+  if (!role) return false;
+  const { error } = await supabaseClient.from("voyage_trip_participants").upsert({
+    trip_id: trip.remoteId,
+    user_id: collabUser.id,
+    role,
+    updated_at: new Date().toISOString()
+  }, { onConflict: "trip_id,user_id" });
+  if (error) { console.warn("Could not register trip participant", error); return false; }
+  return true;
+}
+async function loadParticipantProfiles(remoteId = activeTrip()?.remoteId) {
+  participantProfiles = new Map();
+  if (!supabaseClient || !collabUser || !remoteId) return [];
+  await registerCurrentParticipant(activeTrip()).catch(() => false);
+  const { data, error } = await supabaseClient.rpc("list_voyage_participant_profiles", { p_trip_id: remoteId });
+  if (error) { console.warn("Could not load participant identities", error); return []; }
+  (data || []).forEach(member => participantProfiles.set(member.user_id, member));
+  return data || [];
+}
+function participantName(userId) {
+  const member = participantProfiles.get(userId);
+  if (!member) return ct("unknownMember");
+  return member.display_value || ct("hiddenMember");
+}
+function participantInitial(userId) {
+  const name = participantName(userId);
+  return (name || "?").trim().charAt(0).toUpperCase() || "?";
+}
+function renderMemberDirectory() {
+  const list = document.getElementById("member-directory-list");
+  if (!list) return;
+  const members = Array.from(participantProfiles.values()).sort((a, b) => {
+    const order = { owner:0, admin:1, editor:2, viewer:3 };
+    return (order[a.role] ?? 9) - (order[b.role] ?? 9) || String(a.display_value || "").localeCompare(String(b.display_value || ""));
+  });
+  list.innerHTML = members.length ? members.map(member => {
+    const display = member.display_value || ct("hiddenMember");
+    const hidden = !member.display_value;
+    return `<div class="member-directory-row"><span class="member-avatar">${esc(participantInitial(member.user_id))}</span><span class="member-directory-name ${hidden ? "member-hidden" : ""}" title="${hidden ? "" : esc(display)}">${esc(display)}</span><span class="role-badge">${esc(roleText(member.role))}</span></div>`;
+  }).join("") : `<div class="field-help">${esc(ct("loading"))}</div>`;
+}
+function valueForLog(value) {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+function buildModificationDetails(beforeDocument, afterDocument) {
+  if (!beforeDocument?.trip || !afterDocument?.trip) return [];
+  const changes = [];
+  const tripFields = [
+    ["name", "fieldName"], ["startDate", "fieldStartDate"], ["endDate", "fieldEndDate"],
+    ["defaultCurrency", "fieldCurrency"], ["color", "fieldColor"]
+  ];
+  tripFields.forEach(([field, label]) => {
+    if (JSON.stringify(beforeDocument.trip[field] ?? "") !== JSON.stringify(afterDocument.trip[field] ?? "")) {
+      changes.push({ type:"trip_field", field:label, before:beforeDocument.trip[field] ?? "", after:afterDocument.trip[field] ?? "" });
+    }
+  });
+  const beforeItems = new Map((beforeDocument.items || []).map(item => [item.id, item]));
+  const afterItems = new Map((afterDocument.items || []).map(item => [item.id, item]));
+  afterItems.forEach((item, id) => {
+    const previous = beforeItems.get(id);
+    if (!previous) {
+      changes.push({ type:"item_added", kind:item.kind || "other", title:item.title || "Untitled" });
+      return;
+    }
+    const fields = [
+      ["title", "fieldTitle"], ["kind", "fieldKind"], ["location", "fieldLocation"], ["date", "fieldDate"],
+      ["startTime", "fieldStartTime"], ["endDate", "fieldItemEndDate"], ["endTime", "fieldEndTime"],
+      ["price", "fieldPrice"], ["notes", "fieldNotes"], ["nights", "fieldNights"], ["durationSeconds", "fieldDuration"]
+    ];
+    const fieldChanges = [];
+    fields.forEach(([field, label]) => {
+      if (JSON.stringify(previous[field] ?? "") !== JSON.stringify(item[field] ?? "")) {
+        fieldChanges.push({ field:label, before:previous[field] ?? "", after:item[field] ?? "" });
+      }
+    });
+    if (fieldChanges.length) changes.push({ type:"item_updated", title:item.title || previous.title || "Untitled", fields:fieldChanges });
+  });
+  beforeItems.forEach((item, id) => {
+    if (!afterItems.has(id)) changes.push({ type:"item_removed", kind:item.kind || "other", title:item.title || "Untitled" });
+  });
+  return changes;
+}
+async function insertModificationLog(remoteId, changes) {
+  if (!supabaseClient || !collabUser || !remoteId || !changes?.length) return false;
+  await registerCurrentParticipant(activeTrip()).catch(() => false);
+  const { error } = await supabaseClient.from("voyage_change_logs").insert({ trip_id:remoteId, user_id:collabUser.id, details:{ changes } });
+  if (error) { console.warn("Could not write modification log", error); return false; }
+  return true;
+}
+function modificationLine(change) {
+  if (!change) return "";
+  if (change.type === "trip_field") return ct("changeTripField", { field:ct(change.field), before:valueForLog(change.before), after:valueForLog(change.after) });
+  if (change.type === "item_added") return ct("changeAdded", { kind:kindLabel(change.kind), title:change.title });
+  if (change.type === "item_removed") return ct("changeRemoved", { kind:kindLabel(change.kind), title:change.title });
+  if (change.type === "item_updated") {
+    const fieldText = (change.fields || []).map(field => ct("changeItemField", { field:ct(field.field), before:valueForLog(field.before), after:valueForLog(field.after) })).join("; ");
+    return `${ct("changeUpdated", { title:change.title })}${fieldText ? ` — ${fieldText}` : ""}`;
+  }
+  return ct("tripModified");
+}
+function formatChatTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString(currentLocale(), { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
+}
+async function loadChatData() {
+  const trip = activeTrip();
+  if (!supabaseClient || !collabUser || !trip?.remoteId) return;
+  document.getElementById("chat-status").textContent = ct("chatLoading");
+  await loadParticipantProfiles(trip.remoteId);
+  const [messagesResult, logsResult] = await Promise.all([
+    supabaseClient.from("voyage_chat_messages").select("id,trip_id,user_id,body,created_at").eq("trip_id", trip.remoteId).order("created_at", { ascending:true }).limit(300),
+    supabaseClient.from("voyage_change_logs").select("id,trip_id,user_id,details,created_at").eq("trip_id", trip.remoteId).order("created_at", { ascending:true }).limit(300)
+  ]);
+  chatMessagesCache = messagesResult.data || [];
+  changeLogsCache = logsResult.data || [];
+  const error = messagesResult.error || logsResult.error;
+  document.getElementById("chat-status").textContent = error ? error.message : "";
+  renderChatFeed();
+  renderMemberDirectory();
+}
+function renderChatFeed() {
+  const feed = document.getElementById("chat-feed");
+  if (!feed) return;
+  const showLogs = document.getElementById("chat-show-modifications")?.checked !== false;
+  const entries = [
+    ...chatMessagesCache.map(message => ({ ...message, entryType:"message" })),
+    ...(showLogs ? changeLogsCache.map(log => ({ ...log, entryType:"log" })) : [])
+  ].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  if (!entries.length) {
+    feed.innerHTML = `<div class="chat-empty">${esc(ct("chatEmpty"))}</div>`;
+    return;
+  }
+  feed.innerHTML = entries.map(entry => {
+    const author = participantName(entry.user_id);
+    const time = formatChatTime(entry.created_at);
+    if (entry.entryType === "message") {
+      const own = collabUser && entry.user_id === collabUser.id;
+      return `<article class="chat-message ${own ? "is-own" : ""}"><div class="chat-message-head"><span class="chat-message-author">${esc(author)}</span><time>${esc(time)}</time></div><div class="chat-message-text">${esc(entry.body)}</div></article>`;
+    }
+    const changes = Array.isArray(entry.details?.changes) ? entry.details.changes : [];
+    return `<article class="chat-system" data-log-id="${esc(entry.id)}"><button class="chat-system-toggle" type="button"><span class="chat-system-icon">↻</span><span class="chat-system-main"><span class="chat-system-title">${esc(ct("tripModified"))}</span><span class="chat-system-meta">${esc(ct("modificationBy", { name:author }))} · ${esc(time)}</span></span><span class="chat-system-chevron">⌄</span></button><div class="chat-system-details"><ol>${changes.map(change => `<li>${esc(modificationLine(change))}</li>`).join("") || `<li>${esc(ct("tripModified"))}</li>`}</ol></div></article>`;
+  }).join("");
+  feed.querySelectorAll(".chat-system-toggle").forEach(button => button.addEventListener("click", () => {
+    const card = button.closest(".chat-system");
+    card.classList.toggle("expanded");
+    button.querySelector(".chat-system-chevron").textContent = card.classList.contains("expanded") ? "⌃" : "⌄";
+  }));
+  feed.scrollTop = feed.scrollHeight;
+}
+async function ensureChatRealtime(remoteId = activeTrip()?.remoteId) {
+  if (!supabaseClient || !collabUser || !remoteId) return;
+  if (chatRealtimeTripId === remoteId && chatRealtimeChannel) return;
+  if (chatRealtimeChannel) await supabaseClient.removeChannel(chatRealtimeChannel);
+  chatRealtimeTripId = remoteId;
+  chatRealtimeChannel = supabaseClient.channel(`voyage-chat-${remoteId}`)
+    .on("postgres_changes", { event:"INSERT", schema:"public", table:"voyage_chat_messages", filter:`trip_id=eq.${remoteId}` }, () => loadChatData())
+    .on("postgres_changes", { event:"INSERT", schema:"public", table:"voyage_change_logs", filter:`trip_id=eq.${remoteId}` }, () => loadChatData())
+    .on("postgres_changes", { event:"*", schema:"public", table:"voyage_trip_participants", filter:`trip_id=eq.${remoteId}` }, () => loadChatData())
+    .subscribe();
+}
+async function sendChatMessage() {
+  const trip = activeTrip();
+  const input = document.getElementById("chat-message-input");
+  const body = input.value.trim();
+  if (!body || !supabaseClient || !collabUser || !trip?.remoteId) return;
+  const button = document.getElementById("chat-send-btn");
+  button.disabled = true;
+  await registerCurrentParticipant(trip).catch(() => false);
+  const { error } = await supabaseClient.from("voyage_chat_messages").insert({ trip_id:trip.remoteId, user_id:collabUser.id, body });
+  button.disabled = false;
+  if (error) { document.getElementById("chat-status").textContent = error.message || ct("chatSendError"); return; }
+  input.value = "";
+  await loadChatData();
+}
+async function openChatModal() {
+  applyCollabTranslations();
+  const note = document.getElementById("chat-auth-note");
+  const content = document.getElementById("chat-content");
+  const trip = activeTrip();
+  let message = "";
+  if (!collabUser) message = ct("chatNeedsSignIn");
+  else if (!trip?.remoteId) message = ct("chatNeedsSharedTrip");
+  note.textContent = message;
+  note.style.display = message ? "block" : "none";
+  content.style.display = message ? "none" : "flex";
+  document.getElementById("chat-overlay").classList.add("show");
+  if (!message) {
+    await registerCurrentParticipant(trip).catch(() => false);
+    await ensureChatRealtime(trip.remoteId);
+    await loadChatData();
+  }
+}
+async function closeChatModal() {
+  document.getElementById("chat-overlay").classList.remove("show");
+}
+
 function sharedDocument(trip) {
   const documentTrip = { ...trip };
   ["remoteId", "remoteRole", "remoteVersion", "remoteUpdatedAt", "remoteSnapshot"].forEach(key => delete documentTrip[key]);
@@ -3315,6 +3707,7 @@ async function loadRemoteTrip(remoteId, silent = false) {
   const { data, error } = await supabaseClient.from("voyage_trips").select("id,name,document,version,updated_at").eq("id", remoteId).single();
   if (error) { setCollabMessage(ct("accessDenied"), true); return false; }
   applySharedDocument(remoteId, data.document, role, data.version, data.updated_at);
+  await registerCurrentParticipant(activeTrip()).catch(() => false);
   if (!silent) setCollabMessage(ct("remoteLoaded"));
   return true;
 }
@@ -3330,16 +3723,20 @@ function scheduleRemoteSave() {
 async function saveRemoteTrip(trip) {
   if (!trip?.remoteId || !canEditTrip(trip) || !supabaseClient || remoteSaveInFlight) return false;
   const isActive = trip === activeTrip();
+  const beforeDocument = safeJsonParse(trip.remoteSnapshot, null);
+  const afterDocument = sharedDocument(trip);
+  const modificationDetails = buildModificationDetails(beforeDocument, afterDocument);
   remoteSaveInFlight = true;
   if (isActive) updateSyncStatus("saving");
-  const payload = { name: trip.name, document: sharedDocument(trip), last_client_id: CLIENT_ID };
+  const payload = { name: trip.name, document: afterDocument, last_client_id: CLIENT_ID };
   const { data, error } = await supabaseClient.from("voyage_trips").update(payload).eq("id", trip.remoteId).select("version,updated_at").single();
   remoteSaveInFlight = false;
   if (error) { if (isActive) { updateSyncStatus("error"); setCollabMessage(error.message, true); } return false; }
   trip.remoteVersion = data.version;
   trip.remoteUpdatedAt = data.updated_at;
-  trip.remoteSnapshot = JSON.stringify(sharedDocument(trip));
+  trip.remoteSnapshot = JSON.stringify(afterDocument);
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+  if (modificationDetails.length) insertModificationLog(trip.remoteId, modificationDetails).catch(() => false);
   if (isActive) updateSyncStatus("synced");
   return true;
 }
@@ -3387,6 +3784,7 @@ async function publishActiveTrip() {
   trip.remoteRole = result.role || "owner";
   trip.remoteVersion = result.version || 1;
   trip.remoteSnapshot = JSON.stringify(sharedDocument(trip));
+  await registerCurrentParticipant(trip).catch(() => false);
   history.replaceState({}, "", tripMemberUrl(trip.remoteId));
   renderAll();
   setCollabMessage(ct("remotePublished"));
@@ -3406,30 +3804,30 @@ async function listMembers() {
   const trip = activeTrip();
   const list = document.getElementById("member-list");
   if (!trip?.remoteId || !canManageTrip(trip)) { list.innerHTML = ""; return; }
-  list.innerHTML = `<div class="field-help">${esc(ct("loading"))}</div>`;
-  const { data, error } = await supabaseClient.rpc("list_voyage_members", { p_trip_id: trip.remoteId });
-  if (error) { list.innerHTML = `<div class="collab-message error">${esc(error.message)}</div>`; return; }
-  list.innerHTML = (data || []).map(member => {
+  await loadParticipantProfiles(trip.remoteId);
+  const members = Array.from(participantProfiles.values());
+  list.innerHTML = members.map(member => {
     const isOwner = member.role === "owner";
     const canTouch = tripRole(trip) === "owner" ? !isOwner : ["viewer", "editor"].includes(member.role) && member.user_id !== collabUser.id;
-    const roleOptions = tripRole(trip) === "owner"
-      ? ["admin", "editor", "viewer"]
-      : ["editor", "viewer"];
-    return `<div class="member-row" data-member="${esc(member.user_id)}">
-      <span class="member-email" title="${esc(member.email)}">${esc(member.email)}</span>
-      ${!canTouch ? `<span class="role-badge">${esc(roleText(member.role))}</span>` : `<select class="field-input" data-member-role>${roleOptions.map(role => `<option value="${role}" ${member.role === role ? "selected" : ""}>${esc(roleText(role))}</option>`).join("")}</select>`}
-      ${canTouch ? `<button class="icon-btn danger" data-remove-member title="${esc(ct("removeMember"))}">✕</button>` : ""}
-    </div>`;
+    const roleOptions = tripRole(trip) === "owner" ? ["admin", "editor", "viewer"] : ["editor", "viewer"];
+    const display = member.display_value || ct("hiddenMember");
+    return `<div class="member-row" data-member="${esc(member.user_id)}"><span class="member-email ${member.display_value ? "" : "member-hidden"}" title="${member.display_value ? esc(display) : ""}">${esc(display)}</span>${!canTouch ? `<span class="role-badge">${esc(roleText(member.role))}</span>` : `<select class="field-input" data-member-role>${roleOptions.map(role => `<option value="${role}" ${member.role === role ? "selected" : ""}>${esc(roleText(role))}</option>`).join("")}</select>`}${canTouch ? `<button class="icon-btn danger" data-remove-member title="${esc(ct("removeMember"))}">✕</button>` : ""}</div>`;
   }).join("");
   list.querySelectorAll("[data-member-role]").forEach(select => select.addEventListener("change", async () => {
     const row = select.closest("[data-member]");
-    const { error } = await supabaseClient.rpc("set_voyage_member_role", { p_trip_id: trip.remoteId, p_user_id: row.dataset.member, p_role: select.value });
-    if (error) setCollabMessage(error.message, true); else listMembers();
+    const { error } = await supabaseClient.rpc("set_voyage_member_role", { p_trip_id:trip.remoteId, p_user_id:row.dataset.member, p_role:select.value });
+    if (error) setCollabMessage(error.message, true); else {
+      await supabaseClient.from("voyage_trip_participants").update({ role:select.value, updated_at:new Date().toISOString() }).eq("trip_id", trip.remoteId).eq("user_id", row.dataset.member);
+      await listMembers(); await loadParticipantProfiles(trip.remoteId); renderMemberDirectory();
+    }
   }));
   list.querySelectorAll("[data-remove-member]").forEach(button => button.addEventListener("click", async () => {
     const row = button.closest("[data-member]");
-    const { error } = await supabaseClient.rpc("remove_voyage_member", { p_trip_id: trip.remoteId, p_user_id: row.dataset.member });
-    if (error) setCollabMessage(error.message, true); else listMembers();
+    const { error } = await supabaseClient.rpc("remove_voyage_member", { p_trip_id:trip.remoteId, p_user_id:row.dataset.member });
+    if (error) setCollabMessage(error.message, true); else {
+      await supabaseClient.from("voyage_trip_participants").delete().eq("trip_id", trip.remoteId).eq("user_id", row.dataset.member);
+      await listMembers(); await loadParticipantProfiles(trip.remoteId); renderMemberDirectory();
+    }
   }));
 }
 async function refreshSharePanel() {
@@ -3448,6 +3846,7 @@ async function refreshSharePanel() {
   applyCollabTranslations();
   if (!configured || !collabUser) return;
   document.getElementById("collab-user-email").textContent = collabUser.email || collabUser.id;
+  await ensureOwnProfile().catch(() => null);
   const trip = activeTrip();
   const shared = Boolean(trip?.remoteId);
   document.getElementById("collab-unshared-panel").style.display = shared ? "none" : "block";
@@ -3455,6 +3854,9 @@ async function refreshSharePanel() {
   if (!shared) return;
   document.getElementById("collab-role").textContent = roleText(tripRole(trip));
   document.getElementById("collab-share-link").value = tripMemberUrl(trip.remoteId);
+  await registerCurrentParticipant(trip).catch(() => false);
+  await loadParticipantProfiles(trip.remoteId).catch(() => []);
+  renderMemberDirectory();
   const manageable = canManageTrip(trip);
   document.getElementById("collab-admin-section").style.display = manageable ? "block" : "none";
   const adminOption = document.querySelector('#invite-role option[value="admin"]');
@@ -3508,12 +3910,14 @@ async function initCollaboration() {
   });
   const { data } = await supabaseClient.auth.getSession();
   collabUser = data.session?.user || null;
+  if (collabUser) await ensureOwnProfile().catch(() => null);
   supabaseClient.auth.onAuthStateChange((event, session) => {
     // The INITIAL_SESSION event fires immediately on subscribing and just
     // reports the same session getSession() already gave us above; acting
     // on it again is what was causing the duplicate/racing route pass.
     if (event === "INITIAL_SESSION") return;
     collabUser = session?.user || null;
+    if (collabUser) ensureOwnProfile().catch(() => null); else ownProfile = null;
     applyCollabTranslations();
     renderMobileScheduleNav();
     runCollabRoute();
@@ -3547,6 +3951,15 @@ document.getElementById("share-open-account-btn").addEventListener("click", () =
   attachMobileNavToOverlay("account-overlay", "account");
 });
 document.getElementById("share-trip-btn").addEventListener("click", openShareModal);
+document.getElementById("chat-trip-btn").addEventListener("click", openChatModal);
+document.getElementById("chat-close").addEventListener("click", closeChatModal);
+document.getElementById("chat-overlay").addEventListener("click", event => { if (event.target.id === "chat-overlay") closeChatModal(); });
+document.getElementById("chat-send-btn").addEventListener("click", sendChatMessage);
+document.getElementById("chat-message-input").addEventListener("keydown", event => {
+  if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendChatMessage(); }
+});
+document.getElementById("chat-show-modifications").addEventListener("change", renderChatFeed);
+document.getElementById("profile-save-btn").addEventListener("click", saveOwnProfile);
 document.getElementById("share-close").addEventListener("click", closeShareModal);
 document.getElementById("share-done").addEventListener("click", closeShareModal);
 document.getElementById("share-overlay").addEventListener("click", event => { if (event.target.id === "share-overlay") closeShareModal(); });
@@ -3589,6 +4002,7 @@ document.getElementById("collab-login-btn").addEventListener("click", async () =
 document.getElementById("collab-logout-btn").addEventListener("click", async () => {
   await supabaseClient.auth.signOut();
   collabUser = null;
+  ownProfile = null; participantProfiles = new Map(); chatMessagesCache = []; changeLogsCache = [];
   refreshSharePanel();
   renderMobileScheduleNav();
 });
