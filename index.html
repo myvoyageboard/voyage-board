@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v15 — simplified conversation view and hidden modification logs by default -->
+<!-- Voyage Board v16 — timezone-aware flights and searchable airport directory -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -1357,6 +1357,108 @@
     }
   }
 
+
+  /* v16 timezone-aware flight editor and flight schedule cards */
+  .airport-suggest-item {
+    display:grid;
+    grid-template-columns:44px minmax(0, 1fr);
+    gap:8px;
+    align-items:start;
+    text-align:left;
+  }
+  .airport-suggest-code {
+    color:var(--amber);
+    font-weight:800;
+    letter-spacing:.05em;
+  }
+  .airport-suggest-main {
+    min-width:0;
+  }
+  .airport-suggest-name {
+    display:block;
+    color:var(--text-hi);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .airport-suggest-meta {
+    display:block;
+    margin-top:2px;
+    color:var(--text-lo);
+    font-size:9.5px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  #flight-timezone-fields {
+    margin-top:6px;
+    padding:10px;
+    border:1px solid color-mix(in srgb, #63C7FF 34%, var(--border));
+    border-radius:10px;
+    background:color-mix(in srgb, #63C7FF 6%, var(--panel-2));
+  }
+  #flight-time-status.ok { color:#69D69B; }
+  #flight-time-status.error { color:var(--danger); }
+  #f-duration.flight-calculated {
+    color:#63C7FF;
+    font-weight:700;
+    background:color-mix(in srgb, #63C7FF 7%, var(--panel-2));
+  }
+  .flight-chip {
+    align-items:stretch;
+  }
+  .flight-route-block {
+    min-width:0;
+    display:grid;
+    gap:3px;
+    flex:1 1 auto;
+  }
+  .flight-route-line {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    min-width:0;
+    color:var(--text-hi);
+    font-weight:700;
+  }
+  .flight-airport-code {
+    color:var(--amber);
+    letter-spacing:.04em;
+  }
+  .flight-route-arrow {
+    color:var(--text-lo);
+    flex:0 0 auto;
+  }
+  .flight-local-time {
+    color:var(--text-hi);
+    font-weight:500;
+    white-space:nowrap;
+  }
+  .flight-duration-line {
+    color:var(--text-lo);
+    font-size:10px;
+    white-space:normal;
+  }
+  .flight-timezone-label {
+    opacity:.82;
+  }
+  .flight-day-offset {
+    color:#63C7FF;
+    font-weight:800;
+  }
+  @media (max-width:720px) {
+    #flight-timezone-fields {
+      padding:8px;
+    }
+    .flight-route-line {
+      flex-wrap:wrap;
+      gap:4px;
+    }
+    .flight-duration-line {
+      font-size:9px;
+    }
+  }
+
 </style>
 </head>
 <body>
@@ -1461,6 +1563,22 @@
         </div>
       </div>
 
+      <div id="flight-airport-help" class="field-help" style="display:none;"></div>
+      <div id="flight-timezone-fields" style="display:none;">
+        <div class="grid-2">
+          <div>
+            <label class="field-label" data-i18n="departureTimeZone">Departure time zone</label>
+            <input class="field-input" id="f-departure-timezone" list="flight-time-zone-options" autocomplete="off" placeholder="Asia/Tokyo">
+          </div>
+          <div>
+            <label class="field-label" data-i18n="arrivalTimeZone">Arrival time zone</label>
+            <input class="field-input" id="f-arrival-timezone" list="flight-time-zone-options" autocomplete="off" placeholder="America/Los_Angeles">
+          </div>
+        </div>
+        <datalist id="flight-time-zone-options"></datalist>
+        <div id="flight-time-status" class="field-help"></div>
+      </div>
+
       <label class="field-label" data-i18n="googleMapsLink">Google Maps link</label>
       <div class="field-row">
         <input class="field-input" id="f-map-link" type="url" placeholder="Paste a Google Maps or maps.app.goo.gl link">
@@ -1469,9 +1587,9 @@
       <div class="field-help" data-i18n="mapHelp">Paste a place link, or use “Open Maps” to search using the location or route above.</div>
 
       <div class="grid-3">
-        <div><label class="field-label" data-i18n="date">Date</label><input type="date" class="field-input" id="f-date"></div>
-        <div><label class="field-label" data-i18n="start">Start</label><input type="time" step="1" class="field-input" id="f-start"></div>
-        <div><label class="field-label" data-i18n="duration">Duration</label><input type="text" class="field-input" id="f-duration" placeholder="1d 2h 30m 15s"></div>
+        <div><label class="field-label" id="f-date-label" data-i18n="date">Date</label><input type="date" class="field-input" id="f-date"></div>
+        <div><label class="field-label" id="f-start-label" data-i18n="start">Start</label><input type="time" step="1" class="field-input" id="f-start"></div>
+        <div><label class="field-label" id="f-duration-label" data-i18n="duration">Duration</label><input type="text" class="field-input" id="f-duration" placeholder="1d 2h 30m 15s"></div>
       </div>
       <div class="duration-picker" id="duration-picker" aria-label="Duration selector">
         <label class="duration-unit"><input type="number" id="f-duration-days" min="0" step="1" inputmode="numeric" value="0"><span data-i18n="daysUnit">DAY</span></label>
@@ -1479,15 +1597,15 @@
         <label class="duration-unit"><input type="number" id="f-duration-minutes" min="0" max="59" step="1" inputmode="numeric" value="0"><span data-i18n="minutesUnit">MIN</span></label>
         <label class="duration-unit"><input type="number" id="f-duration-seconds" min="0" max="59" step="1" inputmode="numeric" value="0"><span data-i18n="secondsUnit">SEC</span></label>
       </div>
-      <div class="field-help" data-i18n="durationPickerHelp">Use the four selectors or type the duration manually above.</div>
+      <div class="field-help" id="duration-picker-help" data-i18n="durationPickerHelp">Use the four selectors or type the duration manually above.</div>
       <div class="grid-2" id="hotel-nights-row" style="display:none;">
         <div><label class="field-label" data-i18n="nights">Nights</label><input type="number" min="1" step="1" class="field-input" id="f-nights" placeholder="1"></div>
       </div>
       <div class="grid-2">
-        <div><label class="field-label" data-i18n="endDate">End date</label><input type="date" class="field-input" id="f-end-date"></div>
-        <div><label class="field-label" data-i18n="end">End</label><input type="time" step="1" class="field-input" id="f-end"></div>
+        <div><label class="field-label" id="f-end-date-label" data-i18n="endDate">End date</label><input type="date" class="field-input" id="f-end-date"></div>
+        <div><label class="field-label" id="f-end-label" data-i18n="end">End</label><input type="time" step="1" class="field-input" id="f-end"></div>
       </div>
-      <div class="field-help" data-i18n="overnightHelp">Leave end date blank if it's the same day. Set it (or fill in Duration) for anything that runs past midnight.</div>
+      <div class="field-help" id="overnight-help" data-i18n="overnightHelp">Leave end date blank if it's the same day. Set it (or fill in Duration) for anything that runs past midnight.</div>
       <div class="grid-2">
         <div><label class="field-label" data-i18n="price">Price</label><input type="number" min="0" step="any" class="field-input" id="f-price" placeholder="0"></div>
         <div>
@@ -1950,6 +2068,59 @@ const I18N = {
   }
 };
 
+
+Object.assign(I18N.en, {
+  departureDate:"Departure date",
+  departureTime:"Departure time",
+  arrivalDate:"Arrival date",
+  arrivalTime:"Arrival time",
+  departureTimeZone:"Departure time zone",
+  arrivalTimeZone:"Arrival time zone",
+  flightDuration:"Flight duration",
+  airportDirectoryLoading:"Loading the full airport directory… You can still type an airport manually.",
+  airportDirectoryReady:"Airport directory ready: {count} IATA airports. Select a suggestion or type manually.",
+  airportDirectoryFallback:"The online airport directory could not be loaded. Popular airports and manual entry remain available.",
+  flightTimeReady:"{duration} · {departureZone} → {arrivalZone}",
+  flightTimeMissing:"Select airports or enter both IANA time zones to calculate the real flight duration.",
+  flightTimeInvalid:"Check the departure/arrival date, time, and time-zone values.",
+  flightArrivalBeforeDeparture:"The arrival instant is before the departure instant. Check the local dates, times, or time zones.",
+  airportDataCredit:"Airport suggestions use the airportsdata directory; manual entries are always allowed.",
+});
+Object.assign(I18N["zh-TW"], {
+  departureDate:"出發日期",
+  departureTime:"出發時間",
+  arrivalDate:"抵達日期",
+  arrivalTime:"抵達時間",
+  departureTimeZone:"出發時區",
+  arrivalTimeZone:"抵達時區",
+  flightDuration:"飛行時間",
+  airportDirectoryLoading:"正在載入完整機場清單……您仍可手動輸入機場。",
+  airportDirectoryReady:"機場清單已就緒：{count} 個 IATA 機場。可選擇建議或手動輸入。",
+  airportDirectoryFallback:"無法載入線上機場清單。仍可使用常用機場及手動輸入。",
+  flightTimeReady:"{duration} · {departureZone} → {arrivalZone}",
+  flightTimeMissing:"請選擇機場，或輸入出發及抵達的 IANA 時區，以計算實際飛行時間。",
+  flightTimeInvalid:"請檢查出發／抵達日期、時間與時區。",
+  flightArrivalBeforeDeparture:"抵達時間點早於出發時間點。請檢查當地日期、時間或時區。",
+  airportDataCredit:"機場建議使用 airportsdata 清單；使用者可隨時手動輸入。",
+});
+Object.assign(I18N.ja, {
+  departureDate:"出発日",
+  departureTime:"出発時刻",
+  arrivalDate:"到着日",
+  arrivalTime:"到着時刻",
+  departureTimeZone:"出発タイムゾーン",
+  arrivalTimeZone:"到着タイムゾーン",
+  flightDuration:"飛行時間",
+  airportDirectoryLoading:"空港一覧を読み込み中です。空港は手動でも入力できます。",
+  airportDirectoryReady:"空港一覧を読み込みました：IATA 空港 {count} 件。候補を選ぶか手動入力できます。",
+  airportDirectoryFallback:"オンライン空港一覧を読み込めませんでした。主要空港と手動入力は利用できます。",
+  flightTimeReady:"{duration} · {departureZone} → {arrivalZone}",
+  flightTimeMissing:"空港を選ぶか、出発・到着の IANA タイムゾーンを入力すると実際の飛行時間を計算できます。",
+  flightTimeInvalid:"出発・到着の日付、時刻、タイムゾーンを確認してください。",
+  flightArrivalBeforeDeparture:"到着時点が出発時点より前です。現地の日付、時刻、タイムゾーンを確認してください。",
+  airportDataCredit:"空港候補は airportsdata を使用し、手動入力にも対応しています。",
+});
+
 const CATEGORY_META = {
   flight:    { label: "Flights",        icon: "✈️", kinds: ["flight"] },
   transport: { label: "Transportation", icon: "🚗", kinds: ["train", "bus", "car", "ferry", "walk"] },
@@ -1962,44 +2133,18 @@ const CATEGORY_META = {
 };
 const CATEGORY_ORDER = ["flight", "transport", "hotel", "food", "activity", "shopping", "meeting", "other"];
 
-const AIRPORT_OPTIONS = [
-  "TPE — Taiwan Taoyuan International Airport",
-  "TSA — Taipei Songshan Airport",
-  "KHH — Kaohsiung International Airport",
-  "NRT — Narita International Airport",
-  "HND — Tokyo Haneda Airport",
-  "KIX — Kansai International Airport",
-  "ITM — Osaka Itami Airport",
-  "NGO — Chubu Centrair International Airport",
-  "FUK — Fukuoka Airport",
-  "CTS — New Chitose Airport",
-  "ICN — Incheon International Airport",
-  "GMP — Gimpo International Airport",
-  "HKG — Hong Kong International Airport",
-  "MFM — Macau International Airport",
-  "SIN — Singapore Changi Airport",
-  "BKK — Suvarnabhumi Airport",
-  "DMK — Don Mueang International Airport",
-  "KUL — Kuala Lumpur International Airport",
-  "MNL — Ninoy Aquino International Airport",
-  "SGN — Tan Son Nhat International Airport",
-  "HAN — Noi Bai International Airport",
-  "PEK — Beijing Capital International Airport",
-  "PKX — Beijing Daxing International Airport",
-  "PVG — Shanghai Pudong International Airport",
-  "SHA — Shanghai Hongqiao International Airport",
-  "CAN — Guangzhou Baiyun International Airport",
-  "SZX — Shenzhen Bao'an International Airport",
-  "LAX — Los Angeles International Airport",
-  "SFO — San Francisco International Airport",
-  "JFK — John F. Kennedy International Airport",
-  "LHR — London Heathrow Airport",
-  "CDG — Paris Charles de Gaulle Airport",
-  "FRA — Frankfurt Airport",
-  "AMS — Amsterdam Airport Schiphol",
-  "DXB — Dubai International Airport",
-  "SYD — Sydney Airport"
-];
+const AIRPORT_DATA_URL = "https://raw.githubusercontent.com/mborsetti/airportsdata/main/airportsdata/airports.csv";
+const POPULAR_AIRPORT_ROWS = [["TPE","RCTP","Taiwan Taoyuan International Airport","Taipei","TW","Asia/Taipei"],["TSA","RCSS","Taipei Songshan Airport","Taipei","TW","Asia/Taipei"],["KHH","RCKH","Kaohsiung International Airport","Kaohsiung","TW","Asia/Taipei"],["NRT","RJAA","Narita International Airport","Tokyo","JP","Asia/Tokyo"],["HND","RJTT","Tokyo Haneda Airport","Tokyo","JP","Asia/Tokyo"],["KIX","RJBB","Kansai International Airport","Osaka","JP","Asia/Tokyo"],["ITM","RJOO","Osaka Itami Airport","Osaka","JP","Asia/Tokyo"],["NGO","RJGG","Chubu Centrair International Airport","Nagoya","JP","Asia/Tokyo"],["FUK","RJFF","Fukuoka Airport","Fukuoka","JP","Asia/Tokyo"],["CTS","RJCC","New Chitose Airport","Sapporo","JP","Asia/Tokyo"],["ICN","RKSI","Incheon International Airport","Seoul","KR","Asia/Seoul"],["GMP","RKSS","Gimpo International Airport","Seoul","KR","Asia/Seoul"],["HKG","VHHH","Hong Kong International Airport","Hong Kong","HK","Asia/Hong_Kong"],["MFM","VMMC","Macau International Airport","Macau","MO","Asia/Macau"],["SIN","WSSS","Singapore Changi Airport","Singapore","SG","Asia/Singapore"],["BKK","VTBS","Suvarnabhumi Airport","Bangkok","TH","Asia/Bangkok"],["DMK","VTBD","Don Mueang International Airport","Bangkok","TH","Asia/Bangkok"],["KUL","WMKK","Kuala Lumpur International Airport","Kuala Lumpur","MY","Asia/Kuala_Lumpur"],["MNL","RPLL","Ninoy Aquino International Airport","Manila","PH","Asia/Manila"],["SGN","VVTS","Tan Son Nhat International Airport","Ho Chi Minh City","VN","Asia/Ho_Chi_Minh"],["HAN","VVNB","Noi Bai International Airport","Hanoi","VN","Asia/Ho_Chi_Minh"],["PEK","ZBAA","Beijing Capital International Airport","Beijing","CN","Asia/Shanghai"],["PKX","ZBAD","Beijing Daxing International Airport","Beijing","CN","Asia/Shanghai"],["PVG","ZSPD","Shanghai Pudong International Airport","Shanghai","CN","Asia/Shanghai"],["SHA","ZSSS","Shanghai Hongqiao International Airport","Shanghai","CN","Asia/Shanghai"],["CAN","ZGGG","Guangzhou Baiyun International Airport","Guangzhou","CN","Asia/Shanghai"],["SZX","ZGSZ","Shenzhen Bao'an International Airport","Shenzhen","CN","Asia/Shanghai"],["LAX","KLAX","Los Angeles International Airport","Los Angeles","US","America/Los_Angeles"],["SFO","KSFO","San Francisco International Airport","San Francisco","US","America/Los_Angeles"],["SEA","KSEA","Seattle–Tacoma International Airport","Seattle","US","America/Los_Angeles"],["JFK","KJFK","John F. Kennedy International Airport","New York","US","America/New_York"],["EWR","KEWR","Newark Liberty International Airport","Newark","US","America/New_York"],["BOS","KBOS","Logan International Airport","Boston","US","America/New_York"],["IAD","KIAD","Washington Dulles International Airport","Washington","US","America/New_York"],["ATL","KATL","Hartsfield–Jackson Atlanta International Airport","Atlanta","US","America/New_York"],["MIA","KMIA","Miami International Airport","Miami","US","America/New_York"],["ORD","KORD","O'Hare International Airport","Chicago","US","America/Chicago"],["DFW","KDFW","Dallas/Fort Worth International Airport","Dallas","US","America/Chicago"],["DEN","KDEN","Denver International Airport","Denver","US","America/Denver"],["HNL","PHNL","Daniel K. Inouye International Airport","Honolulu","US","Pacific/Honolulu"],["YVR","CYVR","Vancouver International Airport","Vancouver","CA","America/Vancouver"],["YYZ","CYYZ","Toronto Pearson International Airport","Toronto","CA","America/Toronto"],["MEX","MMMX","Mexico City International Airport","Mexico City","MX","America/Mexico_City"],["GRU","SBGR","São Paulo/Guarulhos International Airport","São Paulo","BR","America/Sao_Paulo"],["EZE","SAEZ","Ministro Pistarini International Airport","Buenos Aires","AR","America/Argentina/Buenos_Aires"],["LHR","EGLL","London Heathrow Airport","London","GB","Europe/London"],["LGW","EGKK","London Gatwick Airport","London","GB","Europe/London"],["CDG","LFPG","Paris Charles de Gaulle Airport","Paris","FR","Europe/Paris"],["FRA","EDDF","Frankfurt Airport","Frankfurt","DE","Europe/Berlin"],["AMS","EHAM","Amsterdam Airport Schiphol","Amsterdam","NL","Europe/Amsterdam"],["MAD","LEMD","Adolfo Suárez Madrid–Barajas Airport","Madrid","ES","Europe/Madrid"],["BCN","LEBL","Barcelona–El Prat Airport","Barcelona","ES","Europe/Madrid"],["FCO","LIRF","Rome Fiumicino Airport","Rome","IT","Europe/Rome"],["ZRH","LSZH","Zurich Airport","Zurich","CH","Europe/Zurich"],["VIE","LOWW","Vienna International Airport","Vienna","AT","Europe/Vienna"],["IST","LTFM","Istanbul Airport","Istanbul","TR","Europe/Istanbul"],["DXB","OMDB","Dubai International Airport","Dubai","AE","Asia/Dubai"],["AUH","OMAA","Zayed International Airport","Abu Dhabi","AE","Asia/Dubai"],["DOH","OTHH","Hamad International Airport","Doha","QA","Asia/Qatar"],["DEL","VIDP","Indira Gandhi International Airport","Delhi","IN","Asia/Kolkata"],["BOM","VABB","Chhatrapati Shivaji Maharaj International Airport","Mumbai","IN","Asia/Kolkata"],["BLR","VOBL","Kempegowda International Airport","Bengaluru","IN","Asia/Kolkata"],["CGK","WIII","Soekarno–Hatta International Airport","Jakarta","ID","Asia/Jakarta"],["DPS","WADD","I Gusti Ngurah Rai International Airport","Denpasar","ID","Asia/Makassar"],["SYD","YSSY","Sydney Airport","Sydney","AU","Australia/Sydney"],["MEL","YMML","Melbourne Airport","Melbourne","AU","Australia/Melbourne"],["BNE","YBBN","Brisbane Airport","Brisbane","AU","Australia/Brisbane"],["AKL","NZAA","Auckland Airport","Auckland","NZ","Pacific/Auckland"],["JNB","FAOR","O. R. Tambo International Airport","Johannesburg","ZA","Africa/Johannesburg"],["CAI","HECA","Cairo International Airport","Cairo","EG","Africa/Cairo"],["NBO","HKJK","Jomo Kenyatta International Airport","Nairobi","KE","Africa/Nairobi"]];
+const POPULAR_AIRPORTS = POPULAR_AIRPORT_ROWS.map(([iata, icao, name, city, country, tz]) => ({
+  iata, icao, name, city, country, tz,
+  search: `${iata} ${icao} ${name} ${city} ${country}`.toLowerCase(),
+}));
+const AIRPORT_OPTIONS = POPULAR_AIRPORTS.map(airport => `${airport.iata} — ${airport.name}`);
+let airportDirectory = [...POPULAR_AIRPORTS];
+let airportDirectoryPromise = null;
+let airportDirectoryLoaded = false;
+let airportDirectoryFailed = false;
+
 
 const PLACE_SUGGESTIONS = {
   flight: AIRPORT_OPTIONS,
@@ -2132,6 +2277,14 @@ function normalizeState(raw) {
     item.mapUrl = item.mapUrl || "";
     item.fromPlace = item.fromPlace || "";
     item.toPlace = item.toPlace || "";
+    item.departureAirportCode = item.departureAirportCode || "";
+    item.departureAirportName = item.departureAirportName || "";
+    item.departureAirportIcao = item.departureAirportIcao || "";
+    item.departureTimezone = item.departureTimezone || "";
+    item.arrivalAirportCode = item.arrivalAirportCode || "";
+    item.arrivalAirportName = item.arrivalAirportName || "";
+    item.arrivalAirportIcao = item.arrivalAirportIcao || "";
+    item.arrivalTimezone = item.arrivalTimezone || "";
     item.color = /^#[0-9a-f]{6}$/i.test(item.color || "") ? item.color : null;
   });
 
@@ -2503,6 +2656,393 @@ function parseDurationToSeconds(text) {
 function secondsToDurationText(seconds) {
   return formatDurationSeconds(seconds) || "";
 }
+
+function validIanaTimeZone(timeZone) {
+  if (!timeZone) return false;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone }).format(0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+function localDateTimeParts(dateStr, timeStr) {
+  if (!dateStr || !timeStr) return null;
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const [hour = 0, minute = 0, second = 0] = timeStr.split(":").map(Number);
+  if (![year, month, day, hour, minute, second].every(Number.isFinite)) return null;
+  return { year, month, day, hour, minute, second };
+}
+function zonedLocalToUtcMs(dateStr, timeStr, timeZone) {
+  const desired = localDateTimeParts(dateStr, timeStr);
+  if (!desired || !validIanaTimeZone(timeZone)) return null;
+  const desiredAsUtc = Date.UTC(
+    desired.year, desired.month - 1, desired.day,
+    desired.hour, desired.minute, desired.second
+  );
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year:"numeric", month:"2-digit", day:"2-digit",
+    hour:"2-digit", minute:"2-digit", second:"2-digit",
+    hourCycle:"h23",
+  });
+  let guess = desiredAsUtc;
+  for (let index = 0; index < 4; index += 1) {
+    const parts = Object.fromEntries(
+      formatter.formatToParts(new Date(guess))
+        .filter(part => part.type !== "literal")
+        .map(part => [part.type, Number(part.value)])
+    );
+    const representedAsUtc = Date.UTC(
+      parts.year, parts.month - 1, parts.day,
+      parts.hour, parts.minute, parts.second
+    );
+    const correction = desiredAsUtc - representedAsUtc;
+    guess += correction;
+    if (!correction) break;
+  }
+  const check = Object.fromEntries(
+    formatter.formatToParts(new Date(guess))
+      .filter(part => part.type !== "literal")
+      .map(part => [part.type, Number(part.value)])
+  );
+  const exact = ["year","month","day","hour","minute","second"]
+    .every(key => check[key] === desired[key]);
+  return exact ? guess : null;
+}
+function timeZoneOffsetLabel(utcMs, timeZone) {
+  if (utcMs == null || !validIanaTimeZone(timeZone)) return timeZone || "";
+  try {
+    return new Intl.DateTimeFormat(currentLocale(), {
+      timeZone,
+      timeZoneName:"shortOffset",
+      hour:"2-digit",
+    }).formatToParts(new Date(utcMs))
+      .find(part => part.type === "timeZoneName")?.value || timeZone;
+  } catch {
+    return timeZone;
+  }
+}
+function flightDurationSeconds(item) {
+  if (!item || item.kind !== "flight") return null;
+  const departureUtc = zonedLocalToUtcMs(
+    item.date,
+    item.startTime,
+    item.departureTimezone
+  );
+  const arrivalUtc = zonedLocalToUtcMs(
+    item.endDate || item.date,
+    item.endTime,
+    item.arrivalTimezone
+  );
+  if (departureUtc == null || arrivalUtc == null || arrivalUtc <= departureUtc) return null;
+  return Math.round((arrivalUtc - departureUtc) / 1000);
+}
+function airportCodeFromText(value) {
+  const match = String(value || "").trim().toUpperCase().match(/^([A-Z0-9]{3,4})(?:\s|—|-|$)/);
+  return match?.[1] || "";
+}
+function airportDisplayValue(airport) {
+  return airport ? `${airport.iata || airport.icao} — ${airport.name}` : "";
+}
+function airportByCode(code) {
+  const normalized = String(code || "").trim().toUpperCase();
+  if (!normalized) return null;
+  return airportDirectory.find(airport =>
+    airport.iata === normalized || airport.icao === normalized
+  ) || null;
+}
+function selectedAirportFromInput(input) {
+  const datasetCode = input.dataset.airportCode || "";
+  const byDataset = airportByCode(datasetCode);
+  if (byDataset) return byDataset;
+  return airportByCode(airportCodeFromText(input.value));
+}
+function parseCsvRow(line) {
+  const values = [];
+  let current = "";
+  let quoted = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    if (char === '"') {
+      if (quoted && line[index + 1] === '"') {
+        current += '"';
+        index += 1;
+      } else {
+        quoted = !quoted;
+      }
+    } else if (char === "," && !quoted) {
+      values.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  values.push(current);
+  return values;
+}
+function parseAirportDirectoryCsv(csvText) {
+  const byIata = new Map();
+  String(csvText || "").split(/\r?\n/).slice(1).forEach(line => {
+    if (!line.trim()) return;
+    const row = parseCsvRow(line);
+    const [icaoRaw, iataRaw, nameRaw, cityRaw, , countryRaw, , , , tzRaw] = row;
+    const iata = String(iataRaw || "").trim().toUpperCase();
+    const icao = String(icaoRaw || "").trim().toUpperCase();
+    const tz = String(tzRaw || "").trim();
+    if (!/^[A-Z0-9]{3}$/.test(iata) || !tz) return;
+    const airport = {
+      iata,
+      icao,
+      name:String(nameRaw || "").trim(),
+      city:String(cityRaw || "").trim(),
+      country:String(countryRaw || "").trim(),
+      tz,
+    };
+    airport.search = `${airport.iata} ${airport.icao} ${airport.name} ${airport.city} ${airport.country}`.toLowerCase();
+    if (!byIata.has(iata)) byIata.set(iata, airport);
+  });
+  POPULAR_AIRPORTS.forEach(airport => byIata.set(airport.iata, airport));
+  return [...byIata.values()].sort((a, b) =>
+    a.iata.localeCompare(b.iata) || a.name.localeCompare(b.name)
+  );
+}
+function populateTimeZoneOptions() {
+  const datalist = document.getElementById("flight-time-zone-options");
+  if (!datalist) return;
+  let zones = [];
+  try {
+    zones = typeof Intl.supportedValuesOf === "function"
+      ? Intl.supportedValuesOf("timeZone")
+      : [];
+  } catch {}
+  if (!zones.length) zones = [...new Set(airportDirectory.map(airport => airport.tz).filter(Boolean))].sort();
+  datalist.innerHTML = zones.map(zone => `<option value="${esc(zone)}"></option>`).join("");
+}
+function updateAirportDirectoryHelp() {
+  const help = document.getElementById("flight-airport-help");
+  if (!help) return;
+  if (airportDirectoryLoaded) {
+    help.textContent = t("airportDirectoryReady", { count:airportDirectory.length });
+  } else if (airportDirectoryFailed) {
+    help.textContent = t("airportDirectoryFallback");
+  } else {
+    help.textContent = t("airportDirectoryLoading");
+  }
+}
+async function loadAirportDirectory() {
+  if (airportDirectoryLoaded || airportDirectoryFailed) return airportDirectory;
+  if (airportDirectoryPromise) return airportDirectoryPromise;
+  updateAirportDirectoryHelp();
+  airportDirectoryPromise = fetch(AIRPORT_DATA_URL, { cache:"force-cache" })
+    .then(response => {
+      if (!response.ok) throw new Error(`Airport directory HTTP ${response.status}`);
+      return response.text();
+    })
+    .then(text => {
+      const parsed = parseAirportDirectoryCsv(text);
+      if (parsed.length < POPULAR_AIRPORTS.length) throw new Error("Airport directory was incomplete");
+      airportDirectory = parsed;
+      airportDirectoryLoaded = true;
+      populateTimeZoneOptions();
+      updateAirportDirectoryHelp();
+      document.querySelectorAll("#f-from, #f-to").forEach(input => {
+        recognizeAirportInput(input, input.id === "f-from" ? "f-departure-timezone" : "f-arrival-timezone");
+      });
+      return airportDirectory;
+    })
+    .catch(error => {
+      console.warn("Could not load airport directory", error);
+      airportDirectoryFailed = true;
+      updateAirportDirectoryHelp();
+      populateTimeZoneOptions();
+      return airportDirectory;
+    })
+    .finally(() => {
+      airportDirectoryPromise = null;
+    });
+  return airportDirectoryPromise;
+}
+function recognizeAirportInput(input, timezoneInputId) {
+  const airport = selectedAirportFromInput(input);
+  if (!airport) return null;
+  input.dataset.airportCode = airport.iata;
+  input.dataset.airportIcao = airport.icao || "";
+  input.dataset.airportName = airport.name || "";
+  input.dataset.airportTimezone = airport.tz || "";
+  const timezoneInput = document.getElementById(timezoneInputId);
+  if (timezoneInput && !timezoneInput.value) timezoneInput.value = airport.tz || "";
+  return airport;
+}
+function setAirportInput(input, airport, timezoneInputId) {
+  input.value = airportDisplayValue(airport);
+  input.dataset.airportCode = airport.iata || "";
+  input.dataset.airportIcao = airport.icao || "";
+  input.dataset.airportName = airport.name || "";
+  input.dataset.airportTimezone = airport.tz || "";
+  const timezoneInput = document.getElementById(timezoneInputId);
+  if (timezoneInput) timezoneInput.value = airport.tz || "";
+  input.dispatchEvent(new Event("input", { bubbles:true }));
+  refreshFlightDurationDisplay();
+}
+function clearAirportDataset(input) {
+  delete input.dataset.airportCode;
+  delete input.dataset.airportIcao;
+  delete input.dataset.airportName;
+  delete input.dataset.airportTimezone;
+}
+function attachRouteAutocomplete(inputId, timezoneInputId) {
+  const input = document.getElementById(inputId);
+  const wrap = input?.closest(".suggest-wrap");
+  if (!input || !wrap) return;
+  const list = document.createElement("div");
+  list.className = "suggest-list";
+  wrap.appendChild(list);
+
+  function render() {
+    if (selectedKind() !== "flight") {
+      const query = input.value.trim().toLowerCase();
+      const options = PLACE_SUGGESTIONS[selectedKind()] || PLACE_SUGGESTIONS.other;
+      const matches = (query ? options.filter(option => option.toLowerCase().includes(query)) : options).slice(0, 8);
+      if (!matches.length) {
+        list.classList.remove("show");
+        list.innerHTML = "";
+        return;
+      }
+      list.innerHTML = matches.map(option =>
+        `<button type="button" class="suggest-item" data-place="${esc(option)}">${esc(option)}</button>`
+      ).join("");
+      list.classList.add("show");
+      return;
+    }
+
+    loadAirportDirectory();
+    const query = input.value.trim().toLowerCase();
+    const queryCode = airportCodeFromText(input.value).toLowerCase();
+    const source = query
+      ? airportDirectory.filter(airport =>
+          airport.search.includes(query) || (queryCode && airport.iata.toLowerCase().startsWith(queryCode))
+        )
+      : POPULAR_AIRPORTS;
+    const matches = source.slice(0, 12);
+    if (!matches.length) {
+      list.classList.remove("show");
+      list.innerHTML = "";
+      return;
+    }
+    list.innerHTML = matches.map(airport => `
+      <button type="button" class="suggest-item airport-suggest-item" data-airport="${esc(airport.iata)}">
+        <span class="airport-suggest-code">${esc(airport.iata)}</span>
+        <span class="airport-suggest-main">
+          <span class="airport-suggest-name">${esc(airport.name)}</span>
+          <span class="airport-suggest-meta">${esc([airport.city, airport.country, airport.tz].filter(Boolean).join(" · "))}</span>
+        </span>
+      </button>`).join("");
+    list.classList.add("show");
+  }
+
+  input.addEventListener("focus", render);
+  input.addEventListener("input", () => {
+    const selected = airportByCode(input.dataset.airportCode);
+    if (selected && input.value !== airportDisplayValue(selected)) {
+      clearAirportDataset(input);
+    }
+    render();
+  });
+  input.addEventListener("keydown", event => {
+    if (event.key === "Escape") list.classList.remove("show");
+  });
+  input.addEventListener("blur", () => {
+    setTimeout(() => {
+      list.classList.remove("show");
+      if (selectedKind() === "flight") {
+        recognizeAirportInput(input, timezoneInputId);
+        refreshFlightDurationDisplay();
+      }
+    }, 150);
+  });
+  list.addEventListener("pointerdown", event => {
+    const button = event.target.closest(".suggest-item");
+    if (!button) return;
+    event.preventDefault();
+    if (button.dataset.airport) {
+      const airport = airportByCode(button.dataset.airport);
+      if (airport) setAirportInput(input, airport, timezoneInputId);
+    } else if (button.dataset.place) {
+      input.value = button.dataset.place;
+      input.dispatchEvent(new Event("input", { bubbles:true }));
+    }
+    list.classList.remove("show");
+  });
+}
+function formFlightDurationSeconds() {
+  const departureUtc = zonedLocalToUtcMs(
+    document.getElementById("f-date").value,
+    document.getElementById("f-start").value,
+    document.getElementById("f-departure-timezone").value.trim()
+  );
+  const arrivalUtc = zonedLocalToUtcMs(
+    document.getElementById("f-end-date").value,
+    document.getElementById("f-end").value,
+    document.getElementById("f-arrival-timezone").value.trim()
+  );
+  if (departureUtc == null || arrivalUtc == null) return { seconds:null, departureUtc, arrivalUtc };
+  return {
+    seconds:Math.round((arrivalUtc - departureUtc) / 1000),
+    departureUtc,
+    arrivalUtc,
+  };
+}
+function refreshFlightDurationDisplay() {
+  if (selectedKind() !== "flight") return;
+  const durationInput = document.getElementById("f-duration");
+  const status = document.getElementById("flight-time-status");
+  const departureZone = document.getElementById("f-departure-timezone").value.trim();
+  const arrivalZone = document.getElementById("f-arrival-timezone").value.trim();
+  const hasAllValues = [
+    document.getElementById("f-date").value,
+    document.getElementById("f-start").value,
+    document.getElementById("f-end-date").value,
+    document.getElementById("f-end").value,
+    departureZone,
+    arrivalZone,
+  ].every(Boolean);
+
+  status.classList.remove("ok", "error");
+  if (!hasAllValues) {
+    durationInput.value = "";
+    setDurationPickerFromSeconds(0);
+    status.textContent = t("flightTimeMissing");
+    return;
+  }
+
+  const result = formFlightDurationSeconds();
+  if (result.departureUtc == null || result.arrivalUtc == null) {
+    durationInput.value = "";
+    setDurationPickerFromSeconds(0);
+    status.textContent = t("flightTimeInvalid");
+    status.classList.add("error");
+    return;
+  }
+  if (result.seconds <= 0) {
+    durationInput.value = "";
+    setDurationPickerFromSeconds(0);
+    status.textContent = t("flightArrivalBeforeDeparture");
+    status.classList.add("error");
+    return;
+  }
+
+  const duration = formatDurationSeconds(result.seconds);
+  durationInput.value = duration || "";
+  setDurationPickerFromSeconds(result.seconds);
+  status.textContent = t("flightTimeReady", {
+    duration,
+    departureZone:timeZoneOffsetLabel(result.departureUtc, departureZone),
+    arrivalZone:timeZoneOffsetLabel(result.arrivalUtc, arrivalZone),
+  });
+  status.classList.add("ok");
+}
+
 function fmtShortDate(dateStr) {
   if (!dateStr) return "";
   return new Date(dateStr + "T00:00:00").toLocaleDateString(currentLocale(), { month: "short", day: "numeric" });
@@ -3123,9 +3663,43 @@ function eventRowHtml(item, config, isLast) {
     </div>`;
 }
 
+
+function flightRouteDisplay(item) {
+  const departureCode = item.departureAirportCode || airportCodeFromText(item.fromPlace) || item.fromPlace || "—";
+  const arrivalCode = item.arrivalAirportCode || airportCodeFromText(item.toPlace) || item.toPlace || "—";
+  const arrivalDate = item.endDate || item.date;
+  const dayOffset = diffDaysDateStr(item.date, arrivalDate);
+  const durationSeconds = flightDurationSeconds(item);
+  const departureUtc = zonedLocalToUtcMs(item.date, item.startTime, item.departureTimezone);
+  const arrivalUtc = zonedLocalToUtcMs(arrivalDate, item.endTime, item.arrivalTimezone);
+  const departureZone = timeZoneOffsetLabel(departureUtc, item.departureTimezone);
+  const arrivalZone = timeZoneOffsetLabel(arrivalUtc, item.arrivalTimezone);
+  const offsetLabel = dayOffset
+    ? `<span class="flight-day-offset">${dayOffset > 0 ? `+${dayOffset}` : dayOffset}</span>`
+    : "";
+  return {
+    duration:durationSeconds ? formatDurationSeconds(durationSeconds) : null,
+    html:`<span class="flight-route-block">
+      <span class="flight-route-line">
+        <span class="flight-airport-code">${esc(departureCode)}</span>
+        <span class="flight-local-time">${esc(fmtShortDate(item.date))} ${esc(fmtTime(item.startTime))}</span>
+        <span class="flight-route-arrow">→</span>
+        <span class="flight-airport-code">${esc(arrivalCode)}</span>
+        <span class="flight-local-time">${esc(fmtShortDate(arrivalDate))} ${esc(fmtTime(item.endTime))}</span>
+        ${offsetLabel}
+      </span>
+      <span class="flight-duration-line">
+        ${durationSeconds ? esc(formatDurationSeconds(durationSeconds)) : esc(item.title)}
+        ${departureZone || arrivalZone ? ` · <span class="flight-timezone-label">${esc(departureZone)} → ${esc(arrivalZone)}</span>` : ""}
+      </span>
+    </span>`,
+  };
+}
+
 function transportRowHtml(item, config, isLast) {
   const dayDiff = item.endDate && item.endDate !== item.date ? diffDaysDateStr(item.date, item.endDate) : null;
-  const duration = fmtDuration(item.startTime, item.endTime, dayDiff);
+  const flightDisplay = item.kind === "flight" ? flightRouteDisplay(item) : null;
+  const duration = flightDisplay?.duration || fmtDuration(item.startTime, item.endTime, dayDiff);
   const displayColor = item.color || config.color;
   const price = money(item.price, effectiveCurrency(item));
   const mapUrl = safeHttpUrl(item.mapUrl);
@@ -3138,10 +3712,12 @@ function transportRowHtml(item, config, isLast) {
       </div>
       <div style="flex:1; min-width:0; display:flex; align-items:center; gap:10px;">
         <div class="transport-line" style="--dash-color:${rgba(displayColor, 0.62)};"></div>
-        <div class="transport-chip" style="--dash-border:${rgba(displayColor, 0.42)}; --dash-bg:${rgba(displayColor, 0.11)}; border-color:${rgba(displayColor, 0.42)}; background:${rgba(displayColor, 0.11)};">
+        <div class="transport-chip ${item.kind === "flight" ? "flight-chip" : ""}" style="--dash-border:${rgba(displayColor, 0.42)}; --dash-bg:${rgba(displayColor, 0.11)}; border-color:${rgba(displayColor, 0.42)}; background:${rgba(displayColor, 0.11)};">
           <span>${config.icon}</span>
-          <span class="transport-title" title="${esc(item.location || item.title)}">${esc(item.title)}</span>
-          ${duration ? `<span class="transport-meta">· ${duration}</span>` : ""}
+          ${flightDisplay
+            ? flightDisplay.html
+            : `<span class="transport-title" title="${esc(item.location || item.title)}">${esc(item.title)}</span>${duration ? `<span class="transport-meta">· ${duration}</span>` : ""}`
+          }
           ${price ? `<span class="transport-price">· ${price}</span>` : ""}
           ${mapUrl ? `<a href="${esc(mapUrl)}" target="_blank" rel="noopener noreferrer" class="icon-btn" title="${esc(item.location || "Open map")}" aria-label="${esc(item.location || "Open map")}">${iconSvg("map")}</a>` : ""}
           ${canEditTrip(tripById(item.tripId)) ? `<span class="transport-actions">
@@ -3208,6 +3784,14 @@ function updateKindSpecificFields(kind, preserveCategory = true) {
 
   document.getElementById("single-place-fields").style.display = isTransport ? "none" : "block";
   document.getElementById("route-place-fields").style.display = isTransport ? "grid" : "none";
+  const isFlight = kind === "flight";
+  document.getElementById("flight-airport-help").style.display = isFlight ? "block" : "none";
+  document.getElementById("flight-timezone-fields").style.display = isFlight ? "block" : "none";
+  document.getElementById("duration-picker").style.display = isFlight ? "none" : "grid";
+  document.getElementById("duration-picker-help").style.display = isFlight ? "none" : "block";
+  document.getElementById("overnight-help").style.display = isFlight ? "none" : "block";
+  document.getElementById("f-duration").readOnly = isFlight;
+  document.getElementById("f-duration").classList.toggle("flight-calculated", isFlight);
   document.getElementById("hotel-nights-row").style.display = kind === "hotel" ? "grid" : "none";
   document.getElementById("f-end-date").disabled = kind === "hotel";
   if (kind === "hotel") {
@@ -3222,7 +3806,20 @@ function updateKindSpecificFields(kind, preserveCategory = true) {
     document.getElementById("to-label").textContent = t("arrivalAirport");
     document.getElementById("f-from").placeholder = t("selectAirport");
     document.getElementById("f-to").placeholder = t("selectAirport");
+    document.getElementById("f-date-label").textContent = t("departureDate");
+    document.getElementById("f-start-label").textContent = t("departureTime");
+    document.getElementById("f-end-date-label").textContent = t("arrivalDate");
+    document.getElementById("f-end-label").textContent = t("arrivalTime");
+    document.getElementById("f-duration-label").textContent = t("flightDuration");
+    updateAirportDirectoryHelp();
+    loadAirportDirectory();
+    requestAnimationFrame(refreshFlightDurationDisplay);
   } else {
+    document.getElementById("f-date-label").textContent = t("date");
+    document.getElementById("f-start-label").textContent = t("start");
+    document.getElementById("f-end-date-label").textContent = t("endDate");
+    document.getElementById("f-end-label").textContent = t("end");
+    document.getElementById("f-duration-label").textContent = t("duration");
     document.getElementById("from-label").textContent = t("from");
     document.getElementById("to-label").textContent = t("to");
     document.getElementById("f-from").placeholder = t("origin");
@@ -3347,17 +3944,51 @@ function openItemModal(itemId) {
   document.getElementById("f-title").value = item?.title || "";
   document.getElementById("f-location").value = item?.location || "";
   const parsedRoute = splitRoute(item?.location || "");
-  document.getElementById("f-from").value = item?.fromPlace || parsedRoute[0];
-  document.getElementById("f-to").value = item?.toPlace || parsedRoute[1];
+  const fromInput = document.getElementById("f-from");
+  const toInput = document.getElementById("f-to");
+  clearAirportDataset(fromInput);
+  clearAirportDataset(toInput);
+  fromInput.value = item?.fromPlace || parsedRoute[0];
+  toInput.value = item?.toPlace || parsedRoute[1];
+
+  if (item?.departureAirportCode) {
+    fromInput.dataset.airportCode = item.departureAirportCode;
+    fromInput.dataset.airportIcao = item.departureAirportIcao || "";
+    fromInput.dataset.airportName = item.departureAirportName || "";
+    fromInput.dataset.airportTimezone = item.departureTimezone || "";
+  }
+  if (item?.arrivalAirportCode) {
+    toInput.dataset.airportCode = item.arrivalAirportCode;
+    toInput.dataset.airportIcao = item.arrivalAirportIcao || "";
+    toInput.dataset.airportName = item.arrivalAirportName || "";
+    toInput.dataset.airportTimezone = item.arrivalTimezone || "";
+  }
+
+  document.getElementById("f-departure-timezone").value = item?.departureTimezone || "";
+  document.getElementById("f-arrival-timezone").value = item?.arrivalTimezone || "";
   document.getElementById("f-map-link").value = item?.mapUrl || "";
   document.getElementById("f-date").value = item?.date || TODAY;
   document.getElementById("f-start").value = item?.startTime || "";
   document.getElementById("f-end").value = item?.endTime || "";
-  document.getElementById("f-end-date").value = item?.endDate || "";
+  document.getElementById("f-end-date").value = item?.kind === "flight"
+    ? (item?.endDate || item?.date || TODAY)
+    : (item?.endDate || "");
   document.getElementById("f-nights").value = item?.kind === "hotel" ? (item?.nights || 1) : "";
-  const initialDurationSeconds = elapsedSeconds(item?.date || TODAY, item?.startTime, item?.endDate, item?.endTime);
+  const initialDurationSeconds = item?.kind === "flight"
+    ? flightDurationSeconds(item)
+    : elapsedSeconds(item?.date || TODAY, item?.startTime, item?.endDate, item?.endTime);
   document.getElementById("f-duration").value = secondsToDurationText(initialDurationSeconds);
   setDurationPickerFromSeconds(initialDurationSeconds || 0);
+  if (kind === "flight") {
+    recognizeAirportInput(fromInput, "f-departure-timezone");
+    recognizeAirportInput(toInput, "f-arrival-timezone");
+    refreshFlightDurationDisplay();
+    loadAirportDirectory().then(() => {
+      recognizeAirportInput(fromInput, "f-departure-timezone");
+      recognizeAirportInput(toInput, "f-arrival-timezone");
+      refreshFlightDurationDisplay();
+    });
+  }
   document.getElementById("f-price").value = item?.price != null ? item.price : "";
   document.getElementById("f-notes").value = item?.notes || "";
 
@@ -3452,6 +4083,10 @@ function setDurationPickerFromSeconds(totalSeconds) {
   document.getElementById("f-duration-seconds").value = parts.seconds;
 }
 function applyDurationSeconds(totalSeconds) {
+  if (selectedKind() === "flight") {
+    refreshFlightDurationDisplay();
+    return;
+  }
   const date = document.getElementById("f-date").value || TODAY;
   const start = document.getElementById("f-start").value || "00:00";
   document.getElementById("f-start").value = start;
@@ -3465,6 +4100,10 @@ function applyDurationSeconds(totalSeconds) {
   syncingDurationFields = false;
 }
 function refreshDurationDisplay() {
+  if (selectedKind() === "flight") {
+    refreshFlightDurationDisplay();
+    return;
+  }
   if (syncingDurationFields) return;
   syncingDurationFields = true;
   const date = document.getElementById("f-date").value || TODAY;
@@ -3477,6 +4116,10 @@ function refreshDurationDisplay() {
   syncingDurationFields = false;
 }
 document.getElementById("f-duration").addEventListener("change", () => {
+  if (selectedKind() === "flight") {
+    refreshFlightDurationDisplay();
+    return;
+  }
   if (syncingDurationFields) return;
   const raw = document.getElementById("f-duration").value.trim();
   if (!raw) { setDurationPickerFromSeconds(0); return; }
@@ -3490,6 +4133,10 @@ DURATION_PICKER_IDS.forEach(id => document.getElementById(id).addEventListener("
 }));
 ["f-date", "f-start", "f-end", "f-end-date"].forEach(id => {
   document.getElementById(id).addEventListener("change", refreshDurationDisplay);
+});
+["f-departure-timezone", "f-arrival-timezone"].forEach(id => {
+  document.getElementById(id).addEventListener("input", refreshFlightDurationDisplay);
+  document.getElementById(id).addEventListener("change", refreshFlightDurationDisplay);
 });
 document.getElementById("f-nights").addEventListener("input", () => {
   const nights = Math.max(1, Number(document.getElementById("f-nights").value) || 1);
@@ -3505,13 +4152,20 @@ document.getElementById("f-date").addEventListener("change", () => {
 document.getElementById("item-save").addEventListener("click", () => {
   const targetTrip = tripById(document.getElementById("f-trip").value);
   if (!canEditTrip(targetTrip)) return;
-  const title = document.getElementById("f-title").value.trim();
+  let title = document.getElementById("f-title").value.trim();
+  const kind = selectedKind();
+  if (!title && kind === "flight") {
+    const departureLabel = airportCodeFromText(document.getElementById("f-from").value) || document.getElementById("f-from").value.trim();
+    const arrivalLabel = airportCodeFromText(document.getElementById("f-to").value) || document.getElementById("f-to").value.trim();
+    title = [departureLabel, arrivalLabel].filter(Boolean).join(" → ");
+    document.getElementById("f-title").value = title;
+  }
   if (!title) {
     document.getElementById("f-title").focus();
     return;
   }
 
-  const kind = selectedKind();
+
   const config = KIND_CONFIG[kind] || KIND_CONFIG.other;
   const fromPlace = document.getElementById("f-from").value.trim();
   const toPlace = document.getElementById("f-to").value.trim();
@@ -3538,7 +4192,33 @@ document.getElementById("item-save").addEventListener("click", () => {
     nights = Math.max(1, Number(document.getElementById("f-nights").value) || 1);
     endDateVal = addDaysToDateStr(dateVal, nights);
   }
-  if (endDateVal === dateVal) endDateVal = "";
+  if (endDateVal === dateVal && kind !== "flight") endDateVal = "";
+
+  const departureAirport = kind === "flight"
+    ? selectedAirportFromInput(document.getElementById("f-from"))
+    : null;
+  const arrivalAirport = kind === "flight"
+    ? selectedAirportFromInput(document.getElementById("f-to"))
+    : null;
+  const departureTimezone = kind === "flight"
+    ? document.getElementById("f-departure-timezone").value.trim()
+    : "";
+  const arrivalTimezone = kind === "flight"
+    ? document.getElementById("f-arrival-timezone").value.trim()
+    : "";
+
+  if (kind === "flight") {
+    const flightResult = formFlightDurationSeconds();
+    if (flightResult.departureUtc == null || flightResult.arrivalUtc == null || flightResult.seconds <= 0) {
+      alert(
+        flightResult.seconds != null && flightResult.seconds <= 0
+          ? t("flightArrivalBeforeDeparture")
+          : t("flightTimeInvalid")
+      );
+      document.getElementById("flight-time-status").scrollIntoView({ block:"center" });
+      return;
+    }
+  }
 
   const form = {
     tripId: document.getElementById("f-trip").value,
@@ -3547,6 +4227,14 @@ document.getElementById("item-save").addEventListener("click", () => {
     location,
     fromPlace: config.transport ? fromPlace : "",
     toPlace: config.transport ? toPlace : "",
+    departureAirportCode: departureAirport?.iata || (kind === "flight" ? airportCodeFromText(fromPlace) : ""),
+    departureAirportName: departureAirport?.name || "",
+    departureAirportIcao: departureAirport?.icao || "",
+    departureTimezone,
+    arrivalAirportCode: arrivalAirport?.iata || (kind === "flight" ? airportCodeFromText(toPlace) : ""),
+    arrivalAirportName: arrivalAirport?.name || "",
+    arrivalAirportIcao: arrivalAirport?.icao || "",
+    arrivalTimezone,
     mapUrl,
     date: dateVal,
     endDate: endDateVal,
@@ -6271,8 +6959,9 @@ initTimelineTouchReorder();
 initTripListTouchReorder();
 attachAutocomplete("f-title", () => TITLE_SUGGESTIONS[selectedKind()] || TITLE_SUGGESTIONS.other);
 attachAutocomplete("f-location", () => PLACE_SUGGESTIONS[selectedKind()] || PLACE_SUGGESTIONS.other);
-attachAutocomplete("f-from", () => PLACE_SUGGESTIONS[selectedKind()] || PLACE_SUGGESTIONS.other);
-attachAutocomplete("f-to", () => PLACE_SUGGESTIONS[selectedKind()] || PLACE_SUGGESTIONS.other);
+attachRouteAutocomplete("f-from", "f-departure-timezone");
+attachRouteAutocomplete("f-to", "f-arrival-timezone");
+populateTimeZoneOptions();
 renderAll();
 initCollaboration();
 </script>
