@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board font-size fix — compact editor typography and scalable controls -->
+<!-- Voyage Board v12 — account-wide cross-device trip and preference synchronization -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -987,176 +987,94 @@
   }
 
 
-  /* ================================================================
-     Unified font sizing — the App Settings choice adds/subtracts one
-     constant from the whole interface instead of scaling only a few
-     individual components.
-     ================================================================ */
-  :root {
-    --vb-font-delta: 0px;
-    --vb-font-base: calc(11.5px + var(--vb-font-delta));
-    --vb-font-title: calc(13.5px + var(--vb-font-delta));
-    --vb-font-date: calc(13px + var(--vb-font-delta));
-    --vb-editor-font: calc(10.25px + var(--vb-font-delta));
-    --vb-editor-title: calc(12px + var(--vb-font-delta));
-    --vb-icon-button: 28px;
-    --vb-icon-glyph: 12px;
-  }
-  html[data-font-size="small"] {
-    --vb-font-delta: -1.5px;
-    --vb-icon-button: 26px;
-    --vb-icon-glyph: 11px;
-  }
-  html[data-font-size="normal"] {
-    --vb-font-delta: 0px;
-    --vb-icon-button: 28px;
-    --vb-icon-glyph: 12px;
-  }
-  html[data-font-size="big"] {
-    --vb-font-delta: 1.75px;
-    --vb-icon-button: 32px;
-    --vb-icon-glyph: 14px;
-  }
-
-  /* One normal text size across the app. The small number of selectors
-     below are deliberately larger because they are titles or dates. */
-  body,
-  body * {
-    font-size: var(--vb-font-base) !important;
-  }
-  .brand-title,
-  .ticket-name,
-  .event-title,
-  .date-full,
-  .modal-head h3,
-  .chat-system-title,
-  .chat-activity-summary-title,
-  .backup-row-title,
-  .hotel-menu-card-main strong,
-  .chat-image-viewer-title,
-  .empty-state .big {
-    font-size: var(--vb-font-title) !important;
-    line-height: 1.3;
-  }
-  .flip-day,
-  .row-time,
-  #mobile-trip-select,
-  .date-dow {
-    font-size: var(--vb-font-date) !important;
-  }
-
-  /* Edit pages are intentionally denser than the schedule page. */
-  #item-overlay,
-  #trip-overlay {
-    --vb-font-base: var(--vb-editor-font);
-    --vb-font-title: var(--vb-editor-title);
-  }
-  #item-overlay .modal-head,
-  #trip-overlay .modal-head {
-    padding-top: 13px;
-  }
-  #item-overlay .modal-body,
-  #trip-overlay .modal-body {
-    padding-top: 9px;
-    padding-bottom: 12px;
-  }
-  #item-overlay .field-label,
-  #trip-overlay .field-label {
-    margin-top: 8px;
-    margin-bottom: 3px;
-    letter-spacing: .025em;
-  }
-  #item-overlay .field-help,
-  #trip-overlay .field-help,
-  #item-overlay .muted-box,
-  #trip-overlay .muted-box {
-    line-height: 1.35;
-  }
-  #item-overlay .field-input,
-  #trip-overlay .field-input,
-  #item-overlay .field-action,
-  #trip-overlay .field-action,
-  #item-overlay .kind-opt,
-  #trip-overlay .kind-opt,
-  #item-overlay .btn,
-  #trip-overlay .btn {
-    font-size: var(--vb-editor-font) !important;
-  }
-  #item-overlay .field-input,
-  #trip-overlay .field-input {
-    padding: 6px 8px;
-  }
-  #item-overlay textarea.field-input,
-  #trip-overlay textarea.field-input {
-    min-height: 48px;
-  }
-  #item-overlay .kind-opt {
-    padding: 6px 3px;
-    gap: 2px;
-  }
-  #item-overlay .duration-unit input {
-    font-size: calc(var(--vb-editor-font) + 1px) !important;
-    padding-top: 6px;
-  }
-  #item-overlay .duration-unit span {
-    font-size: calc(var(--vb-editor-font) - 1px) !important;
-    padding-bottom: 5px;
-  }
-  #item-overlay .modal-foot,
-  #trip-overlay .modal-foot {
-    padding-top: 9px;
-    padding-bottom: 9px;
-  }
-
-  /* Smaller edit/delete controls. Their glyph and button size both follow
-     the selected global font-size option. */
-  .icon-btn,
-  .event-actions .icon-btn,
-  .transport-actions .icon-btn,
-  .member-row .icon-btn,
-  .hotel-menu-actions .icon-btn {
-    width: var(--vb-icon-button) !important;
-    height: var(--vb-icon-button) !important;
-    min-width: var(--vb-icon-button) !important;
-    min-height: var(--vb-icon-button) !important;
-    border-radius: calc(var(--vb-icon-button) * .24) !important;
-    padding: 0 !important;
-  }
-  .icon-btn .ui-icon,
-  .event-actions .icon-btn .ui-icon,
-  .transport-actions .icon-btn .ui-icon,
-  .member-row .icon-btn .ui-icon,
-  .hotel-menu-actions .icon-btn .ui-icon {
-    width: var(--vb-icon-glyph) !important;
-    height: var(--vb-icon-glyph) !important;
-  }
-
-  /* The App Settings preview itself must visibly demonstrate the choices. */
-  .font-size-preview.small { font-size: calc(var(--vb-font-base) - 1px) !important; }
-  .font-size-preview.normal { font-size: var(--vb-font-base) !important; }
-  .font-size-preview.big { font-size: calc(var(--vb-font-base) + 2px) !important; }
-
-  @media (max-width: 720px) {
-    /* Keep mobile edit fields at 16px to avoid Safari focus zoom. Labels,
-       help text, buttons, and the rest of the editor remain compact and
-       continue to react to the global font-size setting. */
+  /* Mobile Edit entry typography — intentionally scoped to #item-overlay. */
+  @media (max-width:720px) {
+    #item-overlay .modal-head {
+      padding:14px 14px 0;
+    }
+    #item-overlay .modal-head h3 {
+      font-size:13px;
+      line-height:1.25;
+    }
+    #item-overlay .modal-close {
+      width:28px;
+      height:28px;
+      padding:0;
+      font-size:12px;
+    }
+    #item-overlay .modal-body {
+      padding:10px 14px 16px;
+      font-size:11px;
+    }
+    #item-overlay .field-label {
+      margin-top:9px;
+      margin-bottom:3px;
+      font-size:10px;
+      line-height:1.3;
+      letter-spacing:.025em;
+    }
+    #item-overlay .field-help,
+    #item-overlay .muted-box {
+      margin-top:3px;
+      font-size:9.5px;
+      line-height:1.4;
+    }
     #item-overlay input,
     #item-overlay select,
     #item-overlay textarea,
-    #trip-overlay input,
-    #trip-overlay select,
-    #trip-overlay textarea {
-      font-size: 16px !important;
+    #item-overlay .field-input {
+      min-height:36px;
+      padding:6px 8px;
+      font-size:13px !important;
+      line-height:1.35;
     }
-    .icon-btn,
-    .event-actions .icon-btn,
-    .transport-actions .icon-btn,
-    .member-row .icon-btn,
-    .hotel-menu-actions .icon-btn {
-      width: calc(var(--vb-icon-button) + 2px) !important;
-      height: calc(var(--vb-icon-button) + 2px) !important;
-      min-width: calc(var(--vb-icon-button) + 2px) !important;
-      min-height: calc(var(--vb-icon-button) + 2px) !important;
+    #item-overlay textarea.field-input {
+      min-height:50px;
+    }
+    #item-overlay .field-action {
+      min-height:36px;
+      padding:0 9px;
+      font-size:10.5px;
+    }
+    #item-overlay .kind-grid {
+      gap:5px;
+      margin-bottom:5px;
+    }
+    #item-overlay .kind-opt {
+      padding:6px 3px;
+      gap:3px;
+      font-size:9px;
+    }
+    #item-overlay .kind-opt span {
+      font-size:13px !important;
+    }
+    #item-overlay .duration-picker {
+      gap:5px;
+      margin-top:6px;
+    }
+    #item-overlay .duration-unit input {
+      min-height:0;
+      padding:6px 2px 2px;
+      font-size:12.5px !important;
+      line-height:1.2;
+    }
+    #item-overlay .duration-unit span {
+      padding:0 2px 5px;
+      font-size:7.5px;
+      line-height:1.1;
+    }
+    #item-overlay .grid-2,
+    #item-overlay .grid-3 {
+      gap:0;
+    }
+    #item-overlay .modal-foot {
+      padding:9px 14px calc(9px + env(safe-area-inset-bottom));
+    }
+    #item-overlay .modal-foot .btn,
+    #item-overlay .modal-foot .btn-danger-text {
+      min-height:34px;
+      padding:6px 10px;
+      font-size:11px;
     }
   }
 
@@ -1958,6 +1876,21 @@ let pendingDelete = null;
 let draftThemeChoice = null;
 let draftFontSizeChoice = null;
 
+const ORIGINAL_VIEWPORT_CONTENT =
+  document.querySelector('meta[name="viewport"]')?.getAttribute("content")
+  || "width=device-width, initial-scale=1.0";
+
+function setItemEditorViewportLock(locked) {
+  const viewport = document.querySelector('meta[name="viewport"]');
+  if (!viewport || !window.matchMedia("(max-width: 720px)").matches) return;
+  viewport.setAttribute(
+    "content",
+    locked
+      ? "width=device-width, initial-scale=1.0, maximum-scale=1.0"
+      : ORIGINAL_VIEWPORT_CONTENT
+  );
+}
+
 const HISTORY_LIMIT = 100;
 const undoStack = [];
 const redoStack = [];
@@ -2055,6 +1988,7 @@ function recordHistoryCheckpoint() {
 function applyHistorySnapshot(snapshot) {
   if (!snapshot) return;
   historyApplying = true;
+  setItemEditorViewportLock(false);
   document.querySelectorAll(".overlay.show").forEach(overlay => overlay.classList.remove("show"));
   editingItemId = null;
   editingTripId = null;
@@ -2591,6 +2525,7 @@ function attachMobileNavToOverlay(overlayId, activeView) {
   bindMobileNav(root, activeView);
 }
 function closeMobileSectionOverlays() {
+  setItemEditorViewportLock(false);
   ["spend-overlay", "trip-overlay", "app-overlay", "share-overlay", "chat-overlay", "backup-overlay", "account-overlay", "hotel-overlay", "item-overlay"].forEach(id => document.getElementById(id)?.classList.remove("show"));
   document.getElementById("f-trip")?.removeAttribute("disabled");
   editingItemId = null;
@@ -2715,6 +2650,10 @@ function renderSidebar() {
       }
       state.activeTripId = button.dataset.trip;
       renderAll();
+      const selected = tripById(button.dataset.trip);
+      if (selected?.remoteId && collabUser) {
+        loadRemoteTrip(selected.remoteId, true).catch(() => false);
+      }
     });
   });
 
@@ -2779,6 +2718,10 @@ function renderToolbarSelect() {
   select.onchange = () => {
     state.activeTripId = select.value;
     renderAll();
+    const selected = tripById(select.value);
+    if (selected?.remoteId && collabUser) {
+      loadRemoteTrip(selected.remoteId, true).catch(() => false);
+    }
   };
 }
 
@@ -3150,12 +3093,14 @@ function openItemModal(itemId) {
   renderCategoryOptions(item?.categoryId || kindToCategory(kind));
 
   document.getElementById("custom-category-row").classList.remove("show");
+  setItemEditorViewportLock(true);
   document.getElementById("item-overlay").classList.add("show");
   document.getElementById("f-title").focus({ preventScroll: true });
   document.querySelector("#item-overlay .modal-body").scrollTop = 0;
 }
 
 function closeItemModal() {
+  setItemEditorViewportLock(false);
   document.getElementById("item-overlay").classList.remove("show");
   document.getElementById("f-trip").disabled = false;
   document.getElementById("item-overlay").dataset.hotelEditor = "false";
@@ -3504,11 +3449,10 @@ function openAppSettings() {
   });
   document.getElementById("app-overlay").classList.add("show");
 }
-function closeAppSettings({ keepFontPreview = false } = {}) {
+function closeAppSettings() {
   document.getElementById("app-overlay").classList.remove("show");
   draftThemeChoice = null;
   draftFontSizeChoice = null;
-  if (!keepFontPreview) applyTheme();
 }
 document.getElementById("app-settings-btn").addEventListener("click", openAppSettings);
 document.getElementById("app-close").addEventListener("click", closeAppSettings);
@@ -3523,16 +3467,16 @@ document.querySelectorAll("[data-theme-choice]").forEach(button => {
 document.querySelectorAll("[data-font-size-choice]").forEach(button => {
   button.addEventListener("click", () => {
     draftFontSizeChoice = button.dataset.fontSizeChoice;
-    document.documentElement.dataset.fontSize = draftFontSizeChoice;
     document.querySelectorAll("[data-font-size-choice]").forEach(candidate => candidate.classList.toggle("active", candidate === button));
   });
 });
-document.getElementById("app-save").addEventListener("click", () => {
+document.getElementById("app-save").addEventListener("click", async () => {
   state.settings.language = document.getElementById("s-language").value;
   state.settings.theme = draftThemeChoice || state.settings.theme || "dark";
   state.settings.fontSize = draftFontSizeChoice || state.settings.fontSize || "normal";
-  closeAppSettings({ keepFontPreview:true });
+  closeAppSettings();
   renderAll();
+  await saveCloudAppSettings();
 });
 
 // ---------------------------------------------------------------------------
@@ -3982,7 +3926,7 @@ const COLLAB_I18N = {
     viewOnlyBanner:"View-only access — changes are disabled.", shareTitle:"Share & collaborate", accountTitle:"Account & sign in", done:"Done", email:"Email",
     authHelp:"Sign in once to access shared trips across the app.", shareAuthHelp:"Sign in first. Your account is global, while sharing remains configured separately for this trip.", globalAccountHelp:"This sign-in is shared across every trip. Sharing permissions still remain separate for each trip.", signIn:"Sign in", account:"Account", sendSignIn:"Send sign-in link", signOut:"Sign out",
     signInSent:"A sign-in link was sent. Open it in this same browser.", sessionNote:"Normal browsing keeps you signed in on this device. Private browsing forgets the session when all private tabs are closed.", resendIn:"Send again in {seconds}s", emailRateLimited:"Too many sign-in emails were requested. Wait for the email limit to reset, or configure custom SMTP in Supabase.", configMissing:"Cloud collaboration is not configured yet. Add the Supabase URL and publishable key to COLLAB_CONFIG, run the supplied SQL, and host this file over HTTPS.",
-    publishTitle:"Publish this trip", publishHelp:"This trip is currently stored only in this browser. Publishing creates a cloud copy and a stable shared URL.", publish:"Create shared trip",
+    publishTitle:"Publish this trip", publishHelp:"This trip is stored only on this device. Sync it once to make it available automatically on every device signed in to your account.", publish:"Create shared trip",
     yourAccess:"Your access", owner:"Owner", admin:"Administrator", editor:"Can edit", viewer:"View only",
     memberLink:"Link for existing members", memberLinkHelp:"People must already be members. Create an invitation below for a new person.", copy:"Copy", copied:"Copied.",
     inviteTitle:"Invite a collaborator", createInvite:"Create invite", invitationLink:"Invitation link", emailInvite:"Email", members:"People with access",
@@ -4247,6 +4191,10 @@ let selectedChatImage = null;
 let selectedChatImagePreviewUrl = "";
 let chatImageUrls = new Map();
 let backupCache = [];
+let accountTripSyncInFlight = null;
+let lastAccountTripSyncAt = 0;
+let accountTripRefreshTimer = null;
+const ACCOUNT_TRIP_REFRESH_MS = 60 * 1000;
 const CHAT_MEDIA_BUCKET = "voyage-chat-media";
 const CHAT_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
 const CHAT_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
@@ -4303,9 +4251,58 @@ function safeJsonParse(value, fallback = null) {
 function normalizeProfileVisibility(value) {
   return ["role", "name", "email", "hidden"].includes(value) ? value : "role";
 }
+function normalizedCloudAppSettings(value) {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  return {
+    language: ["en", "zh-TW", "ja"].includes(source.language) ? source.language : null,
+    theme: ["dark", "light"].includes(source.theme) ? source.theme : null,
+    fontSize: ["small", "normal", "big"].includes(source.fontSize) ? source.fontSize : null,
+  };
+}
+function cloudAppSettingsPayload() {
+  return {
+    language: currentLanguage(),
+    theme: state.settings?.theme || "dark",
+    fontSize: state.settings?.fontSize || "normal",
+  };
+}
+function applyCloudAppSettings(value) {
+  const incoming = normalizedCloudAppSettings(value);
+  let changed = false;
+  Object.entries(incoming).forEach(([key, setting]) => {
+    if (setting && state.settings[key] !== setting) {
+      state.settings[key] = setting;
+      changed = true;
+    }
+  });
+  if (changed) {
+    applyTheme();
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+  }
+  return changed;
+}
+async function saveCloudAppSettings() {
+  if (!supabaseClient || !collabUser) return false;
+  const payload = {
+    app_settings: cloudAppSettingsPayload(),
+    updated_at: new Date().toISOString(),
+  };
+  const { data, error } = await supabaseClient
+    .from("voyage_user_profiles")
+    .update(payload)
+    .eq("user_id", collabUser.id)
+    .select("user_id,email,display_name,visibility,app_settings")
+    .single();
+  if (error) {
+    console.warn("Could not save cross-device app settings", error);
+    return false;
+  }
+  ownProfile = { ...(ownProfile || {}), ...data };
+  return true;
+}
 async function ensureOwnProfile() {
   if (!supabaseClient || !collabUser) return null;
-  const { data, error } = await supabaseClient.from("voyage_user_profiles").select("user_id,email,display_name,visibility").eq("user_id", collabUser.id).maybeSingle();
+  const { data, error } = await supabaseClient.from("voyage_user_profiles").select("user_id,email,display_name,visibility,app_settings").eq("user_id", collabUser.id).maybeSingle();
   if (error) { console.warn("Could not load identity profile", error); return null; }
   if (data) {
     ownProfile = data;
@@ -4314,8 +4311,8 @@ async function ensureOwnProfile() {
       ownProfile.email = collabUser.email;
     }
   } else {
-    const created = { user_id: collabUser.id, email: collabUser.email || "", display_name: "", visibility: "role" };
-    const { data: inserted, error: insertError } = await supabaseClient.from("voyage_user_profiles").insert(created).select("user_id,email,display_name,visibility").single();
+    const created = { user_id: collabUser.id, email: collabUser.email || "", display_name: "", visibility: "role", app_settings: cloudAppSettingsPayload() };
+    const { data: inserted, error: insertError } = await supabaseClient.from("voyage_user_profiles").insert(created).select("user_id,email,display_name,visibility,app_settings").single();
     if (insertError) { console.warn("Could not create identity profile", insertError); return null; }
     ownProfile = inserted;
   }
@@ -4323,6 +4320,7 @@ async function ensureOwnProfile() {
   const visibility = document.getElementById("profile-visibility");
   if (nameInput) nameInput.value = ownProfile.display_name || "";
   if (visibility) visibility.value = normalizeProfileVisibility(ownProfile.visibility);
+  applyCloudAppSettings(ownProfile.app_settings);
   return ownProfile;
 }
 function setProfileStatus(message = "", isError = false) {
@@ -4336,8 +4334,8 @@ async function saveOwnProfile() {
   const displayName = document.getElementById("profile-display-name").value.trim();
   const visibility = normalizeProfileVisibility(document.getElementById("profile-visibility").value);
   if (visibility === "name" && !displayName) return setProfileStatus(ct("profileNameRequired"), true);
-  const payload = { user_id: collabUser.id, email: collabUser.email || "", display_name: displayName, visibility, updated_at: new Date().toISOString() };
-  const { data, error } = await supabaseClient.from("voyage_user_profiles").upsert(payload, { onConflict: "user_id" }).select("user_id,email,display_name,visibility").single();
+  const payload = { user_id: collabUser.id, email: collabUser.email || "", display_name: displayName, visibility, app_settings: cloudAppSettingsPayload(), updated_at: new Date().toISOString() };
+  const { data, error } = await supabaseClient.from("voyage_user_profiles").upsert(payload, { onConflict: "user_id" }).select("user_id,email,display_name,visibility,app_settings").single();
   if (error) return setProfileStatus(error.message, true);
   ownProfile = data;
   setProfileStatus(ct("profileSaved"));
@@ -5319,11 +5317,22 @@ function sharedDocument(trip) {
     items: state.items.filter(item => item.tripId === trip.id).map(item => ({ ...item })),
   };
 }
-function applySharedDocument(remoteId, documentData, role, version, updatedAt = "") {
-  if (!documentData?.trip || !Array.isArray(documentData.items)) return;
-  const existing = state.trips.find(trip => trip.remoteId === remoteId);
+function applySharedDocument(remoteId, documentData, role, version, updatedAt = "", options = {}) {
+  if (!documentData?.trip || !Array.isArray(documentData.items)) return null;
+  const {
+    activate = true,
+    render = true,
+    persistLocal = true,
+  } = options;
+
+  // Match either an already-known remote trip or the original local trip ID.
+  // This prevents duplicate copies when another device still has the same
+  // trip locally but has not yet learned its remote UUID.
+  const existing = state.trips.find(trip => trip.remoteId === remoteId)
+    || state.trips.find(trip => !trip.remoteId && trip.id === documentData.trip.id);
   let localId = existing?.id || documentData.trip.id || uid();
   if (!existing && state.trips.some(trip => trip.id === localId && trip.remoteId !== remoteId)) localId = uid();
+
   const incomingTrip = {
     ...documentData.trip,
     id: localId,
@@ -5337,6 +5346,8 @@ function applySharedDocument(remoteId, documentData, role, version, updatedAt = 
   incomingTrip.color = incomingTrip.color || TRIP_PALETTE[0];
   incomingTrip.order = existing?.order ?? incomingTrip.order ?? orderedTrips().length;
 
+  const previousSuppressRemoteSave = suppressRemoteSave;
+  const previousHistorySuspended = historySuspended;
   suppressRemoteSave = true;
   historySuspended = true;
   try {
@@ -5344,13 +5355,17 @@ function applySharedDocument(remoteId, documentData, role, version, updatedAt = 
     else state.trips.push(incomingTrip);
     state.items = state.items.filter(item => item.tripId !== localId);
     state.items.push(...documentData.items.map(item => ({ ...item, tripId: localId })));
-    state.activeTripId = localId;
-    (existing || incomingTrip).remoteSnapshot = JSON.stringify(sharedDocument(existing || incomingTrip));
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
-    renderAll();
+    if (activate) state.activeTripId = localId;
+    const merged = existing || incomingTrip;
+    merged.remoteSnapshot = JSON.stringify(sharedDocument(merged));
+    if (persistLocal) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+    }
+    if (render) renderAll();
+    return merged;
   } finally {
-    suppressRemoteSave = false;
-    historySuspended = false;
+    suppressRemoteSave = previousSuppressRemoteSave;
+    historySuspended = previousHistorySuspended;
   }
 }
 async function fetchRole(remoteId) {
@@ -5359,7 +5374,109 @@ async function fetchRole(remoteId) {
   if (error) throw error;
   return data || null;
 }
-async function loadRemoteTrip(remoteId, silent = false) {
+function removeInaccessibleRemoteTrips(accessibleRemoteIds) {
+  const removedLocalIds = new Set(
+    state.trips
+      .filter(trip => trip.remoteId && !accessibleRemoteIds.has(trip.remoteId))
+      .map(trip => trip.id)
+  );
+  if (!removedLocalIds.size) return;
+  state.items = state.items.filter(item => !removedLocalIds.has(item.tripId));
+  state.trips = state.trips.filter(trip => !removedLocalIds.has(trip.id));
+}
+async function syncAccountTrips(options = {}) {
+  if (!supabaseClient || !collabUser) return false;
+  if (accountTripSyncInFlight) return accountTripSyncInFlight;
+
+  const {
+    preferredRemoteId = null,
+    removeRevoked = true,
+    force = false,
+  } = options;
+  const now = Date.now();
+  if (!force && !preferredRemoteId && now - lastAccountTripSyncAt < ACCOUNT_TRIP_REFRESH_MS) {
+    return true;
+  }
+
+  accountTripSyncInFlight = (async () => {
+    const previousActive = activeTrip();
+    const previousActiveRemoteId = previousActive?.remoteId || null;
+    const previousActiveLocalId = previousActive?.id || null;
+    const { data, error } = await supabaseClient.rpc("list_voyage_account_trips");
+
+    if (error) {
+      console.warn("Could not load account trip library", error);
+      if (/list_voyage_account_trips/i.test(error.message || "")) {
+        updateSyncStatus("error");
+      }
+      return false;
+    }
+
+    const rows = Array.isArray(data) ? data : [];
+    const accessibleRemoteIds = new Set(rows.map(row => row.trip_id));
+    const previousSuppressRemoteSave = suppressRemoteSave;
+    const previousHistorySuspended = historySuspended;
+    suppressRemoteSave = true;
+    historySuspended = true;
+    try {
+      rows.forEach(row => {
+        applySharedDocument(
+          row.trip_id,
+          row.document,
+          row.role,
+          row.version,
+          row.updated_at,
+          { activate:false, render:false, persistLocal:false }
+        );
+      });
+
+      if (removeRevoked) removeInaccessibleRemoteTrips(accessibleRemoteIds);
+
+      const preferredTrip = preferredRemoteId
+        ? state.trips.find(trip => trip.remoteId === preferredRemoteId)
+        : null;
+      const previousRemoteTrip = previousActiveRemoteId
+        ? state.trips.find(trip => trip.remoteId === previousActiveRemoteId)
+        : null;
+      const previousLocalTrip = previousActiveLocalId
+        ? state.trips.find(trip => trip.id === previousActiveLocalId)
+        : null;
+      const firstCloudTrip = rows.length
+        ? state.trips.find(trip => trip.remoteId === rows[0].trip_id)
+        : null;
+
+      state.activeTripId = (
+        preferredTrip
+        || previousRemoteTrip
+        || previousLocalTrip
+        || firstCloudTrip
+        || orderedTrips()[0]
+        || {}
+      ).id || null;
+
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+      lastAccountTripSyncAt = Date.now();
+      renderAll();
+      return true;
+    } finally {
+      suppressRemoteSave = previousSuppressRemoteSave;
+      historySuspended = previousHistorySuspended;
+    }
+  })().finally(() => {
+    accountTripSyncInFlight = null;
+  });
+
+  return accountTripSyncInFlight;
+}
+function scheduleAccountTripRefresh(delay = 100) {
+  clearTimeout(accountTripRefreshTimer);
+  accountTripRefreshTimer = setTimeout(() => {
+    if (collabUser && document.visibilityState !== "hidden") {
+      syncAccountTrips({ force:true }).catch(() => false);
+    }
+  }, delay);
+}
+async function loadRemoteTrip(remoteId, silent = false, options = {}) {
   if (!supabaseClient || !collabUser) return false;
   if (!silent) setCollabMessage(ct("loading"));
 
@@ -5380,8 +5497,19 @@ async function loadRemoteTrip(remoteId, silent = false) {
   if (!role) { setCollabMessage(ct("accessDenied"), true); return false; }
   const { data, error } = await supabaseClient.from("voyage_trips").select("id,name,document,version,updated_at").eq("id", remoteId).single();
   if (error) { setCollabMessage(ct("accessDenied"), true); return false; }
-  applySharedDocument(remoteId, data.document, role, data.version, data.updated_at);
-  await registerCurrentParticipant(activeTrip()).catch(() => false);
+  const loadedTrip = applySharedDocument(
+    remoteId,
+    data.document,
+    role,
+    data.version,
+    data.updated_at,
+    {
+      activate: options.activate !== false,
+      render: options.render !== false,
+      persistLocal: options.persistLocal !== false,
+    }
+  );
+  await registerCurrentParticipant(loadedTrip || activeTrip()).catch(() => false);
   if (!silent) setCollabMessage(ct("remoteLoaded"));
   return true;
 }
@@ -5495,6 +5623,7 @@ async function publishActiveTrip() {
   history.replaceState({}, "", tripMemberUrl(trip.remoteId));
   renderAll();
   setCollabMessage(ct("remotePublished"));
+  await syncAccountTrips({ preferredRemoteId:trip.remoteId, force:true });
   refreshSharePanel();
 }
 async function acceptInvite(token) {
@@ -5612,11 +5741,27 @@ async function processCollabRoute() {
   const invite = params.get("invite");
   const tripId = params.get("trip");
   if (!collabUser && (invite || tripId)) { openAccountModal(); return; }
-  if (invite && collabUser) { openShareModal(); await acceptInvite(invite); return; }
-  if (tripId && collabUser) await loadRemoteTrip(tripId, true);
-  else {
-    const cachedRemote = activeTrip()?.remoteId;
-    if (cachedRemote && collabUser) await loadRemoteTrip(cachedRemote, true).catch(() => false);
+  if (!collabUser) return;
+
+  if (invite) {
+    openShareModal();
+    const accepted = await acceptInvite(invite);
+    if (accepted) {
+      const acceptedTripId = new URLSearchParams(location.search).get("trip");
+      await syncAccountTrips({ preferredRemoteId:acceptedTripId, force:true });
+    }
+    return;
+  }
+
+  const synced = await syncAccountTrips({
+    preferredRemoteId:tripId || activeTrip()?.remoteId || null,
+    force:true,
+  });
+
+  // Compatibility fallback for projects where the account-list migration has
+  // not been applied yet, or for a just-created link not returned immediately.
+  if (tripId && (!synced || !state.trips.some(trip => trip.remoteId === tripId))) {
+    await loadRemoteTrip(tripId, true);
   }
 }
 let collabRouteInFlight = null;
@@ -5639,8 +5784,8 @@ async function initCollaboration() {
   });
   const { data } = await supabaseClient.auth.getSession();
   collabUser = data.session?.user || null;
-  if (collabUser) await ensureOwnProfile().catch(() => null);
-  supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (collabUser) { await ensureOwnProfile().catch(() => null); renderAll(); }
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
     // The INITIAL_SESSION event fires immediately on subscribing and just
     // reports the same session getSession() already gave us above; acting
     // on it again is what was causing the duplicate/racing route pass.
@@ -5654,15 +5799,20 @@ async function initCollaboration() {
     changeLogsCache = [];
     chatDataLoadedTripId = null;
     expandedChangeLogIds.clear();
-    if (collabUser) ensureOwnProfile().catch(() => null); else ownProfile = null;
+    if (collabUser) await ensureOwnProfile().catch(() => null); else ownProfile = null;
     applyCollabTranslations();
-    renderMobileScheduleNav();
-    runCollabRoute();
+    renderAll();
+    await runCollabRoute();
   });
   await runCollabRoute();
 }
 
 document.getElementById("undo-btn").addEventListener("click", undoLastChange);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") scheduleAccountTripRefresh(80);
+});
+window.addEventListener("focus", () => scheduleAccountTripRefresh(120));
+
 document.getElementById("redo-btn").addEventListener("click", redoLastChange);
 document.addEventListener("keydown", event => {
   if (event.key === "Escape" && document.getElementById("chat-image-viewer")?.classList.contains("show")) {
@@ -5784,6 +5934,9 @@ document.getElementById("collab-logout-btn").addEventListener("click", async () 
   openChatMessageMenuId = null;
   expandedChangeLogIds.clear();
   backupCache = [];
+  accountTripSyncInFlight = null;
+  lastAccountTripSyncAt = 0;
+  clearTimeout(accountTripRefreshTimer);
   clearSelectedChatImage();
   refreshSharePanel();
   renderMobileScheduleNav();
