@@ -225,8 +225,8 @@
   }
   .field-input:focus { border-color: var(--amber); }
   textarea.field-input { min-height: 60px; resize: vertical; }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 
   .kind-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
   .kind-opt {
@@ -4101,7 +4101,8 @@ function isGoogleMapsShortLink(raw) {
     const host = url.hostname.toLowerCase();
     return (
       host === "maps.app.goo.gl" ||
-      (host === "goo.gl" && /^\/maps(?:\/|$)/i.test(url.pathname))
+      (host === "goo.gl" && /^\/maps(?:\/|$)/i.test(url.pathname)) ||
+      host === "naver.me"
     );
   } catch {
     return false;
@@ -4116,7 +4117,8 @@ function isFullGoogleMapsLink(raw) {
     return (
       /^maps\.google\.[a-z.]+$/.test(host) ||
       (/^(?:www\.)?google\.[a-z.]+$/.test(host) &&
-        /^\/maps(?:\/|$)/i.test(url.pathname))
+        /^\/maps(?:\/|$)/i.test(url.pathname)) ||
+      /^(?:m\.|www\.)?map\.naver\.com$/.test(host)
     );
   } catch {
     return false;
@@ -4227,7 +4229,16 @@ async function openMapLinkWithExpansion(rawUrl, control = null, itemId = "") {
 
   try {
     const expandedUrl = isGoogleMapsShortLink(safeUrl)
-      ? await expandGoogleMapsShortLink(safeUrl)
+      ? await expandGoogleMapsShortLink(safeUrl).catch(error => {
+          // The short link couldn't be resolved server-side (resolver not
+          // deployed, network hiccup, etc). Don't block the user — fall
+          // back to opening the short link directly. On a phone this still
+          // has a good chance of working via the OS's own universal-link
+          // handling; on desktop it opens the short link in a new tab,
+          // which the browser can usually follow on its own.
+          console.warn("Could not expand short map link; opening it as-is.", error);
+          return safeUrl;
+        })
       : safeUrl;
 
     if (itemId && expandedUrl !== safeUrl) {
@@ -4253,8 +4264,7 @@ async function openMapLinkWithExpansion(rawUrl, control = null, itemId = "") {
     openResolvedMapUrl(expandedUrl);
     return true;
   } catch (error) {
-    console.error("Could not expand Google Maps short link.", error);
-    alert(t("expandMapLinkFailed"));
+    console.error("Could not open map link.", error);
     return false;
   } finally {
     if (control) {
