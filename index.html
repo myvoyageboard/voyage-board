@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v38 — automatically expand Google Maps short links on open -->
+<!-- Voyage Board v39 — multi-service Google Maps short-link expansion -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -2639,7 +2639,7 @@ const I18N = {
     toolbarHint:"Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.", type:"Type", titleLabel:"Title", entryColor:"Entry color",
     useTypeDefault:"Use type default", colorDefaultHelp:"Uses the selected type's default color unless you choose a custom color.", colorCustomHelp:"Custom color override is active for this entry.",
     location:"Location", propertyLocation:"Property / location", from:"From", to:"To", departureAirport:"Departure airport", arrivalAirport:"Arrival airport",
-    googleMapsLink:"Map link", openMaps:"Open", clearMapLink:"Clear", pasteMapLink:"Paste", pasteMapLinkPrompt:"Paste the map or location link", invalidMapLink:"Enter a complete web link, such as https://example.com/place.", expandingMapLink:"Expanding Google Maps link…", expandMapLinkFailed:"The Google Maps short link could not be expanded. Please try again.", mapHelp:"Paste a Google Maps, Naver Map, or other normal web link. Google Maps short links are expanded automatically when opened.",
+    googleMapsLink:"Map link", openMaps:"Open", clearMapLink:"Clear", pasteMapLink:"Paste", pasteMapLinkPrompt:"Paste the map or location link", invalidMapLink:"Enter a complete web link, such as https://example.com/place.", expandingMapLink:"Expanding Google Maps link…", expandMapLinkFailed:"The Google Maps short link could not be expanded by either expansion service. Please try again later.", mapHelp:"Paste a Google Maps, Naver Map, or other normal web link. Google Maps short links are expanded automatically when opened.",
     date:"Date", start:"Start", end:"End", price:"Price", currency:"Currency", spendingCategory:"Spending category", add:"Add", trip:"Trip", notes:"Notes",
     flightNumber:"Flight number", departureTerminal:"Departure terminal", arrivalTerminal:"Arrival terminal", busNumber:"Bus number",
     flightService:"Flight {number}", busService:"Bus {number}", terminalRoute:"Terminal {departure} → {arrival}", departureTerminalOnly:"Departure terminal {terminal}", arrivalTerminalOnly:"Arrival terminal {terminal}",
@@ -2666,7 +2666,7 @@ const I18N = {
     toolbarHint:"拖曳時間軸項目可重新排序；拖曳左側旅程可調整旅程順序。", type:"類型", titleLabel:"標題", entryColor:"項目顏色",
     useTypeDefault:"使用類型預設色", colorDefaultHelp:"除非選擇自訂顏色，否則會使用所選類型的預設色。", colorCustomHelp:"此項目已啟用自訂顏色。",
     location:"地點", propertyLocation:"住宿／地點", from:"出發地", to:"目的地", departureAirport:"出發機場", arrivalAirport:"抵達機場",
-    googleMapsLink:"地圖連結", openMaps:"開啟", clearMapLink:"清除", pasteMapLink:"貼上", pasteMapLinkPrompt:"貼上地圖或地點連結", invalidMapLink:"請輸入完整的網頁連結，例如 https://example.com/place。", expandingMapLink:"正在展開 Google 地圖連結…", expandMapLinkFailed:"無法展開 Google 地圖短連結，請再試一次。", mapHelp:"可貼上 Google 地圖、Naver Map 或其他一般網頁連結。開啟 Google 地圖短連結時會自動展開。",
+    googleMapsLink:"地圖連結", openMaps:"開啟", clearMapLink:"清除", pasteMapLink:"貼上", pasteMapLinkPrompt:"貼上地圖或地點連結", invalidMapLink:"請輸入完整的網頁連結，例如 https://example.com/place。", expandingMapLink:"正在展開 Google 地圖連結…", expandMapLinkFailed:"兩個展開服務都無法展開這個 Google 地圖短連結，請稍後再試。", mapHelp:"可貼上 Google 地圖、Naver Map 或其他一般網頁連結。開啟 Google 地圖短連結時會自動展開。",
     date:"日期", start:"開始", end:"結束", price:"價格", currency:"幣別", spendingCategory:"支出分類", add:"新增", trip:"旅程", notes:"備註",
     flightNumber:"航班編號", departureTerminal:"出發航廈", arrivalTerminal:"抵達航廈", busNumber:"公車號碼",
     flightService:"航班 {number}", busService:"公車 {number}", terminalRoute:"航廈 {departure} → {arrival}", departureTerminalOnly:"出發航廈 {terminal}", arrivalTerminalOnly:"抵達航廈 {terminal}",
@@ -2693,7 +2693,7 @@ const I18N = {
     toolbarHint:"タイムライン項目をドラッグして並べ替えます。左側の旅行もドラッグできます。", type:"種類", titleLabel:"タイトル", entryColor:"項目の色",
     useTypeDefault:"種類の既定色", colorDefaultHelp:"カスタム色を選ばない場合、種類の既定色を使用します。", colorCustomHelp:"この項目にはカスタム色が設定されています。",
     location:"場所", propertyLocation:"宿泊施設／場所", from:"出発地", to:"目的地", departureAirport:"出発空港", arrivalAirport:"到着空港",
-    googleMapsLink:"地図リンク", openMaps:"開く", clearMapLink:"クリア", pasteMapLink:"貼り付け", pasteMapLinkPrompt:"地図または場所のリンクを貼り付け", invalidMapLink:"https://example.com/place のような完全なウェブリンクを入力してください。", expandingMapLink:"Google マップのリンクを展開しています…", expandMapLinkFailed:"Google マップ短縮リンクを展開できませんでした。もう一度お試しください。", mapHelp:"Google マップ、Naver Map、または通常のウェブリンクを貼り付けられます。Google マップ短縮リンクは開くときに自動展開されます。",
+    googleMapsLink:"地図リンク", openMaps:"開く", clearMapLink:"クリア", pasteMapLink:"貼り付け", pasteMapLinkPrompt:"地図または場所のリンクを貼り付け", invalidMapLink:"https://example.com/place のような完全なウェブリンクを入力してください。", expandingMapLink:"Google マップのリンクを展開しています…", expandMapLinkFailed:"どちらの展開サービスでも Google マップ短縮リンクを展開できませんでした。しばらくしてから再試行してください。", mapHelp:"Google マップ、Naver Map、または通常のウェブリンクを貼り付けられます。Google マップ短縮リンクは開くときに自動展開されます。",
     date:"日付", start:"開始", end:"終了", price:"価格", currency:"通貨", spendingCategory:"支出カテゴリ", add:"追加", trip:"旅行", notes:"メモ",
     flightNumber:"便名", departureTerminal:"出発ターミナル", arrivalTerminal:"到着ターミナル", busNumber:"バス番号",
     flightService:"便名 {number}", busService:"バス {number}", terminalRoute:"ターミナル {departure} → {arrival}", departureTerminalOnly:"出発ターミナル {terminal}", arrivalTerminalOnly:"到着ターミナル {terminal}",
@@ -4088,8 +4088,10 @@ function safeHttpUrl(raw) {
     return "";
   }
 }
+const GOOGLE_MAPS_REDIRECT_API =
+  "https://api.domainee.dev/v1/tools/redirect-checker";
 const GOOGLE_MAPS_EXPAND_PROXY = "https://corsproxy.io/?url=";
-const GOOGLE_MAPS_EXPAND_CACHE_KEY = "voyage-google-map-expanded-v1";
+const GOOGLE_MAPS_EXPAND_CACHE_KEY = "voyage-google-map-expanded-v2";
 const expandedGoogleMapCache = new Map();
 
 function isGoogleMapsShortLink(raw) {
@@ -4141,7 +4143,9 @@ function cleanExpandedGoogleMapsLink(raw) {
 }
 function loadExpandedGoogleMapCache() {
   try {
-    const stored = JSON.parse(localStorage.getItem(GOOGLE_MAPS_EXPAND_CACHE_KEY) || "{}");
+    const stored = JSON.parse(
+      localStorage.getItem(GOOGLE_MAPS_EXPAND_CACHE_KEY) || "{}"
+    );
     Object.entries(stored).forEach(([shortUrl, fullUrl]) => {
       if (isGoogleMapsShortLink(shortUrl) && isFullGoogleMapsLink(fullUrl)) {
         expandedGoogleMapCache.set(shortUrl, fullUrl);
@@ -4157,13 +4161,22 @@ function saveExpandedGoogleMapCache() {
     );
   } catch {}
 }
+function rememberExpandedGoogleMapLink(shortUrl, fullUrl) {
+  const cleaned = cleanExpandedGoogleMapsLink(fullUrl);
+  if (!cleaned) return "";
+  expandedGoogleMapCache.set(shortUrl, cleaned);
+  saveExpandedGoogleMapCache();
+  return cleaned;
+}
 function decodeMapHtmlValue(value) {
   const textarea = document.createElement("textarea");
   textarea.innerHTML = String(value || "");
   return textarea.value;
 }
 function candidateExpandedMapUrl(raw, baseUrl = "") {
-  const decoded = decodeMapHtmlValue(raw).replace(/\\u0026/gi, "&").trim();
+  const decoded = decodeMapHtmlValue(raw)
+    .replace(/\\u0026/gi, "&")
+    .trim();
   if (!decoded) return "";
   try {
     const absolute = baseUrl ? new URL(decoded, baseUrl).href : decoded;
@@ -4173,11 +4186,11 @@ function candidateExpandedMapUrl(raw, baseUrl = "") {
   }
 }
 function extractExpandedGoogleMapsLink(htmlText, baseUrl = "") {
-  const html = String(htmlText || "");
-  if (!html) return "";
+  const source = String(htmlText || "");
+  if (!source) return "";
 
   try {
-    const documentNode = new DOMParser().parseFromString(html, "text/html");
+    const documentNode = new DOMParser().parseFromString(source, "text/html");
     const selectors = [
       'link[rel~="canonical"][href]',
       'meta[property="og:url"][content]',
@@ -4186,12 +4199,19 @@ function extractExpandedGoogleMapsLink(htmlText, baseUrl = "") {
 
     for (const selector of selectors) {
       const node = documentNode.querySelector(selector);
-      const value = node?.getAttribute("href") || node?.getAttribute("content") || "";
+      const value =
+        node?.getAttribute("href") ||
+        node?.getAttribute("content") ||
+        "";
       const candidate = candidateExpandedMapUrl(value, baseUrl);
       if (candidate) return candidate;
     }
 
-    for (const meta of documentNode.querySelectorAll('meta[http-equiv="refresh" i][content]')) {
+    for (
+      const meta of documentNode.querySelectorAll(
+        'meta[http-equiv="refresh" i][content]'
+      )
+    ) {
       const content = meta.getAttribute("content") || "";
       const match = content.match(/url\s*=\s*["']?([^"']+)/i);
       const candidate = candidateExpandedMapUrl(match?.[1] || "", baseUrl);
@@ -4199,7 +4219,10 @@ function extractExpandedGoogleMapsLink(htmlText, baseUrl = "") {
     }
 
     for (const link of documentNode.querySelectorAll("a[href]")) {
-      const candidate = candidateExpandedMapUrl(link.getAttribute("href"), baseUrl);
+      const candidate = candidateExpandedMapUrl(
+        link.getAttribute("href"),
+        baseUrl
+      );
       if (candidate) return candidate;
     }
   } catch {}
@@ -4210,7 +4233,7 @@ function extractExpandedGoogleMapsLink(htmlText, baseUrl = "") {
   ];
 
   for (const pattern of patterns) {
-    for (const match of html.matchAll(pattern)) {
+    for (const match of source.matchAll(pattern)) {
       const unescaped = String(match[0] || "")
         .replaceAll("\\/", "/")
         .replaceAll("\\u0026", "&");
@@ -4221,22 +4244,53 @@ function extractExpandedGoogleMapsLink(htmlText, baseUrl = "") {
 
   return "";
 }
-async function expandGoogleMapsShortLink(raw) {
-  const shortUrl = safeHttpUrl(raw);
-  if (!shortUrl || !isGoogleMapsShortLink(shortUrl)) return shortUrl;
-
-  const cached = expandedGoogleMapCache.get(shortUrl);
-  if (cached) return cached;
-
-  const proxyUrl = `${GOOGLE_MAPS_EXPAND_PROXY}${encodeURIComponent(shortUrl)}`;
-  const response = await fetch(proxyUrl, {
+async function expandWithRedirectChecker(shortUrl) {
+  const endpoint =
+    `${GOOGLE_MAPS_REDIRECT_API}?url=${encodeURIComponent(shortUrl)}`;
+  const response = await fetch(endpoint, {
     method:"GET",
     cache:"no-store",
-    headers:{ "Accept":"text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8" },
+    headers:{ "Accept":"application/json" },
   });
 
   if (!response.ok) {
-    throw new Error(`Expansion proxy returned HTTP ${response.status}`);
+    throw new Error(`Redirect checker returned HTTP ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (!result?.ok) {
+    throw new Error(
+      result?.error?.message || "Redirect checker reported a failure"
+    );
+  }
+
+  const candidates = [
+    result?.data?.finalUrl,
+    ...(Array.isArray(result?.data?.hops)
+      ? [...result.data.hops].reverse().map(hop => hop?.url)
+      : []),
+  ];
+
+  for (const value of candidates) {
+    const expanded = candidateExpandedMapUrl(value || "", shortUrl);
+    if (expanded) return expanded;
+  }
+
+  throw new Error("Redirect checker returned no full Google Maps URL");
+}
+async function expandWithCorsProxy(shortUrl) {
+  const proxyUrl =
+    `${GOOGLE_MAPS_EXPAND_PROXY}${encodeURIComponent(shortUrl)}`;
+  const response = await fetch(proxyUrl, {
+    method:"GET",
+    cache:"no-store",
+    headers:{
+      "Accept":"text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`CORS proxy returned HTTP ${response.status}`);
   }
 
   const headerCandidates = [
@@ -4247,61 +4301,73 @@ async function expandGoogleMapsShortLink(raw) {
   ];
   for (const value of headerCandidates) {
     const candidate = candidateExpandedMapUrl(value || "", shortUrl);
-    if (candidate) {
-      expandedGoogleMapCache.set(shortUrl, candidate);
-      saveExpandedGoogleMapCache();
-      return candidate;
-    }
+    if (candidate) return candidate;
   }
 
-  const responseUrlCandidate = candidateExpandedMapUrl(response.url, shortUrl);
-  if (responseUrlCandidate) {
-    expandedGoogleMapCache.set(shortUrl, responseUrlCandidate);
-    saveExpandedGoogleMapCache();
-    return responseUrlCandidate;
-  }
+  const responseUrlCandidate = candidateExpandedMapUrl(
+    response.url,
+    shortUrl
+  );
+  if (responseUrlCandidate) return responseUrlCandidate;
 
   const body = await response.text();
-  let expanded = "";
 
   try {
-    const json = JSON.parse(body);
+    const result = JSON.parse(body);
     const jsonCandidates = [
-      json?.finalUrl,
-      json?.final_url,
-      json?.url,
-      json?.destination,
-      json?.location,
+      result?.finalUrl,
+      result?.final_url,
+      result?.url,
+      result?.destination,
+      result?.location,
     ];
     for (const value of jsonCandidates) {
-      expanded = candidateExpandedMapUrl(value || "", shortUrl);
-      if (expanded) break;
+      const candidate = candidateExpandedMapUrl(value || "", shortUrl);
+      if (candidate) return candidate;
     }
   } catch {}
 
-  if (!expanded) {
-    expanded = extractExpandedGoogleMapsLink(body, shortUrl);
-  }
-  if (!expanded) {
-    throw new Error("No full Google Maps URL found in proxy response");
+  const expanded = extractExpandedGoogleMapsLink(body, shortUrl);
+  if (expanded) return expanded;
+
+  throw new Error("CORS proxy returned no full Google Maps URL");
+}
+async function expandGoogleMapsShortLink(raw) {
+  const shortUrl = safeHttpUrl(raw);
+  if (!shortUrl || !isGoogleMapsShortLink(shortUrl)) return shortUrl;
+
+  const cached = expandedGoogleMapCache.get(shortUrl);
+  if (cached) return cached;
+
+  const failures = [];
+  for (const resolver of [
+    expandWithRedirectChecker,
+    expandWithCorsProxy,
+  ]) {
+    try {
+      const expanded = await resolver(shortUrl);
+      const remembered = rememberExpandedGoogleMapLink(shortUrl, expanded);
+      if (remembered) return remembered;
+    } catch (error) {
+      failures.push(error);
+      console.warn("Map URL expansion attempt failed.", error);
+    }
   }
 
-  expandedGoogleMapCache.set(shortUrl, expanded);
-  saveExpandedGoogleMapCache();
-  return expanded;
+  throw new AggregateError(
+    failures,
+    "No expansion service returned a full Google Maps URL"
+  );
+}
+function openResolvedMapUrl(url) {
+  // Keep the opening step simple and reliable: once expansion finishes,
+  // navigate the current browser tab directly to the full URL.
+  window.location.assign(url);
 }
 async function openMapLinkWithExpansion(rawUrl, control = null, itemId = "") {
   const safeUrl = safeHttpUrl(rawUrl);
   if (!safeUrl) return false;
 
-  if (!isGoogleMapsShortLink(safeUrl)) {
-    window.open(safeUrl, "_blank", "noopener,noreferrer");
-    return true;
-  }
-
-  // Open a blank browser tab synchronously so mobile popup blockers do not
-  // reject the final navigation after the asynchronous expansion completes.
-  const pendingWindow = window.open("about:blank", "_blank");
   const originalText = control?.textContent || "";
   const originalTitle = control?.title || "";
 
@@ -4313,11 +4379,11 @@ async function openMapLinkWithExpansion(rawUrl, control = null, itemId = "") {
   }
 
   try {
-    const expandedUrl = await expandGoogleMapsShortLink(safeUrl);
+    const expandedUrl = isGoogleMapsShortLink(safeUrl)
+      ? await expandGoogleMapsShortLink(safeUrl)
+      : safeUrl;
 
-    // Upgrade the saved entry in memory after a successful expansion. The
-    // normal persistence pipeline will sync this canonical URL.
-    if (itemId) {
+    if (itemId && expandedUrl !== safeUrl) {
       const item = state.items.find(entry => entry.id === itemId);
       if (item && item.mapUrl === rawUrl) {
         item.mapUrl = expandedUrl;
@@ -4328,6 +4394,7 @@ async function openMapLinkWithExpansion(rawUrl, control = null, itemId = "") {
 
     const editorInput = document.getElementById("f-map-link");
     if (
+      expandedUrl !== safeUrl &&
       editorInput &&
       document.getElementById("item-overlay")?.classList.contains("show") &&
       editorInput.value.trim() === rawUrl
@@ -4336,16 +4403,10 @@ async function openMapLinkWithExpansion(rawUrl, control = null, itemId = "") {
       editorInput.dispatchEvent(new Event("input", { bubbles:true }));
     }
 
-    if (pendingWindow && !pendingWindow.closed) {
-      pendingWindow.opener = null;
-      pendingWindow.location.replace(expandedUrl);
-    } else {
-      window.open(expandedUrl, "_blank", "noopener,noreferrer");
-    }
+    openResolvedMapUrl(expandedUrl);
     return true;
   } catch (error) {
     console.error("Could not expand Google Maps short link.", error);
-    try { pendingWindow?.close(); } catch {}
     alert(t("expandMapLinkFailed"));
     return false;
   } finally {
@@ -4353,7 +4414,9 @@ async function openMapLinkWithExpansion(rawUrl, control = null, itemId = "") {
       control.classList.remove("is-expanding");
       control.removeAttribute("aria-busy");
       control.title = originalTitle;
-      if (control.id === "map-search-btn") control.textContent = originalText || t("openMaps");
+      if (control.id === "map-search-btn") {
+        control.textContent = originalText || t("openMaps");
+      }
     }
   }
 }

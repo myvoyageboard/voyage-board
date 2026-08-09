@@ -1,0 +1,131 @@
+\
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Voyage Board v39 URL Expansion Test</title>
+  <style>
+    :root { color-scheme:dark; font-family:system-ui,sans-serif; }
+    body { margin:0; padding:20px; background:#07101d; color:#eef5fb; }
+    main { max-width:860px; margin:auto; }
+    article { margin:14px 0; padding:16px; border:1px solid #35536e; border-radius:14px; background:#101d2c; }
+    code, pre { overflow-wrap:anywhere; white-space:pre-wrap; }
+    button { min-height:44px; margin-right:8px; padding:8px 14px; border-radius:9px; border:1px solid #74a9d3; background:#173653; color:white; }
+    .ok { color:#89e89f; }
+    .bad { color:#ff9ba4; }
+    .pending { color:#ffd47a; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Voyage Board v39 URL Expansion Test</h1>
+  <p>This page calls the live redirect-checker API, then falls back to corsproxy.io.</p>
+  <button id="run-all">Run all live tests</button>
+  <div id="results"></div>
+</main>
+<script>
+const REDIRECT_API = "https://api.domainee.dev/v1/tools/redirect-checker";
+const CORS_PROXY = "https://corsproxy.io/?url=";
+
+const tests = [
+  {
+    name:"Hsinchu Zoo",
+    short:"https://maps.app.goo.gl/jUbQsUWyYaogz1949?g_st=ic",
+    expected:"https://www.google.com/maps?q=Hsinchu+Zoo,+No.+66%E8%99%9F%E9%A3%9F%E5%93%81%E8%B7%AF+Gongyuan+Village,+East+District,+Hsinchu+City,+300&ftid=0x346835dd9e16bf97:0x655055c03a215bcf&entry=gps&shh=CAE&lucs=,94297699,94231188,94280568,100821559,47071704,94218641,94282134,100813464,94286869,100820247,100813014,100822499&g_ep=CAISEjI2LjMxLjUuOTU0MzA2MDQzMBgAIIgnKnEsOTQyOTc2OTksOTQyMzExODgsOTQyODA1NjgsMTAwODIxNTU5LDQ3MDcxNzA0LDk0MjE4NjQxLDk0MjgyMTM0LDEwMDgxMzQ2NCw5NDI4Njg2OSwxMDA4MjAyNDcsMTAwODEzMDE0LDEwMDgyMjQ5OUICVFc%3D&skid=5af5a530-4e60-47df-b93b-438e55044dce&g_st=ic"
+  },
+  {
+    name:"艷麗南洋鹹甜食",
+    short:"https://maps.app.goo.gl/8eHtihcCRqsDmZEF6?g_st=ic",
+    expected:"https://www.google.com/maps?q=%E8%89%B7%E9%BA%97%E5%8D%97%E6%B4%8B%E9%B9%B9%E7%94%9C%E9%A3%9F,+No.+52%E8%99%9F,+Nanda+Rd,+%E6%9D%B1%E5%8D%80+East+District,+Hsinchu+City,+300&ftid=0x34683582abfd61ab:0xfb22aec1683d4114&entry=gps&shh=CAE&lucs=,94297699,94231188,94280568,100821559,47071704,94218641,94282134,100813464,94286869,100820247,100813014,100822499&g_ep=CAISEjI2LjMxLjUuOTU0MzA2MDQzMBgAIIgnKnEsOTQyOTc2OTksOTQyMzExODgsOTQyODA1NjgsMTAwODIxNTU5LDQ3MDcxNzA0LDk0MjE4NjQxLDk0MjgyMTM0LDEwMDgxMzQ2NCw5NDI4Njg2OSwxMDA4MjAyNDcsMTAwODEzMDE0LDEwMDgyMjQ5OUICVFc%3D&skid=0a1e613c-152b-45b6-a328-08ba35b6f9d2&g_st=ic"
+  },
+  {
+    name:"DoubleTree Seattle Airport",
+    short:"https://maps.app.goo.gl/rfSrJ1Qr9SaJLsZg8?g_st=ic",
+    expected:"https://www.google.com/maps?q=DoubleTree+by+Hilton+Hotel+Seattle+Airport,+18740+International+Blvd,+Seattle,+WA+98188,+United+States&ftid=0x54905ca75f4c722b:0xd407b9006acd55ee&entry=gps&shh=CAE&lucs=,94297699,94231188,94280568,100821559,47071704,94218641,94282134,100813464,94286869,100820247,100813014,100822499&g_ep=CAISEjI2LjMxLjUuOTU0MzA2MDQzMBgAIIgnKnEsOTQyOTc2OTksOTQyMzExODgsOTQyODA1NjgsMTAwODIxNTU5LDQ3MDcxNzA0LDk0MjE4NjQxLDk0MjgyMTM0LDEwMDgxMzQ2NCw5NDI4Njg2OSwxMDA4MjAyNDcsMTAwODEzMDE0LDEwMDgyMjQ5OUICVFc%3D&skid=d7e754a5-769b-4115-8c43-a0598001c6c2&g_st=ic"
+  }
+];
+
+function isGoogleMapsUrl(raw) {
+  try {
+    const url = new URL(raw);
+    return /^(?:www\.)?google\./.test(url.hostname) && url.pathname.startsWith("/maps");
+  } catch { return false; }
+}
+
+function semanticallyEqual(a, b) {
+  try {
+    const x = new URL(a), y = new URL(b);
+    if (x.protocol !== y.protocol || x.hostname !== y.hostname || x.pathname !== y.pathname) return false;
+    const sx = [...x.searchParams.entries()].sort();
+    const sy = [...y.searchParams.entries()].sort();
+    return JSON.stringify(sx) === JSON.stringify(sy);
+  } catch { return false; }
+}
+
+async function expand(shortUrl) {
+  const apiUrl = `${REDIRECT_API}?url=${encodeURIComponent(shortUrl)}`;
+  try {
+    const response = await fetch(apiUrl, { cache:"no-store" });
+    const json = await response.json();
+    const finalUrl = json?.data?.finalUrl || "";
+    if (response.ok && json?.ok && isGoogleMapsUrl(finalUrl)) {
+      return { finalUrl, resolver:"Domainee redirect checker" };
+    }
+  } catch {}
+
+  const response = await fetch(`${CORS_PROXY}${encodeURIComponent(shortUrl)}`, { cache:"no-store" });
+  if (!response.ok) throw new Error(`Fallback returned HTTP ${response.status}`);
+  const body = await response.text();
+  const doc = new DOMParser().parseFromString(body, "text/html");
+  const finalUrl =
+    doc.querySelector('link[rel~="canonical"][href]')?.href ||
+    doc.querySelector('meta[property="og:url"][content]')?.content ||
+    "";
+  if (!isGoogleMapsUrl(finalUrl)) throw new Error("No full Google Maps URL found");
+  return { finalUrl, resolver:"corsproxy.io fallback" };
+}
+
+async function runOne(test, article) {
+  article.querySelector(".status").className = "status pending";
+  article.querySelector(".status").textContent = "Testing…";
+  try {
+    const result = await expand(test.short);
+    const match = semanticallyEqual(result.finalUrl, test.expected);
+    article.querySelector(".status").className = `status ${match ? "ok" : "bad"}`;
+    article.querySelector(".status").textContent = match ? "PASS" : "MISMATCH";
+    article.querySelector(".resolver").textContent = result.resolver;
+    article.querySelector(".actual").textContent = result.finalUrl;
+    article.querySelector(".open").disabled = false;
+    article.querySelector(".open").onclick = () => window.location.assign(result.finalUrl);
+  } catch (error) {
+    article.querySelector(".status").className = "status bad";
+    article.querySelector(".status").textContent = `FAIL: ${error.message}`;
+  }
+}
+
+const results = document.getElementById("results");
+tests.forEach((test, index) => {
+  const article = document.createElement("article");
+  article.innerHTML = `
+    <h2>${index + 1}. ${test.name}</h2>
+    <p class="status">Not run</p>
+    <p><strong>Resolver:</strong> <span class="resolver">—</span></p>
+    <p><strong>Short:</strong><br><code>${test.short}</code></p>
+    <p><strong>Actual expanded:</strong><br><code class="actual">—</code></p>
+    <button class="run">Run test</button>
+    <button class="open" disabled>Open expanded URL</button>
+  `;
+  article.querySelector(".run").onclick = () => runOne(test, article);
+  results.append(article);
+});
+
+document.getElementById("run-all").onclick = async () => {
+  const articles = [...document.querySelectorAll("article")];
+  for (let index = 0; index < tests.length; index += 1) {
+    await runOne(tests[index], articles[index]);
+  }
+};
+</script>
+</body>
+</html>
