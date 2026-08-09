@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <!-- Voyage Board v40 — first-party Supabase Google Maps short-link expansion -->
+<!-- Voyage Board v43: desktop schedule alignment, desktop chat workspace, and desktop new-tab map opening -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -2072,6 +2073,93 @@
     }
   }
 
+
+  /* v43 desktop-only schedule and chat corrections.
+     Mobile rules remain unchanged because these overrides start at 721px. */
+  @media (min-width:721px) {
+    /* Transport and flight entries use the same full-width rectangular card
+       boundary as ordinary schedule blocks instead of a centered pill. */
+    .transport-row {
+      align-items:stretch;
+    }
+    .transport-row > div:last-child {
+      align-items:stretch !important;
+      gap:0 !important;
+      min-width:0 !important;
+    }
+    .transport-row .transport-line {
+      display:none;
+    }
+    .transport-row .transport-chip {
+      flex:1 1 auto;
+      width:100%;
+      max-width:100%;
+      min-width:0;
+      border-radius:12px;
+      padding:12px 16px;
+    }
+    .transport-row .transport-main-content {
+      width:100%;
+      min-width:0;
+    }
+
+    /* Give the desktop chat a real flex height. Previously the active panel
+       could collapse to zero height because only the mobile modal was flex. */
+    #chat-overlay {
+      padding:24px;
+      align-items:center;
+      overflow:hidden;
+    }
+    #chat-overlay .chat-modal {
+      display:flex;
+      flex-direction:column;
+      width:min(920px, calc(100vw - 48px));
+      max-width:920px !important;
+      height:min(720px, calc(100vh - 48px));
+      max-height:calc(100vh - 48px);
+      margin:0;
+      border-radius:16px;
+      overflow:hidden;
+    }
+    #chat-overlay .chat-modal > .modal-head,
+    #chat-content > .chat-workspace-tabs,
+    #chat-content > .chat-toolbar,
+    #chat-content > .chat-composer {
+      flex:0 0 auto;
+    }
+    #chat-content {
+      min-height:0;
+      overflow:hidden;
+    }
+    #chat-content > .chat-view-panel {
+      flex:1 1 0;
+      min-height:0;
+      overflow:hidden;
+    }
+    #chat-content > .chat-view-panel > .chat-body,
+    #chat-content > .chat-view-panel > .chat-activity-body,
+    #chat-content > .chat-view-panel > .chat-album-body {
+      flex:1 1 auto;
+      min-height:0;
+      max-height:none;
+      overflow-y:auto;
+    }
+    .chat-workspace-tabs {
+      min-height:52px;
+      padding:4px 20px 10px;
+    }
+    .chat-workspace-tab {
+      min-height:38px;
+      padding:8px 14px;
+    }
+    .chat-toolbar-v8 {
+      min-height:58px;
+      padding-top:8px;
+    }
+    .chat-composer {
+      min-height:68px;
+    }
+  }
 
   /* v38 automatic Google Maps short-link expansion */
   [data-map-open].is-expanding,
@@ -4223,13 +4311,31 @@ async function expandGoogleMapsShortLink(raw) {
 
   return expanded;
 }
-function openResolvedMapUrl(url) {
+function shouldOpenMapInNewTab() {
+  return window.matchMedia?.("(min-width: 721px)")?.matches === true;
+}
+function prepareDesktopMapTab() {
+  if (!shouldOpenMapInNewTab()) return null;
+  const pendingWindow = window.open("about:blank", "_blank");
+  if (pendingWindow) pendingWindow.opener = null;
+  return pendingWindow;
+}
+function openResolvedMapUrl(url, pendingWindow = null) {
+  if (shouldOpenMapInNewTab()) {
+    if (pendingWindow && !pendingWindow.closed) {
+      pendingWindow.location.replace(url);
+    } else {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+    return;
+  }
   window.location.assign(url);
 }
 async function openMapLinkWithExpansion(rawUrl, control = null, itemId = "") {
   const safeUrl = safeHttpUrl(rawUrl);
   if (!safeUrl) return false;
 
+  const pendingWindow = prepareDesktopMapTab();
   const originalText = control?.textContent || "";
   const originalTitle = control?.title || "";
 
@@ -4274,9 +4380,10 @@ async function openMapLinkWithExpansion(rawUrl, control = null, itemId = "") {
       editorInput.dispatchEvent(new Event("input", { bubbles:true }));
     }
 
-    openResolvedMapUrl(expandedUrl);
+    openResolvedMapUrl(expandedUrl, pendingWindow);
     return true;
   } catch (error) {
+    try { pendingWindow?.close(); } catch {}
     console.error("Could not open map link.", error);
     return false;
   } finally {
