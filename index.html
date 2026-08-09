@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v26 — linked arrival blocks for overnight flights -->
+<!-- Voyage Board v28 — visible notes, service details, and reliable map links -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -394,7 +394,7 @@
     .date-group, .date-header, .row { width: 100%; max-width: 100%; min-width: 0; }
     .date-header { gap: 8px; }
     .row { gap: 7px; padding-bottom: 14px; }
-    .row-time { width: 48px; font-size: 10px; padding-top: 7px; }
+    .row-time { width: 62px; font-size: 10px; padding-top: 7px; }
     .spine { width: 16px; }
     .event-card { min-width: 0; padding: 11px 12px; }
     .event-top { display: block; min-width: 0; }
@@ -1820,9 +1820,6 @@
   }
 
   @media (max-width:720px) {
-    .transport-row:has(.flight-chip) .row-time {
-      width:62px;
-    }
     .flight-row-time {
       font-size:9px;
     }
@@ -1929,6 +1926,82 @@
     .flight-continuation-meta,
     .flight-continuation-link {
       font-size:9px;
+    }
+  }
+
+
+  /* v27 shared schedule grid alignment */
+  @media (max-width:720px) {
+    .row > .spine + div {
+      flex:1 1 0;
+      min-width:0;
+    }
+    .row .event-card,
+    .row .transport-chip {
+      width:100%;
+      max-width:100%;
+    }
+  }
+
+
+  /* v28 service details and visible notes */
+  .transport-detail-block {
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    width:100%;
+    min-width:0;
+    margin-top:7px;
+    padding-left:34px;
+  }
+  .transport-service-line {
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:5px;
+    min-width:0;
+  }
+  .transport-service-pill {
+    display:inline-flex;
+    align-items:center;
+    max-width:100%;
+    padding:3px 7px;
+    border:1px solid color-mix(in srgb, var(--dash-border) 72%, var(--border));
+    border-radius:999px;
+    background:color-mix(in srgb, var(--dash-bg) 72%, transparent);
+    color:var(--text-hi);
+    font-size:10px;
+    font-weight:750;
+    line-height:1.2;
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+  .transport-notes {
+    color:var(--text-lo);
+    font-size:calc(12.5px * var(--app-font-scale));
+    font-style:italic;
+    line-height:1.42;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+  }
+  .hotel-menu-notes {
+    margin-top:3px;
+    color:var(--text-lo);
+    font-size:10.5px;
+    font-style:italic;
+    line-height:1.35;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+  }
+
+  @media (max-width:720px) {
+    .transport-detail-block {
+      margin-top:6px;
+      padding-left:28px;
+    }
+    .transport-service-pill {
+      font-size:9px;
+      padding:3px 6px;
     }
   }
 
@@ -2050,6 +2123,26 @@
         </div>
         <datalist id="flight-time-zone-options"></datalist>
         <div id="flight-time-status" class="field-help"></div>
+      </div>
+
+      <div id="flight-service-fields" class="grid-3" style="display:none;">
+        <div>
+          <label class="field-label" data-i18n="flightNumber">Flight number</label>
+          <input class="field-input" id="f-flight-number" autocomplete="off" placeholder="CI100">
+        </div>
+        <div>
+          <label class="field-label" data-i18n="departureTerminal">Departure terminal</label>
+          <input class="field-input" id="f-departure-terminal" autocomplete="off" placeholder="T2">
+        </div>
+        <div>
+          <label class="field-label" data-i18n="arrivalTerminal">Arrival terminal</label>
+          <input class="field-input" id="f-arrival-terminal" autocomplete="off" placeholder="T1">
+        </div>
+      </div>
+
+      <div id="bus-service-fields" style="display:none;">
+        <label class="field-label" data-i18n="busNumber">Bus number</label>
+        <input class="field-input" id="f-bus-number" autocomplete="off" placeholder="307">
       </div>
 
       <label class="field-label" data-i18n="googleMapsLink">Google Maps link</label>
@@ -2476,6 +2569,8 @@ const I18N = {
     location:"Location", propertyLocation:"Property / location", from:"From", to:"To", departureAirport:"Departure airport", arrivalAirport:"Arrival airport",
     googleMapsLink:"Google Maps link", openMaps:"Open Maps", mapHelp:"Paste a place link, or use “Open Maps” to search using the location or route above.",
     date:"Date", start:"Start", end:"End", price:"Price", currency:"Currency", spendingCategory:"Spending category", add:"Add", trip:"Trip", notes:"Notes",
+    flightNumber:"Flight number", departureTerminal:"Departure terminal", arrivalTerminal:"Arrival terminal", busNumber:"Bus number",
+    flightService:"Flight {number}", busService:"Bus {number}", terminalRoute:"Terminal {departure} → {arrival}", departureTerminalOnly:"Departure terminal {terminal}", arrivalTerminalOnly:"Arrival terminal {terminal}",
     delete:"🗑 Delete", cancel:"Cancel", save:"Save", language:"Language", appearance:"Appearance", darkTheme:"Dark", lightTheme:"Light", fontSize:"Font size", fontSmall:"Small", fontNormal:"Normal", fontBig:"Big", fontSizeHelp:"Changes the general interface text size.",
     appearanceHelp:"The selected theme applies to the whole app.", appSettingsTitle:"App settings", tripName:"Trip name", startDate:"Start date", endDate:"End date",
     defaultCurrency:"Default price currency", currencyDefaultNote:"Entries set to “Trip default” follow this currency automatically. An entry-specific currency still overrides it.",
@@ -2501,6 +2596,8 @@ const I18N = {
     location:"地點", propertyLocation:"住宿／地點", from:"出發地", to:"目的地", departureAirport:"出發機場", arrivalAirport:"抵達機場",
     googleMapsLink:"Google 地圖連結", openMaps:"開啟地圖", mapHelp:"貼上地點連結，或使用「開啟地圖」依上方地點或路線搜尋。",
     date:"日期", start:"開始", end:"結束", price:"價格", currency:"幣別", spendingCategory:"支出分類", add:"新增", trip:"旅程", notes:"備註",
+    flightNumber:"航班編號", departureTerminal:"出發航廈", arrivalTerminal:"抵達航廈", busNumber:"公車號碼",
+    flightService:"航班 {number}", busService:"公車 {number}", terminalRoute:"航廈 {departure} → {arrival}", departureTerminalOnly:"出發航廈 {terminal}", arrivalTerminalOnly:"抵達航廈 {terminal}",
     delete:"🗑 刪除", cancel:"取消", save:"儲存", language:"語言", appearance:"外觀", darkTheme:"深色", lightTheme:"淺色", fontSize:"字體大小", fontSmall:"小", fontNormal:"一般", fontBig:"大", fontSizeHelp:"調整整體介面的文字大小。",
     appearanceHelp:"所選主題會套用到整個 App。", appSettingsTitle:"App 設定", tripName:"旅程名稱", startDate:"開始日期", endDate:"結束日期",
     defaultCurrency:"預設價格幣別", currencyDefaultNote:"設為「旅程預設」的項目會自動沿用此幣別；個別項目仍可覆寫。",
@@ -2526,6 +2623,8 @@ const I18N = {
     location:"場所", propertyLocation:"宿泊施設／場所", from:"出発地", to:"目的地", departureAirport:"出発空港", arrivalAirport:"到着空港",
     googleMapsLink:"Google マップリンク", openMaps:"マップを開く", mapHelp:"場所のリンクを貼るか、上の場所／経路から検索できます。",
     date:"日付", start:"開始", end:"終了", price:"価格", currency:"通貨", spendingCategory:"支出カテゴリ", add:"追加", trip:"旅行", notes:"メモ",
+    flightNumber:"便名", departureTerminal:"出発ターミナル", arrivalTerminal:"到着ターミナル", busNumber:"バス番号",
+    flightService:"便名 {number}", busService:"バス {number}", terminalRoute:"ターミナル {departure} → {arrival}", departureTerminalOnly:"出発ターミナル {terminal}", arrivalTerminalOnly:"到着ターミナル {terminal}",
     delete:"🗑 削除", cancel:"キャンセル", save:"保存", language:"言語", appearance:"外観", darkTheme:"ダーク", lightTheme:"ライト", fontSize:"文字サイズ", fontSmall:"小", fontNormal:"標準", fontBig:"大", fontSizeHelp:"画面全体の文字サイズを変更します。",
     appearanceHelp:"選択したテーマはアプリ全体に適用されます。", appSettingsTitle:"アプリ設定", tripName:"旅行名", startDate:"開始日", endDate:"終了日",
     defaultCurrency:"既定の通貨", currencyDefaultNote:"「旅行の既定値」の項目はこの通貨を自動的に使用し、個別項目で上書きできます。",
@@ -2883,6 +2982,10 @@ function normalizeState(raw) {
     item.arrivalAirportName = item.arrivalAirportName || "";
     item.arrivalAirportIcao = item.arrivalAirportIcao || "";
     item.arrivalTimezone = item.arrivalTimezone || "";
+    item.flightNumber = item.flightNumber || "";
+    item.departureTerminal = item.departureTerminal || "";
+    item.arrivalTerminal = item.arrivalTerminal || "";
+    item.busNumber = item.busNumber || "";
     if (item.kind === "flight") migrateFlightAirportMetadata(item);
     item.color = /^#[0-9a-f]{6}$/i.test(item.color || "") ? item.color : null;
   });
@@ -3896,13 +3999,57 @@ function secondsToTime(seconds) {
 }
 
 function safeHttpUrl(raw) {
-  if (!raw) return "";
+  const value = String(raw || "").trim();
+  if (!value) return "";
+  const candidate = /^(?:www\.|maps\.|google\.)/i.test(value)
+    ? `https://${value}`
+    : value;
   try {
-    const url = new URL(raw);
+    const url = new URL(candidate);
     return ["http:", "https:"].includes(url.protocol) ? url.href : "";
   } catch {
     return "";
   }
+}
+function googleMapsSearchUrl(query) {
+  const value = String(query || "").trim();
+  return value
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(value)}`
+    : "";
+}
+function googleMapsDirectionsUrl(origin, destination) {
+  const from = String(origin || "").trim();
+  const to = String(destination || "").trim();
+  if (!from || !to) return "";
+  return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(from)}&destination=${encodeURIComponent(to)}`;
+}
+function mapHrefForItem(item) {
+  if (!item) return "";
+
+  const routeUrl = googleMapsDirectionsUrl(item.fromPlace, item.toPlace);
+  const searchUrl = googleMapsSearchUrl(item.location || item.title);
+  const generatedUrl = routeUrl || searchUrl;
+  const explicitUrl = safeHttpUrl(item.mapUrl);
+
+  if (!explicitUrl) return generatedUrl;
+
+  try {
+    const url = new URL(explicitUrl);
+    const host = url.hostname.toLowerCase();
+    const isGoogleMapsHost =
+      host === "maps.app.goo.gl" ||
+      host === "goo.gl" ||
+      host === "maps.google.com" ||
+      host === "www.google.com" ||
+      host.endsWith(".google.com");
+
+    // Google short/app links may be rejected by an installed Maps app or a
+    // restricted webview. Use the universal API=1 URL built from the saved
+    // entry data whenever possible.
+    if (isGoogleMapsHost && generatedUrl) return generatedUrl;
+  } catch {}
+
+  return explicitUrl || generatedUrl;
 }
 
 function splitRoute(location) {
@@ -4201,7 +4348,12 @@ function renderHotelMenu() {
     const locationControl = cardLocationControlHtml(item);
     return `<article class="hotel-menu-card" data-hotel-id="${item.id}">
       <div class="hotel-menu-card-icon">${iconSvg("hotel")}</div>
-      <div class="hotel-menu-card-main"><strong>${esc(item.title)}</strong><span>${esc(item.location || "")}</span><small>${esc(range)} · ${esc(t("nightsCount", { n: nights }))}</small></div>
+      <div class="hotel-menu-card-main">
+        <strong>${esc(item.title)}</strong>
+        <span>${esc(item.location || "")}</span>
+        <small>${esc(range)} · ${esc(t("nightsCount", { n: nights }))}</small>
+        ${item.notes ? `<div class="hotel-menu-notes">${esc(item.notes)}</div>` : ""}
+      </div>
       <div class="card-footer-row hotel-menu-card-footer">
         <div class="card-footer-left">
           ${price ? `<span class="card-footer-price">${price}</span>` : ""}
@@ -4424,7 +4576,7 @@ function renderTimeline() {
 
 function locationHtml(item) {
   if (!item.location) return "";
-  const safeUrl = safeHttpUrl(item.mapUrl);
+  const safeUrl = mapHrefForItem(item);
   const content = safeUrl
     ? `<a href="${esc(safeUrl)}" target="_blank" rel="noopener noreferrer">${esc(item.location)}</a>`
     : esc(item.location);
@@ -4433,7 +4585,7 @@ function locationHtml(item) {
 
 
 function cardLocationControlHtml(item) {
-  const mapUrl = safeHttpUrl(item?.mapUrl);
+  const mapUrl = mapHrefForItem(item);
   const title = item?.location || t("openMaps");
   if (mapUrl) {
     return `<a href="${esc(mapUrl)}" target="_blank" rel="noopener noreferrer"
@@ -4758,6 +4910,55 @@ function flightArrivalContinuationRowHtml(item, config, isLast) {
     </div>`;
 }
 
+
+function transportDetailsHtml(item) {
+  const serviceParts = [];
+
+  if (item.kind === "flight") {
+    if (item.flightNumber) {
+      serviceParts.push(
+        `<span class="transport-service-pill">${esc(t("flightService", { number:item.flightNumber }))}</span>`
+      );
+    }
+
+    if (item.departureTerminal && item.arrivalTerminal) {
+      serviceParts.push(
+        `<span class="transport-service-pill">${esc(t("terminalRoute", {
+          departure:item.departureTerminal,
+          arrival:item.arrivalTerminal,
+        }))}</span>`
+      );
+    } else if (item.departureTerminal) {
+      serviceParts.push(
+        `<span class="transport-service-pill">${esc(t("departureTerminalOnly", {
+          terminal:item.departureTerminal,
+        }))}</span>`
+      );
+    } else if (item.arrivalTerminal) {
+      serviceParts.push(
+        `<span class="transport-service-pill">${esc(t("arrivalTerminalOnly", {
+          terminal:item.arrivalTerminal,
+        }))}</span>`
+      );
+    }
+  }
+
+  if (item.kind === "bus" && item.busNumber) {
+    serviceParts.push(
+      `<span class="transport-service-pill">${esc(t("busService", { number:item.busNumber }))}</span>`
+    );
+  }
+
+  if (!serviceParts.length && !item.notes) return "";
+
+  return `<div class="transport-detail-block">
+    ${serviceParts.length
+      ? `<div class="transport-service-line">${serviceParts.join("")}</div>`
+      : ""}
+    ${item.notes ? `<div class="transport-notes">${esc(item.notes)}</div>` : ""}
+  </div>`;
+}
+
 function transportRowHtml(item, config, isLast) {
   const dayDiff = item.endDate && item.endDate !== item.date ? diffDaysDateStr(item.date, item.endDate) : null;
   const flightDisplay = item.kind === "flight" ? flightRouteDisplay(item, config.icon) : null;
@@ -4784,6 +4985,7 @@ function transportRowHtml(item, config, isLast) {
               : `<span>${config.icon}</span><span class="transport-title" title="${esc(item.location || item.title)}">${esc(item.title)}</span>${duration ? `<span class="transport-meta">· ${duration}</span>` : ""}`
             }
           </div>
+          ${transportDetailsHtml(item)}
           ${cardFooterHtml(item, price)}
         </div>
         <div class="transport-line" style="--dash-color:${rgba(displayColor, 0.62)};"></div>
@@ -4848,6 +5050,8 @@ function updateKindSpecificFields(kind, preserveCategory = true) {
   const isFlight = kind === "flight";
   document.getElementById("flight-airport-help").style.display = isFlight ? "block" : "none";
   document.getElementById("flight-timezone-fields").style.display = isFlight ? "block" : "none";
+  document.getElementById("flight-service-fields").style.display = isFlight ? "grid" : "none";
+  document.getElementById("bus-service-fields").style.display = kind === "bus" ? "block" : "none";
   document.getElementById("duration-picker").style.display = isFlight ? "none" : "grid";
   document.getElementById("duration-picker-help").style.display = isFlight ? "none" : "block";
   document.getElementById("overnight-help").style.display = isFlight ? "none" : "block";
@@ -5032,6 +5236,10 @@ function openItemModal(itemId) {
   document.getElementById("f-arrival-timezone").value = item?.kind === "flight"
     ? effectiveFlightTimezone(item, "arrival")
     : (item?.arrivalTimezone || "");
+  document.getElementById("f-flight-number").value = item?.flightNumber || "";
+  document.getElementById("f-departure-terminal").value = item?.departureTerminal || "";
+  document.getElementById("f-arrival-terminal").value = item?.arrivalTerminal || "";
+  document.getElementById("f-bus-number").value = item?.busNumber || "";
   document.getElementById("f-map-link").value = item?.mapUrl || "";
   document.getElementById("f-date").value = item?.date || TODAY;
   document.getElementById("f-start").value = item?.startTime || "";
@@ -5104,29 +5312,24 @@ document.getElementById("f-category-name").addEventListener("keydown", event => 
 });
 
 document.getElementById("map-search-btn").addEventListener("click", () => {
-  const pastedUrl = safeHttpUrl(document.getElementById("f-map-link").value.trim());
-  if (pastedUrl) {
-    window.open(pastedUrl, "_blank", "noopener,noreferrer");
-    return;
-  }
-
   const kind = selectedKind();
   const config = KIND_CONFIG[kind] || KIND_CONFIG.other;
-  if (config.transport) {
-    const origin = document.getElementById("f-from").value.trim();
-    const destination = document.getElementById("f-to").value.trim();
-    if (origin && destination) {
-      const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
-      window.open(url, "_blank", "noopener,noreferrer");
-      return;
-    }
-  }
-
-  const query = config.transport
-    ? document.getElementById("f-to").value.trim() || document.getElementById("f-from").value.trim()
+  const origin = document.getElementById("f-from").value.trim();
+  const destination = document.getElementById("f-to").value.trim();
+  const location = config.transport
+    ? [origin, destination].filter(Boolean).join(" → ")
     : document.getElementById("f-location").value.trim();
-  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || document.getElementById("f-title").value.trim())}`;
-  window.open(url, "_blank", "noopener,noreferrer");
+
+  const mapItem = {
+    kind,
+    title:document.getElementById("f-title").value.trim(),
+    location,
+    fromPlace:config.transport ? origin : "",
+    toPlace:config.transport ? destination : "",
+    mapUrl:document.getElementById("f-map-link").value.trim(),
+  };
+  const url = mapHrefForItem(mapItem);
+  if (url) window.open(url, "_blank", "noopener,noreferrer");
 });
 
 // ---------------------------------------------------------------------------
@@ -5301,6 +5504,10 @@ document.getElementById("item-save").addEventListener("click", () => {
     arrivalAirportName: arrivalAirport?.name || "",
     arrivalAirportIcao: arrivalAirport?.icao || "",
     arrivalTimezone,
+    flightNumber: kind === "flight" ? document.getElementById("f-flight-number").value.trim().toUpperCase() : "",
+    departureTerminal: kind === "flight" ? document.getElementById("f-departure-terminal").value.trim() : "",
+    arrivalTerminal: kind === "flight" ? document.getElementById("f-arrival-terminal").value.trim() : "",
+    busNumber: kind === "bus" ? document.getElementById("f-bus-number").value.trim() : "",
     mapUrl,
     date: dateVal,
     endDate: endDateVal,
