@@ -220,10 +220,14 @@
 
   .field-label { display: block; margin-top: 12px; margin-bottom: 5px; font-size: 11px; letter-spacing: 0.04em; color: var(--text-lo); }
   .field-input {
-    width: 100%; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
+    display:block; width: 100%; min-width:0; box-sizing:border-box; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
     padding: 8px 10px; font-size: 13px; color: var(--text-hi); outline: none; font-family: var(--font-ui);
   }
   .field-input:focus { border-color: var(--amber); }
+  input[type="date"].field-input,
+  input[type="time"].field-input {
+    appearance:none; -webkit-appearance:none; width:100%; max-width:100%; box-sizing:border-box;
+  }
   textarea.field-input { min-height: 60px; resize: vertical; }
   .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
   .grid-3 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
@@ -1027,6 +1031,15 @@
       padding:6px 8px;
       font-size:13px !important;
       line-height:1.35;
+      box-sizing:border-box;
+    }
+    #item-overlay input[type="date"],
+    #item-overlay input[type="time"] {
+      display:block;
+      width:100%;
+      max-width:100%;
+      appearance:none;
+      -webkit-appearance:none;
     }
     #item-overlay textarea.field-input {
       min-height:50px;
@@ -5601,6 +5614,7 @@ function restoreMapLinkHelp() {
 }
 async function pasteMapLinkFromClipboard() {
   const input = document.getElementById("f-map-link");
+  if (!input) return false;
   let pasted = "";
 
   try {
@@ -5609,21 +5623,14 @@ async function pasteMapLinkFromClipboard() {
     }
   } catch {}
 
-  // Clipboard permission can be unavailable in some mobile browsers/PWAs.
   if (!pasted) {
-    pasted = String(window.prompt(t("pasteMapLinkPrompt"), "") || "").trim();
-  }
-
-  if (!pasted) {
-    input.focus();
-    return;
+    return false;
   }
 
   input.value = pasted;
   input.setCustomValidity("");
   input.dispatchEvent(new Event("input", { bubbles:true }));
-  input.focus();
-  input.setSelectionRange?.(input.value.length, input.value.length);
+  return true;
 }
 document.addEventListener("click", event => {
   const control = event.target.closest("[data-map-open]");
@@ -5654,7 +5661,6 @@ document.getElementById("map-clear-btn").addEventListener("click", async () => {
   input.value = "";
   input.setCustomValidity("");
   input.dispatchEvent(new Event("input", { bubbles:true }));
-  input.focus();
 });
 document.getElementById("map-search-btn").addEventListener("click", () => {
   const kind = selectedKind();
