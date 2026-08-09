@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v34 — Google Maps short-link expansion before app handoff -->
+<!-- Voyage Board v37 — require expanded Google Maps links for reliable sharing -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -2060,17 +2060,17 @@
   }
 
 
-  /* v34 Google Maps short-link resolution */
-  [data-map-open].is-resolving {
-    pointer-events:none;
-    opacity:.62;
-    cursor:progress;
+  /* v37 short Google Maps link warning */
+  #map-link-help.is-warning {
+    color:#FFCA6A;
   }
-  [data-map-open].is-resolving svg {
-    animation:map-link-resolving-spin .8s linear infinite;
+  .map-clear-btn[data-mode="replace"] {
+    color:#FFCA6A;
+    border-color:color-mix(in srgb, #FFCA6A 55%, var(--border));
   }
-  @keyframes map-link-resolving-spin {
-    to { transform:rotate(360deg); }
+  .map-clear-btn[data-mode="replace"]:hover {
+    color:var(--text-hi);
+    border-color:#FFCA6A;
   }
 
 </style>
@@ -2638,7 +2638,7 @@ const I18N = {
     toolbarHint:"Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.", type:"Type", titleLabel:"Title", entryColor:"Entry color",
     useTypeDefault:"Use type default", colorDefaultHelp:"Uses the selected type's default color unless you choose a custom color.", colorCustomHelp:"Custom color override is active for this entry.",
     location:"Location", propertyLocation:"Property / location", from:"From", to:"To", departureAirport:"Departure airport", arrivalAirport:"Arrival airport",
-    googleMapsLink:"Map link", openMaps:"Open", clearMapLink:"Clear", pasteMapLink:"Paste", pasteMapLinkPrompt:"Paste the map or location link", invalidMapLink:"Enter a complete web link, such as https://example.com/place.", resolvingMapLink:"Resolving Google Maps link…", mapShortLinkResolveError:"This Google Maps short link could not be expanded. Please try again or paste the full google.com/maps link.", mapHelp:"Paste any normal web link. Open follows that exact link in the current browser tab. When empty, the location is searched instead.",
+    googleMapsLink:"Map link", openMaps:"Open", clearMapLink:"Clear", pasteMapLink:"Paste", replaceMapLink:"Replace", pasteMapLinkPrompt:"Paste the expanded map or location link", invalidMapLink:"Enter a complete web link, such as https://example.com/place.", shortGoogleMapLinkWarning:"Google Maps short links may show Unsupported link for recipients. In Apple Shortcuts, use Expand URL, copy the resulting full google.com/maps link, then tap Replace.", shortGoogleMapLinkBlocked:"Expand this Google Maps short link first, then replace it with the full google.com/maps URL.", mapHelp:"Paste a full Google Maps, Naver Map, or other normal web link. Empty fields use a location search.",
     date:"Date", start:"Start", end:"End", price:"Price", currency:"Currency", spendingCategory:"Spending category", add:"Add", trip:"Trip", notes:"Notes",
     flightNumber:"Flight number", departureTerminal:"Departure terminal", arrivalTerminal:"Arrival terminal", busNumber:"Bus number",
     flightService:"Flight {number}", busService:"Bus {number}", terminalRoute:"Terminal {departure} → {arrival}", departureTerminalOnly:"Departure terminal {terminal}", arrivalTerminalOnly:"Arrival terminal {terminal}",
@@ -2651,7 +2651,7 @@ const I18N = {
     noCosts:"No costs logged yet", noTrips:"No trips yet", createFirstTrip:"Create your first trip", emptyTrip:"{name} is empty", emptyTripHelp:"Use “Add entry” to log a flight, hotel, meal, shopping stop, or activity.",
     item:"item", items:"items", until:"until", tripDefault:"Trip default ({currency})", inheritedCurrency:"Using trip default: {currency}. Select another currency to override it for this entry.",
     customCurrency:"This entry overrides the trip default ({currency}).", invalidMap:"Please enter a valid http:// or https:// map link.", untitled:"Untitled", optional:"Optional",
-    addCustomCategory:"＋ Add custom category…", titlePlaceholder:"e.g. Flight to Tokyo", mapPlaceholder:"Paste a Google Maps, maps.app.goo.gl, map.naver.com, or naver.me link", categoryPlaceholder:"e.g. Shopping", tripNamePlaceholder:"e.g. Iceland Roadtrip — leave blank for Untitled",
+    addCustomCategory:"＋ Add custom category…", titlePlaceholder:"e.g. Flight to Tokyo", mapPlaceholder:"Paste a full google.com/maps, map.naver.com, or naver.me link", categoryPlaceholder:"e.g. Shopping", tripNamePlaceholder:"e.g. Iceland Roadtrip — leave blank for Untitled",
     selectAirport:"Select or type an airport", origin:"Origin", destination:"Destination", placeAddress:"Place or address", hotelPlaceholder:"Hotel or property name",
     foodPlaceholder:"Restaurant, café, or market", activityPlaceholder:"Venue or meeting point", sightseeingPlaceholder:"Landmark or area", meetingPlaceholder:"Office or meeting venue",
     confirmDelete:'Delete "{label}"?', cannotUndo:"This can't be undone.", deleteAction:"Delete",
@@ -2665,7 +2665,7 @@ const I18N = {
     toolbarHint:"拖曳時間軸項目可重新排序；拖曳左側旅程可調整旅程順序。", type:"類型", titleLabel:"標題", entryColor:"項目顏色",
     useTypeDefault:"使用類型預設色", colorDefaultHelp:"除非選擇自訂顏色，否則會使用所選類型的預設色。", colorCustomHelp:"此項目已啟用自訂顏色。",
     location:"地點", propertyLocation:"住宿／地點", from:"出發地", to:"目的地", departureAirport:"出發機場", arrivalAirport:"抵達機場",
-    googleMapsLink:"地圖連結", openMaps:"開啟", clearMapLink:"清除", pasteMapLink:"貼上", pasteMapLinkPrompt:"貼上地圖或地點連結", invalidMapLink:"請輸入完整的網頁連結，例如 https://example.com/place。", resolvingMapLink:"正在解析 Google 地圖連結…", mapShortLinkResolveError:"無法展開這個 Google 地圖短連結。請再試一次，或貼上完整的 google.com/maps 連結。", mapHelp:"可貼上任何一般網頁連結。開啟時會在目前的瀏覽器分頁直接前往該連結；欄位留空時才依地點搜尋。",
+    googleMapsLink:"地圖連結", openMaps:"開啟", clearMapLink:"清除", pasteMapLink:"貼上", replaceMapLink:"取代", pasteMapLinkPrompt:"貼上展開後的地圖或地點連結", invalidMapLink:"請輸入完整的網頁連結，例如 https://example.com/place。", shortGoogleMapLinkWarning:"Google 地圖短連結可能讓收件者看到「不支援的連結」。請在 Apple 捷徑中使用「展開 URL」，複製產生的完整 google.com/maps 連結，再按「取代」。", shortGoogleMapLinkBlocked:"請先展開這個 Google 地圖短連結，再以完整的 google.com/maps URL 取代。", mapHelp:"請貼上完整的 Google 地圖、Naver Map 或其他一般網頁連結。欄位留空時會依地點搜尋。",
     date:"日期", start:"開始", end:"結束", price:"價格", currency:"幣別", spendingCategory:"支出分類", add:"新增", trip:"旅程", notes:"備註",
     flightNumber:"航班編號", departureTerminal:"出發航廈", arrivalTerminal:"抵達航廈", busNumber:"公車號碼",
     flightService:"航班 {number}", busService:"公車 {number}", terminalRoute:"航廈 {departure} → {arrival}", departureTerminalOnly:"出發航廈 {terminal}", arrivalTerminalOnly:"抵達航廈 {terminal}",
@@ -2678,7 +2678,7 @@ const I18N = {
     noCosts:"尚未記錄支出", noTrips:"尚無旅程", createFirstTrip:"建立第一個旅程", emptyTrip:"{name} 尚無內容", emptyTripHelp:"使用「新增項目」記錄航班、住宿、餐飲、購物或活動。",
     item:"個項目", items:"個項目", until:"至", tripDefault:"旅程預設（{currency}）", inheritedCurrency:"使用旅程預設：{currency}。選擇其他幣別即可覆寫此項目。",
     customCurrency:"此項目已覆寫旅程預設幣別（{currency}）。", invalidMap:"請輸入有效的 http:// 或 https:// 地圖連結。", untitled:"未命名", optional:"選填",
-    addCustomCategory:"＋ 新增自訂分類…", titlePlaceholder:"例如：前往東京的航班", mapPlaceholder:"貼上 Google 地圖、maps.app.goo.gl、map.naver.com 或 naver.me 連結", categoryPlaceholder:"例如：購物", tripNamePlaceholder:"例如：冰島自駕；留白則使用「未命名」",
+    addCustomCategory:"＋ 新增自訂分類…", titlePlaceholder:"例如：前往東京的航班", mapPlaceholder:"貼上完整的 google.com/maps、map.naver.com 或 naver.me 連結", categoryPlaceholder:"例如：購物", tripNamePlaceholder:"例如：冰島自駕；留白則使用「未命名」",
     selectAirport:"選擇或輸入機場", origin:"出發地", destination:"目的地", placeAddress:"地點或地址", hotelPlaceholder:"飯店或住宿名稱",
     foodPlaceholder:"餐廳、咖啡廳或市場", activityPlaceholder:"場地或集合點", sightseeingPlaceholder:"景點或區域", meetingPlaceholder:"辦公室或會議地點",
     confirmDelete:'刪除「{label}」？', cannotUndo:"此動作無法復原。", deleteAction:"刪除",
@@ -2692,7 +2692,7 @@ const I18N = {
     toolbarHint:"タイムライン項目をドラッグして並べ替えます。左側の旅行もドラッグできます。", type:"種類", titleLabel:"タイトル", entryColor:"項目の色",
     useTypeDefault:"種類の既定色", colorDefaultHelp:"カスタム色を選ばない場合、種類の既定色を使用します。", colorCustomHelp:"この項目にはカスタム色が設定されています。",
     location:"場所", propertyLocation:"宿泊施設／場所", from:"出発地", to:"目的地", departureAirport:"出発空港", arrivalAirport:"到着空港",
-    googleMapsLink:"地図リンク", openMaps:"開く", clearMapLink:"クリア", pasteMapLink:"貼り付け", pasteMapLinkPrompt:"地図または場所のリンクを貼り付け", invalidMapLink:"https://example.com/place のような完全なウェブリンクを入力してください。", resolvingMapLink:"Google マップのリンクを展開しています…", mapShortLinkResolveError:"この Google マップ短縮リンクを展開できませんでした。もう一度試すか、完全な google.com/maps リンクを貼り付けてください。", mapHelp:"通常のウェブリンクを貼り付けられます。開くと現在のブラウザタブでそのリンクへ直接移動し、空欄の場合のみ場所を検索します。",
+    googleMapsLink:"地図リンク", openMaps:"開く", clearMapLink:"クリア", pasteMapLink:"貼り付け", replaceMapLink:"置換", pasteMapLinkPrompt:"展開済みの地図または場所リンクを貼り付け", invalidMapLink:"https://example.com/place のような完全なウェブリンクを入力してください。", shortGoogleMapLinkWarning:"Google マップ短縮リンクは受信者側で「サポートされていないリンク」と表示される場合があります。Apple ショートカットで「URLを展開」を実行し、生成された完全な google.com/maps リンクをコピーしてから「置換」を押してください。", shortGoogleMapLinkBlocked:"この Google マップ短縮リンクを先に展開し、完全な google.com/maps URL に置き換えてください。", mapHelp:"完全な Google マップ、Naver Map、または通常のウェブリンクを貼り付けてください。空欄の場合は場所を検索します。",
     date:"日付", start:"開始", end:"終了", price:"価格", currency:"通貨", spendingCategory:"支出カテゴリ", add:"追加", trip:"旅行", notes:"メモ",
     flightNumber:"便名", departureTerminal:"出発ターミナル", arrivalTerminal:"到着ターミナル", busNumber:"バス番号",
     flightService:"便名 {number}", busService:"バス {number}", terminalRoute:"ターミナル {departure} → {arrival}", departureTerminalOnly:"出発ターミナル {terminal}", arrivalTerminalOnly:"到着ターミナル {terminal}",
@@ -2705,7 +2705,7 @@ const I18N = {
     noCosts:"支出はまだありません", noTrips:"旅行はまだありません", createFirstTrip:"最初の旅行を作成", emptyTrip:"{name} は空です", emptyTripHelp:"「予定を追加」でフライト、ホテル、食事、買い物、アクティビティを登録します。",
     item:"件", items:"件", until:"まで", tripDefault:"旅行の既定値（{currency}）", inheritedCurrency:"旅行の既定値を使用：{currency}。別の通貨を選ぶと上書きできます。",
     customCurrency:"この項目は旅行の既定通貨（{currency}）を上書きしています。", invalidMap:"有効な http:// または https:// の地図リンクを入力してください。", untitled:"無題", optional:"任意",
-    addCustomCategory:"＋ カスタムカテゴリを追加…", titlePlaceholder:"例：東京へのフライト", mapPlaceholder:"Google マップ、maps.app.goo.gl、map.naver.com、naver.me のリンクを貼り付け", categoryPlaceholder:"例：買い物", tripNamePlaceholder:"例：アイスランド旅行（空欄は「無題」）",
+    addCustomCategory:"＋ カスタムカテゴリを追加…", titlePlaceholder:"例：東京へのフライト", mapPlaceholder:"完全な google.com/maps、map.naver.com、または naver.me リンクを貼り付け", categoryPlaceholder:"例：買い物", tripNamePlaceholder:"例：アイスランド旅行（空欄は「無題」）",
     selectAirport:"空港を選択または入力", origin:"出発地", destination:"目的地", placeAddress:"場所または住所", hotelPlaceholder:"ホテルまたは宿泊施設名",
     foodPlaceholder:"レストラン、カフェ、市場", activityPlaceholder:"会場または集合場所", sightseeingPlaceholder:"観光地またはエリア", meetingPlaceholder:"オフィスまたは会議場所",
     confirmDelete:'「{label}」を削除しますか？', cannotUndo:"この操作は元に戻せません。", deleteAction:"削除",
@@ -4087,6 +4087,20 @@ function safeHttpUrl(raw) {
     return "";
   }
 }
+function isGoogleMapsShortLink(raw) {
+  const safeUrl = safeHttpUrl(raw);
+  if (!safeUrl) return false;
+  try {
+    const url = new URL(safeUrl);
+    const host = url.hostname.toLowerCase();
+    return (
+      host === "maps.app.goo.gl" ||
+      (host === "goo.gl" && /^\/maps(?:\/|$)/i.test(url.pathname))
+    );
+  } catch {
+    return false;
+  }
+}
 function googleMapsSearchUrl(query) {
   const value = String(query || "").trim();
   return value
@@ -4106,7 +4120,10 @@ function mapHrefForItem(item) {
 
   // When the user entered a value, either use that exact web URL or return no
   // link. Never silently replace it with an airport route or another place.
-  if (rawExplicitUrl) return safeHttpUrl(rawExplicitUrl);
+  if (rawExplicitUrl) {
+    if (isGoogleMapsShortLink(rawExplicitUrl)) return "";
+    return safeHttpUrl(rawExplicitUrl);
+  }
 
   // With no pasted link, show one location only. Do not create directions.
   const locationQuery =
@@ -4116,140 +4133,15 @@ function mapHrefForItem(item) {
     item.title;
   return googleMapsSearchUrl(locationQuery);
 }
-const MAP_SHORT_LINK_RESOLVER_ENDPOINT = "https://www.redirectcheck.org/api/check";
-const MAP_SHORT_LINK_CACHE_KEY = "voyage-map-short-link-cache-v1";
-const resolvedMapShortLinkCache = new Map();
-
-function isGoogleMapsShortUrl(raw) {
-  const safeUrl = safeHttpUrl(raw);
-  if (!safeUrl) return false;
-  try {
-    const url = new URL(safeUrl);
-    const host = url.hostname.toLowerCase();
-    return host === "maps.app.goo.gl" || (
-      host === "goo.gl" &&
-      /^\/maps(?:\/|$)/i.test(url.pathname)
-    );
-  } catch {
-    return false;
-  }
-}
-function loadResolvedMapShortLinkCache() {
-  try {
-    const cached = JSON.parse(localStorage.getItem(MAP_SHORT_LINK_CACHE_KEY) || "{}");
-    Object.entries(cached).forEach(([shortUrl, finalUrl]) => {
-      if (safeHttpUrl(shortUrl) && safeHttpUrl(finalUrl)) {
-        resolvedMapShortLinkCache.set(shortUrl, finalUrl);
-      }
-    });
-  } catch {}
-}
-function saveResolvedMapShortLinkCache() {
-  try {
-    localStorage.setItem(
-      MAP_SHORT_LINK_CACHE_KEY,
-      JSON.stringify(Object.fromEntries(resolvedMapShortLinkCache))
-    );
-  } catch {}
-}
-function isCanonicalGoogleMapsUrl(raw) {
-  const safeUrl = safeHttpUrl(raw);
-  if (!safeUrl) return false;
-  try {
-    const url = new URL(safeUrl);
-    const host = url.hostname.toLowerCase();
-    return (
-      /^maps\.google\./.test(host) ||
-      (/^(?:www\.)?google\./.test(host) && /^\/maps(?:\/|$)/i.test(url.pathname))
-    );
-  } catch {
-    return false;
-  }
-}
-function normalizeResolvedMapUrl(raw) {
-  const safeUrl = safeHttpUrl(raw);
-  if (!safeUrl || !isCanonicalGoogleMapsUrl(safeUrl)) return "";
-  try {
-    const url = new URL(safeUrl);
-    url.searchParams.delete("g_st");
-    url.searchParams.delete("utm_source");
-    url.searchParams.delete("utm_medium");
-    url.searchParams.delete("utm_campaign");
-    return url.href;
-  } catch {
-    return "";
-  }
-}
-async function resolveGoogleMapsShortUrl(raw) {
-  const shortUrl = safeHttpUrl(raw);
-  if (!shortUrl || !isGoogleMapsShortUrl(shortUrl)) return shortUrl;
-
-  const cached = resolvedMapShortLinkCache.get(shortUrl);
-  if (cached) return cached;
-
-  const response = await fetch(MAP_SHORT_LINK_RESOLVER_ENDPOINT, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      url:shortUrl,
-      method:"GET",
-      followMetaRefresh:true,
-      maxHops:15,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Map link resolver returned ${response.status}`);
-  }
-
-  const result = await response.json();
-  const finalUrl = normalizeResolvedMapUrl(
-    result?.final_result?.final_url ||
-    result?.finalUrl ||
-    ""
-  );
-
-  if (!finalUrl || isGoogleMapsShortUrl(finalUrl)) {
-    throw new Error(result?.error_message || "Short link did not resolve");
-  }
-
-  resolvedMapShortLinkCache.set(shortUrl, finalUrl);
-  saveResolvedMapShortLinkCache();
-  return finalUrl;
-}
 function followMapLink(url) {
   const safeUrl = safeHttpUrl(url);
   if (!safeUrl) return false;
-  window.location.assign(safeUrl);
+
+  // Let the browser handle the exact URL directly. On mobile, the browser or
+  // operating system may choose to hand the link to an installed map app.
+  window.open(safeUrl, "_blank", "noopener,noreferrer");
   return true;
 }
-async function openResolvedMapLink(rawUrl, control = null) {
-  const safeUrl = safeHttpUrl(rawUrl);
-  if (!safeUrl) return false;
-
-  const originalTitle = control?.title || "";
-  if (control) {
-    control.classList.add("is-resolving");
-    control.setAttribute("aria-busy", "true");
-    control.title = t("resolvingMapLink");
-  }
-
-  try {
-    const finalUrl = await resolveGoogleMapsShortUrl(safeUrl);
-    return followMapLink(finalUrl);
-  } catch (error) {
-    console.error("Could not resolve Google Maps short link.", error);
-    window.alert(t("mapShortLinkResolveError"));
-    return false;
-  } finally {
-    if (control) {
-      control.classList.remove("is-resolving");
-      control.removeAttribute("aria-busy");
-      control.title = originalTitle;
-    }
-  }
-}
-loadResolvedMapShortLinkCache();
 
 function splitRoute(location) {
   if (!location) return ["", ""];
@@ -4775,19 +4667,28 @@ function renderTimeline() {
 
 function locationHtml(item) {
   if (!item.location) return "";
-  const safeUrl = mapHrefForItem(item);
+  const safeUrl = isGoogleMapsShortLink(item?.mapUrl)
+    ? ""
+    : mapHrefForItem(item);
   const content = safeUrl
-    ? `<a href="${esc(safeUrl)}" data-map-open data-map-url="${esc(safeUrl)}">${esc(item.location)}</a>`
+    ? `<a href="${esc(safeUrl)}" target="_blank" rel="noopener noreferrer">${esc(item.location)}</a>`
     : esc(item.location);
   return `<div class="event-loc">📍 ${content}</div>`;
 }
 
 
 function cardLocationControlHtml(item) {
+  const rawMapUrl = String(item?.mapUrl || "").trim();
+  if (isGoogleMapsShortLink(rawMapUrl)) {
+    return `<span class="icon-btn card-footer-location is-disabled"
+      title="${esc(t("shortGoogleMapLinkWarning"))}"
+      aria-label="${esc(t("shortGoogleMapLinkWarning"))}">${iconSvg("map")}</span>`;
+  }
+
   const mapUrl = mapHrefForItem(item);
   const title = item?.location || t("openMaps");
   if (mapUrl) {
-    return `<a href="${esc(mapUrl)}" data-map-open data-map-url="${esc(mapUrl)}"
+    return `<a href="${esc(mapUrl)}" target="_blank" rel="noopener noreferrer"
       class="icon-btn card-footer-location"
       title="${esc(title)}" aria-label="${esc(title)}">${iconSvg("map")}</a>`;
   }
@@ -5441,6 +5342,7 @@ function openItemModal(itemId) {
   document.getElementById("f-bus-number").value = item?.busNumber || "";
   document.getElementById("f-map-link").value = item?.mapUrl || "";
   updateMapLinkActionButton();
+  restoreMapLinkHelp();
   document.getElementById("f-date").value = item?.date || TODAY;
   document.getElementById("f-start").value = item?.startTime || "";
   document.getElementById("f-end").value = item?.endTime || "";
@@ -5516,19 +5418,33 @@ function updateMapLinkActionButton() {
   const button = document.getElementById("map-clear-btn");
   if (!button) return;
 
-  const hasValue = Boolean(input?.value.trim());
-  button.dataset.mode = hasValue ? "clear" : "paste";
-  button.textContent = t(hasValue ? "clearMapLink" : "pasteMapLink");
+  const value = input?.value.trim() || "";
+  const mode = !value
+    ? "paste"
+    : isGoogleMapsShortLink(value)
+      ? "replace"
+      : "clear";
+  const key = mode === "paste"
+    ? "pasteMapLink"
+    : mode === "replace"
+      ? "replaceMapLink"
+      : "clearMapLink";
+
+  button.dataset.mode = mode;
+  button.textContent = t(key);
   button.title = button.textContent;
   button.setAttribute("aria-label", button.textContent);
   button.disabled = false;
 }
 function restoreMapLinkHelp() {
   const help = document.getElementById("map-link-help");
-  if (help) {
-    help.textContent = t("mapHelp");
-    help.classList.remove("error");
-  }
+  const input = document.getElementById("f-map-link");
+  if (!help) return;
+
+  const isShort = isGoogleMapsShortLink(input?.value.trim() || "");
+  help.textContent = t(isShort ? "shortGoogleMapLinkWarning" : "mapHelp");
+  help.classList.toggle("is-warning", isShort);
+  help.classList.remove("error");
 }
 async function pasteMapLinkFromClipboard() {
   const input = document.getElementById("f-map-link");
@@ -5556,18 +5472,6 @@ async function pasteMapLinkFromClipboard() {
   input.focus();
   input.setSelectionRange?.(input.value.length, input.value.length);
 }
-document.addEventListener("click", event => {
-  const control = event.target.closest("[data-map-open]");
-  if (!control) return;
-
-  const rawUrl = control.dataset.mapUrl || control.getAttribute("href") || "";
-  if (!rawUrl) return;
-
-  event.preventDefault();
-  event.stopPropagation();
-  openResolvedMapLink(rawUrl, control);
-});
-
 document.getElementById("f-map-link").addEventListener("input", event => {
   event.target.setCustomValidity("");
   restoreMapLinkHelp();
@@ -5577,7 +5481,7 @@ document.getElementById("map-clear-btn").addEventListener("click", async () => {
   const input = document.getElementById("f-map-link");
   const button = document.getElementById("map-clear-btn");
 
-  if (button.dataset.mode === "paste") {
+  if (button.dataset.mode === "paste" || button.dataset.mode === "replace") {
     await pasteMapLinkFromClipboard();
     return;
   }
@@ -5606,6 +5510,14 @@ document.getElementById("map-search-btn").addEventListener("click", () => {
     toPlace:config.transport ? destination : "",
     mapUrl:pastedValue,
   };
+  if (isGoogleMapsShortLink(pastedValue)) {
+    input.setCustomValidity(t("shortGoogleMapLinkBlocked"));
+    input.reportValidity();
+    input.focus();
+    restoreMapLinkHelp();
+    return;
+  }
+
   const url = mapHrefForItem(mapItem);
 
   if (pastedValue && !url) {
@@ -5616,18 +5528,7 @@ document.getElementById("map-search-btn").addEventListener("click", () => {
   }
 
   input.setCustomValidity("");
-  if (!url) return;
-
-  const openButton = document.getElementById("map-search-btn");
-  openResolvedMapLink(url, openButton).then(opened => {
-    if (!opened || !pastedValue || !isGoogleMapsShortUrl(pastedValue)) return;
-
-    const cached = resolvedMapShortLinkCache.get(safeHttpUrl(pastedValue));
-    if (cached) {
-      input.value = cached;
-      input.dispatchEvent(new Event("input", { bubbles:true }));
-    }
-  });
+  if (url) followMapLink(url);
 });
 
 // ---------------------------------------------------------------------------
@@ -5740,7 +5641,18 @@ document.getElementById("item-save").addEventListener("click", () => {
     ? [fromPlace, toPlace].filter(Boolean).join(" → ")
     : document.getElementById("f-location").value.trim();
 
-  const mapRaw = document.getElementById("f-map-link").value.trim();
+  const mapInput = document.getElementById("f-map-link");
+  const mapRaw = mapInput.value.trim();
+
+  if (isGoogleMapsShortLink(mapRaw)) {
+    mapInput.setCustomValidity(t("shortGoogleMapLinkBlocked"));
+    mapInput.reportValidity();
+    mapInput.focus();
+    restoreMapLinkHelp();
+    return;
+  }
+
+  mapInput.setCustomValidity("");
   const mapUrl = safeHttpUrl(mapRaw);
   if (mapRaw && !mapUrl) {
     alert(t("invalidMap"));
