@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v32 — three-day scheduled backups with manual backup retained -->
+<!-- Voyage Board v33 — exact same-tab map links and Clear/Paste action -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -2031,13 +2031,17 @@
   .map-clear-btn {
     color:var(--text-lo);
   }
-  .map-clear-btn:not(:disabled):hover {
+  .map-clear-btn[data-mode="clear"]:hover {
     color:var(--danger);
     border-color:color-mix(in srgb, var(--danger) 58%, var(--border));
   }
-  .map-clear-btn:disabled {
-    opacity:.42;
-    cursor:default;
+  .map-clear-btn[data-mode="paste"] {
+    color:var(--accent);
+    border-color:color-mix(in srgb, var(--accent) 45%, var(--border));
+  }
+  .map-clear-btn[data-mode="paste"]:hover {
+    color:var(--text-hi);
+    border-color:var(--accent);
   }
 
   @media (max-width:720px) {
@@ -2203,7 +2207,7 @@
           <button type="button" class="field-action map-clear-btn" id="map-clear-btn">Clear</button>
         </div>
       </div>
-      <div class="field-help" data-i18n="mapHelp">Paste a Google Maps or Naver Map link. Open uses the saved link first, or searches from the location when the field is empty.</div>
+      <div class="field-help" id="map-link-help" data-i18n="mapHelp">Paste any normal web link. Open follows that exact link in the current browser tab. When empty, the location is searched instead.</div>
 
       <div class="grid-3">
         <div><label class="field-label" id="f-date-label" data-i18n="date">Date</label><input type="date" class="field-input" id="f-date"></div>
@@ -2620,7 +2624,7 @@ const I18N = {
     toolbarHint:"Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.", type:"Type", titleLabel:"Title", entryColor:"Entry color",
     useTypeDefault:"Use type default", colorDefaultHelp:"Uses the selected type's default color unless you choose a custom color.", colorCustomHelp:"Custom color override is active for this entry.",
     location:"Location", propertyLocation:"Property / location", from:"From", to:"To", departureAirport:"Departure airport", arrivalAirport:"Arrival airport",
-    googleMapsLink:"Map link", openMaps:"Open", clearMapLink:"Clear", mapHelp:"Paste a Google Maps or Naver Map link. Open uses the saved link first, or searches from the location when the field is empty.",
+    googleMapsLink:"Map link", openMaps:"Open", clearMapLink:"Clear", pasteMapLink:"Paste", pasteMapLinkPrompt:"Paste the map or location link", invalidMapLink:"Enter a complete web link, such as https://example.com/place.", mapHelp:"Paste any normal web link. Open follows that exact link in the current browser tab. When empty, the location is searched instead.",
     date:"Date", start:"Start", end:"End", price:"Price", currency:"Currency", spendingCategory:"Spending category", add:"Add", trip:"Trip", notes:"Notes",
     flightNumber:"Flight number", departureTerminal:"Departure terminal", arrivalTerminal:"Arrival terminal", busNumber:"Bus number",
     flightService:"Flight {number}", busService:"Bus {number}", terminalRoute:"Terminal {departure} → {arrival}", departureTerminalOnly:"Departure terminal {terminal}", arrivalTerminalOnly:"Arrival terminal {terminal}",
@@ -2647,7 +2651,7 @@ const I18N = {
     toolbarHint:"拖曳時間軸項目可重新排序；拖曳左側旅程可調整旅程順序。", type:"類型", titleLabel:"標題", entryColor:"項目顏色",
     useTypeDefault:"使用類型預設色", colorDefaultHelp:"除非選擇自訂顏色，否則會使用所選類型的預設色。", colorCustomHelp:"此項目已啟用自訂顏色。",
     location:"地點", propertyLocation:"住宿／地點", from:"出發地", to:"目的地", departureAirport:"出發機場", arrivalAirport:"抵達機場",
-    googleMapsLink:"地圖連結", openMaps:"開啟", clearMapLink:"清除", mapHelp:"可貼上 Google 地圖或 Naver Map 連結。欄位有連結時會優先開啟；留空時則依地點或路線搜尋。",
+    googleMapsLink:"地圖連結", openMaps:"開啟", clearMapLink:"清除", pasteMapLink:"貼上", pasteMapLinkPrompt:"貼上地圖或地點連結", invalidMapLink:"請輸入完整的網頁連結，例如 https://example.com/place。", mapHelp:"可貼上任何一般網頁連結。開啟時會在目前的瀏覽器分頁直接前往該連結；欄位留空時才依地點搜尋。",
     date:"日期", start:"開始", end:"結束", price:"價格", currency:"幣別", spendingCategory:"支出分類", add:"新增", trip:"旅程", notes:"備註",
     flightNumber:"航班編號", departureTerminal:"出發航廈", arrivalTerminal:"抵達航廈", busNumber:"公車號碼",
     flightService:"航班 {number}", busService:"公車 {number}", terminalRoute:"航廈 {departure} → {arrival}", departureTerminalOnly:"出發航廈 {terminal}", arrivalTerminalOnly:"抵達航廈 {terminal}",
@@ -2674,7 +2678,7 @@ const I18N = {
     toolbarHint:"タイムライン項目をドラッグして並べ替えます。左側の旅行もドラッグできます。", type:"種類", titleLabel:"タイトル", entryColor:"項目の色",
     useTypeDefault:"種類の既定色", colorDefaultHelp:"カスタム色を選ばない場合、種類の既定色を使用します。", colorCustomHelp:"この項目にはカスタム色が設定されています。",
     location:"場所", propertyLocation:"宿泊施設／場所", from:"出発地", to:"目的地", departureAirport:"出発空港", arrivalAirport:"到着空港",
-    googleMapsLink:"地図リンク", openMaps:"開く", clearMapLink:"クリア", mapHelp:"Google マップまたは Naver Map のリンクを貼り付けられます。リンクがある場合は優先して開き、空欄の場合は場所／経路から検索します。",
+    googleMapsLink:"地図リンク", openMaps:"開く", clearMapLink:"クリア", pasteMapLink:"貼り付け", pasteMapLinkPrompt:"地図または場所のリンクを貼り付け", invalidMapLink:"https://example.com/place のような完全なウェブリンクを入力してください。", mapHelp:"通常のウェブリンクを貼り付けられます。開くと現在のブラウザタブでそのリンクへ直接移動し、空欄の場合のみ場所を検索します。",
     date:"日付", start:"開始", end:"終了", price:"価格", currency:"通貨", spendingCategory:"支出カテゴリ", add:"追加", trip:"旅行", notes:"メモ",
     flightNumber:"便名", departureTerminal:"出発ターミナル", arrivalTerminal:"到着ターミナル", busNumber:"バス番号",
     flightService:"便名 {number}", busService:"バス {number}", terminalRoute:"ターミナル {departure} → {arrival}", departureTerminalOnly:"出発ターミナル {terminal}", arrivalTerminalOnly:"到着ターミナル {terminal}",
@@ -3285,6 +3289,7 @@ function applyStaticTranslations() {
     redoButton.title = `${t("redo")} (Ctrl/Cmd+Shift+Z / Ctrl+Y)`;
   }
   applyCollabTranslations();
+  if (typeof updateMapLinkActionButton === "function") updateMapLinkActionButton();
 }
 
 function persist() {
@@ -4083,17 +4088,29 @@ function googleMapsDirectionsUrl(origin, destination) {
 function mapHrefForItem(item) {
   if (!item) return "";
 
-  // A link explicitly pasted by the user must always win. The previous
-  // implementation replaced Google Maps links with a generated route based
-  // on the entry's from/to fields, so changing the saved link appeared to do
-  // nothing and could repeatedly open an airport terminal.
-  const explicitUrl = safeHttpUrl(item.mapUrl);
-  if (explicitUrl) return explicitUrl;
+  const rawExplicitUrl = String(item.mapUrl || "").trim();
 
-  // Generate a dependable fallback only when no map link was saved.
-  const routeUrl = googleMapsDirectionsUrl(item.fromPlace, item.toPlace);
-  const searchUrl = googleMapsSearchUrl(item.location || item.title);
-  return routeUrl || searchUrl;
+  // When the user entered a value, either use that exact web URL or return no
+  // link. Never silently replace it with an airport route or another place.
+  if (rawExplicitUrl) return safeHttpUrl(rawExplicitUrl);
+
+  // With no pasted link, show one location only. Do not create directions.
+  const locationQuery =
+    item.location ||
+    item.toPlace ||
+    item.fromPlace ||
+    item.title;
+  return googleMapsSearchUrl(locationQuery);
+}
+function followMapLink(url) {
+  const safeUrl = safeHttpUrl(url);
+  if (!safeUrl) return false;
+
+  // Same-tab navigation behaves like pasting the URL into the browser address
+  // bar and avoids embedded/new-window map handlers that report unsupported
+  // links.
+  window.location.assign(safeUrl);
+  return true;
 }
 
 function splitRoute(location) {
@@ -4622,7 +4639,7 @@ function locationHtml(item) {
   if (!item.location) return "";
   const safeUrl = mapHrefForItem(item);
   const content = safeUrl
-    ? `<a href="${esc(safeUrl)}" target="_blank" rel="noopener noreferrer">${esc(item.location)}</a>`
+    ? `<a href="${esc(safeUrl)}">${esc(item.location)}</a>`
     : esc(item.location);
   return `<div class="event-loc">📍 ${content}</div>`;
 }
@@ -4632,7 +4649,7 @@ function cardLocationControlHtml(item) {
   const mapUrl = mapHrefForItem(item);
   const title = item?.location || t("openMaps");
   if (mapUrl) {
-    return `<a href="${esc(mapUrl)}" target="_blank" rel="noopener noreferrer"
+    return `<a href="${esc(mapUrl)}"
       class="icon-btn card-footer-location"
       title="${esc(title)}" aria-label="${esc(title)}">${iconSvg("map")}</a>`;
   }
@@ -5285,7 +5302,7 @@ function openItemModal(itemId) {
   document.getElementById("f-arrival-terminal").value = item?.arrivalTerminal || "";
   document.getElementById("f-bus-number").value = item?.busNumber || "";
   document.getElementById("f-map-link").value = item?.mapUrl || "";
-  updateMapClearButton();
+  updateMapLinkActionButton();
   document.getElementById("f-date").value = item?.date || TODAY;
   document.getElementById("f-start").value = item?.startTime || "";
   document.getElementById("f-end").value = item?.endTime || "";
@@ -5356,15 +5373,67 @@ document.getElementById("f-category-name").addEventListener("keydown", event => 
   }
 });
 
-function updateMapClearButton() {
+function updateMapLinkActionButton() {
   const input = document.getElementById("f-map-link");
   const button = document.getElementById("map-clear-btn");
-  if (button) button.disabled = !input?.value.trim();
+  if (!button) return;
+
+  const hasValue = Boolean(input?.value.trim());
+  button.dataset.mode = hasValue ? "clear" : "paste";
+  button.textContent = t(hasValue ? "clearMapLink" : "pasteMapLink");
+  button.title = button.textContent;
+  button.setAttribute("aria-label", button.textContent);
+  button.disabled = false;
 }
-document.getElementById("f-map-link").addEventListener("input", updateMapClearButton);
-document.getElementById("map-clear-btn").addEventListener("click", () => {
+function restoreMapLinkHelp() {
+  const help = document.getElementById("map-link-help");
+  if (help) {
+    help.textContent = t("mapHelp");
+    help.classList.remove("error");
+  }
+}
+async function pasteMapLinkFromClipboard() {
   const input = document.getElementById("f-map-link");
+  let pasted = "";
+
+  try {
+    if (navigator.clipboard?.readText) {
+      pasted = String(await navigator.clipboard.readText() || "").trim();
+    }
+  } catch {}
+
+  // Clipboard permission can be unavailable in some mobile browsers/PWAs.
+  if (!pasted) {
+    pasted = String(window.prompt(t("pasteMapLinkPrompt"), "") || "").trim();
+  }
+
+  if (!pasted) {
+    input.focus();
+    return;
+  }
+
+  input.value = pasted;
+  input.setCustomValidity("");
+  input.dispatchEvent(new Event("input", { bubbles:true }));
+  input.focus();
+  input.setSelectionRange?.(input.value.length, input.value.length);
+}
+document.getElementById("f-map-link").addEventListener("input", event => {
+  event.target.setCustomValidity("");
+  restoreMapLinkHelp();
+  updateMapLinkActionButton();
+});
+document.getElementById("map-clear-btn").addEventListener("click", async () => {
+  const input = document.getElementById("f-map-link");
+  const button = document.getElementById("map-clear-btn");
+
+  if (button.dataset.mode === "paste") {
+    await pasteMapLinkFromClipboard();
+    return;
+  }
+
   input.value = "";
+  input.setCustomValidity("");
   input.dispatchEvent(new Event("input", { bubbles:true }));
   input.focus();
 });
@@ -5373,8 +5442,10 @@ document.getElementById("map-search-btn").addEventListener("click", () => {
   const config = KIND_CONFIG[kind] || KIND_CONFIG.other;
   const origin = document.getElementById("f-from").value.trim();
   const destination = document.getElementById("f-to").value.trim();
+  const pastedValue = document.getElementById("f-map-link").value.trim();
+  const input = document.getElementById("f-map-link");
   const location = config.transport
-    ? [origin, destination].filter(Boolean).join(" → ")
+    ? document.getElementById("f-location").value.trim() || destination || origin
     : document.getElementById("f-location").value.trim();
 
   const mapItem = {
@@ -5383,10 +5454,19 @@ document.getElementById("map-search-btn").addEventListener("click", () => {
     location,
     fromPlace:config.transport ? origin : "",
     toPlace:config.transport ? destination : "",
-    mapUrl:document.getElementById("f-map-link").value.trim(),
+    mapUrl:pastedValue,
   };
   const url = mapHrefForItem(mapItem);
-  if (url) window.open(url, "_blank", "noopener,noreferrer");
+
+  if (pastedValue && !url) {
+    input.setCustomValidity(t("invalidMapLink"));
+    input.reportValidity();
+    input.focus();
+    return;
+  }
+
+  input.setCustomValidity("");
+  if (url) followMapLink(url);
 });
 
 // ---------------------------------------------------------------------------
