@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Voyage Board v40 — first-party Supabase Google Maps short-link expansion -->
-<!-- Voyage Board v44: compact consistent desktop schedule cards; mobile layout preserved -->
+<!-- Voyage Board v45: compact consistent desktop schedule cards; mobile layout preserved -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -6468,6 +6468,28 @@ document.getElementById("confirm-ok").addEventListener("click", async () => {
 // Timeline drag to reorder
 // ---------------------------------------------------------------------------
 let draggedId = null;
+let draggedPlacement = null;
+
+function itemDragPlacement(item) {
+  const dayItems = tripItemsForDate(item.date);
+  const index = dayItems.findIndex(candidate => candidate.id === item.id);
+  return {
+    date: item.date,
+    previousId: index > 0 ? dayItems[index - 1].id : null,
+    nextId: index >= 0 && index < dayItems.length - 1
+      ? dayItems[index + 1].id
+      : null,
+  };
+}
+
+function dragPlacementChanged(original, targetDate, previousItem, nextItem) {
+  if (!original) return true;
+  return (
+    original.date !== targetDate ||
+    original.previousId !== (previousItem?.id || null) ||
+    original.nextId !== (nextItem?.id || null)
+  );
+}
 
 function applyDragReposition(item, targetDate, previousItem, nextItem) {
   const DAY_START = 0;
@@ -6524,6 +6546,8 @@ function initDragHandlers() {
     const row = event.target.closest(".row");
     if (!row) return;
     draggedId = row.dataset.id;
+    const draggedItem = state.items.find(item => item.id === draggedId);
+    draggedPlacement = draggedItem ? itemDragPlacement(draggedItem) : null;
     row.classList.add("dragging");
     event.dataTransfer.effectAllowed = "move";
     try { event.dataTransfer.setData("text/plain", draggedId); } catch {}
@@ -6561,6 +6585,15 @@ function initDragHandlers() {
 
     if (!draggedItem) {
       draggedId = null;
+      draggedPlacement = null;
+      return;
+    }
+
+    // Dropping back on the same block is not a move. Do not recalculate its
+    // time merely because a drag gesture started.
+    if (row?.dataset.id === draggedId) {
+      draggedId = null;
+      draggedPlacement = null;
       return;
     }
 
@@ -6586,6 +6619,7 @@ function initDragHandlers() {
       const group = event.target.closest(".date-group");
       if (!group) {
         draggedId = null;
+        draggedPlacement = null;
         return;
       }
       targetDate = group.dataset.date;
@@ -6593,13 +6627,23 @@ function initDragHandlers() {
       previousItem = dayItems[dayItems.length - 1] || null;
     }
 
-    applyDragReposition(draggedItem, targetDate, previousItem, nextItem);
+    const changed = dragPlacementChanged(
+      draggedPlacement,
+      targetDate,
+      previousItem,
+      nextItem
+    );
     draggedId = null;
+    draggedPlacement = null;
+    if (!changed) return;
+
+    applyDragReposition(draggedItem, targetDate, previousItem, nextItem);
     renderAll();
   });
 
   timeline.addEventListener("dragend", () => {
     draggedId = null;
+    draggedPlacement = null;
     clearDragVisuals();
   });
 }
@@ -6789,6 +6833,10 @@ function initTimelineTouchReorder() {
       const draggedItem = state.items.find(item => item.id === draggedId);
       if (!draggedItem) return;
 
+      // A long-press released on the original block is not a reorder.
+      if (overEl?.dataset.id === draggedId) return;
+
+      const originalPlacement = itemDragPlacement(draggedItem);
       let targetDate;
       let previousItem = null;
       let nextItem = null;
@@ -6813,6 +6861,13 @@ function initTimelineTouchReorder() {
         const dayItems = tripItemsForDate(targetDate).filter(item => item.id !== draggedId);
         previousItem = dayItems[dayItems.length - 1] || null;
       }
+
+      if (!dragPlacementChanged(
+        originalPlacement,
+        targetDate,
+        previousItem,
+        nextItem
+      )) return;
 
       applyDragReposition(draggedItem, targetDate, previousItem, nextItem);
       renderAll();
