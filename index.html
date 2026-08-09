@@ -2410,6 +2410,163 @@
     to { transform:rotate(360deg); }
   }
 
+
+
+  /* v48: Keep Account typography aligned with the normal app interface.
+     This is deliberately scoped to the Account overlay only. */
+  #account-overlay .modal-head h3 {
+    font-size: 15px !important;
+    line-height: 1.3;
+  }
+  #account-overlay .modal-body {
+    font-size: 11.5px !important;
+  }
+  #account-overlay .muted-box {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  #account-overlay .field-label {
+    margin-top: 10px;
+    margin-bottom: 4px;
+    font-size: 10.5px;
+    line-height: 1.35;
+  }
+  #account-overlay .field-help,
+  #account-overlay .collab-message,
+  #account-overlay .profile-status,
+  #account-overlay #collab-user-email {
+    font-size: 10.5px !important;
+    line-height: 1.45;
+  }
+  #account-overlay .collab-section-title {
+    font-size: 12px !important;
+    line-height: 1.35;
+  }
+  #account-overlay .field-input {
+    font-size: 13px !important;
+    line-height: 1.35;
+  }
+  #account-overlay .btn {
+    font-size: 12px !important;
+    line-height: 1.25;
+  }
+
+  @media (max-width: 720px) {
+    #account-overlay .modal-head {
+      padding: 14px 14px 0;
+    }
+    #account-overlay .modal-head h3 {
+      font-size: 14px !important;
+    }
+    #account-overlay .modal-body {
+      padding: 11px 14px 16px;
+      font-size: 11px !important;
+    }
+    #account-overlay .collab-panel {
+      gap: 10px;
+    }
+    #account-overlay .muted-box {
+      padding: 8px 9px;
+      font-size: 10.5px;
+    }
+    #account-overlay .field-label {
+      margin-top: 8px;
+      margin-bottom: 3px;
+      font-size: 10px;
+    }
+    #account-overlay .field-help,
+    #account-overlay .collab-message,
+    #account-overlay .profile-status,
+    #account-overlay #collab-user-email {
+      font-size: 10px !important;
+    }
+    #account-overlay .collab-section-title {
+      font-size: 11.5px !important;
+    }
+    #account-overlay .field-input {
+      min-height: 38px;
+      padding: 7px 9px;
+      font-size: 13px !important;
+    }
+    #account-overlay .btn {
+      min-height: 38px;
+      padding: 7px 11px;
+      font-size: 11.5px !important;
+    }
+    #account-overlay .profile-settings {
+      gap: 6px;
+    }
+  }
+
+
+  /* v49: Compact the sent-code state and always show the complete address. */
+  #account-overlay .collab-pending-email {
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    padding:8px 10px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--soft);
+    color:var(--text-lo);
+    font-size:10.5px;
+    line-height:1.4;
+  }
+  #account-overlay .collab-pending-email[hidden] { display:none !important; }
+  #account-overlay #collab-pending-email {
+    color:var(--text-hi);
+    font-size:11px;
+    font-weight:600;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+  #account-overlay #collab-otp-panel .field-label,
+  #account-overlay #collab-otp-panel .field-help,
+  #account-overlay #collab-otp-panel .btn,
+  #account-overlay #collab-auth-message,
+  #account-overlay #collab-session-note {
+    font-size:10.5px !important;
+  }
+  #account-overlay #collab-otp-code {
+    font-size:12px !important;
+    letter-spacing:.16em;
+  }
+
+  @media (max-width: 720px) {
+    #account-overlay #collab-email-row.otp-active {
+      display:grid;
+      grid-template-columns:minmax(0,1fr);
+      align-items:stretch;
+      gap:7px;
+    }
+    #account-overlay #collab-auth-panel.otp-active #collab-email-label,
+    #account-overlay #collab-auth-panel.otp-active #collab-login-email {
+      display:none;
+    }
+    #account-overlay #collab-email-row.otp-active .btn {
+      width:100%;
+      flex:none;
+    }
+    #account-overlay .collab-pending-email {
+      padding:7px 9px;
+      font-size:10px;
+    }
+    #account-overlay #collab-pending-email { font-size:10.5px; }
+    #account-overlay #collab-otp-panel { gap:7px; }
+    #account-overlay #collab-otp-panel .collab-link-row { gap:7px; }
+    #account-overlay #collab-otp-panel .field-label,
+    #account-overlay #collab-otp-panel .field-help,
+    #account-overlay #collab-otp-panel .btn,
+    #account-overlay #collab-auth-message,
+    #account-overlay #collab-session-note {
+      font-size:10px !important;
+    }
+    #account-overlay #collab-otp-code {
+      font-size:11.5px !important;
+      letter-spacing:.14em;
+    }
+  }
+
 </style>
 </head>
 <body>
@@ -2719,9 +2876,13 @@
       <div id="collab-auth-panel" class="collab-panel" style="display:none;">
         <div class="muted-box" id="collab-auth-help">Sign in once to access shared trips across the app.</div>
         <label class="field-label" id="collab-email-label">Email</label>
-        <div class="collab-link-row">
+        <div class="collab-link-row" id="collab-email-row">
           <input class="field-input" id="collab-login-email" type="email" autocomplete="email" placeholder="you@example.com">
           <button class="btn btn-primary" id="collab-login-btn" type="button">Send sign-in code</button>
+        </div>
+        <div class="collab-pending-email" id="collab-pending-email-row" hidden>
+          <span id="collab-pending-email-label">Code sent to</span>
+          <strong id="collab-pending-email"></strong>
         </div>
         <div id="collab-otp-panel" aria-live="polite">
           <label class="field-label" id="collab-otp-label" for="collab-otp-code">Verification code</label>
@@ -6936,7 +7097,7 @@ function initTripListTouchReorder() {
 const COLLAB_I18N = {
   en: {
     share:"↗ Share", localOnly:"Local only", synced:"Synced", saving:"Saving…", syncError:"Sync error", viewOnlyStatus:"View only",
-    viewOnlyBanner:"View-only access — changes are disabled.", shareTitle:"Share & collaborate", accountTitle:"Account & sign in", done:"Done", email:"Email",
+    viewOnlyBanner:"View-only access — changes are disabled.", shareTitle:"Share & collaborate", accountTitle:"Account & sign in", done:"Done", email:"Email", codeSentTo:"Code sent to",
     authHelp:"Enter your email, then verify the code inside this app.", shareAuthHelp:"Sign in first. Your account is global, while sharing remains configured separately for this trip.", globalAccountHelp:"This sign-in is shared across every trip. Sharing permissions still remain separate for each trip.", signIn:"Sign in", account:"Account", sendSignIn:"Send sign-in code", signOut:"Sign out", verificationCode:"Verification code", verifyCode:"Verify code", otpHelp:"Enter the sign-in code from the email inside this app.", useAnotherEmail:"Use another email", invalidOtp:"Enter a valid verification code (6–10 digits).", otpVerified:"Signed in successfully.",
     signInSent:"A sign-in code was sent. Return here and enter the code.", sessionNote:"The code is verified inside this app, so the session stays in the installed Home Screen app.", resendIn:"Send again in {seconds}s", emailRateLimited:"Too many sign-in emails were requested. Wait for the email limit to reset, or configure custom SMTP in Supabase.", configMissing:"Cloud collaboration is not configured yet. Add the Supabase URL and publishable key to COLLAB_CONFIG, run the supplied SQL, and host this file over HTTPS.",
     publishTitle:"Publish this trip", publishHelp:"This trip is stored only on this device. Sync it once to make it available automatically on every device signed in to your account.", publish:"Create shared trip",
@@ -6951,7 +7112,7 @@ const COLLAB_I18N = {
   },
   "zh-TW": {
     share:"↗ 分享", localOnly:"僅儲存於本機", synced:"已同步", saving:"儲存中…", syncError:"同步錯誤", viewOnlyStatus:"僅供檢視",
-    viewOnlyBanner:"目前為僅供檢視權限，無法修改內容。", shareTitle:"分享與共同編輯", accountTitle:"帳號與登入", done:"完成", email:"電子郵件",
+    viewOnlyBanner:"目前為僅供檢視權限，無法修改內容。", shareTitle:"分享與共同編輯", accountTitle:"帳號與登入", done:"完成", email:"電子郵件", codeSentTo:"登入碼已寄送至",
     authHelp:"輸入電子郵件後，請直接在此 App 內驗證登入碼。", shareAuthHelp:"請先登入。帳號適用於所有旅程，但每個旅程的分享權限仍各自獨立。", globalAccountHelp:"登入狀態會套用至所有旅程；每個旅程的分享對象與權限仍互相獨立。", signIn:"登入", account:"帳號", sendSignIn:"傳送登入碼", signOut:"登出", verificationCode:"驗證碼", verifyCode:"驗證登入碼", otpHelp:"請在此 App 內輸入郵件中的登入碼。", useAnotherEmail:"使用其他電子郵件", invalidOtp:"請輸入有效的 6 至 10 位數驗證碼。", otpVerified:"登入成功。",
     signInSent:"登入碼已寄出；請返回此處輸入驗證碼。", sessionNote:"驗證碼會直接在此 App 內驗證，因此登入狀態會保留在主畫面 App 中。", resendIn:"{seconds} 秒後可再次傳送", emailRateLimited:"登入郵件要求過多。請等待寄送限制重設，或在 Supabase 設定自訂 SMTP。", configMissing:"尚未設定雲端協作。請在 COLLAB_CONFIG 填入 Supabase URL 與 publishable key、執行隨附 SQL，並以 HTTPS 發布此檔案。",
     publishTitle:"發布此旅程", publishHelp:"此旅程目前只存在此瀏覽器。發布後會建立雲端副本與固定共享網址。", publish:"建立共享旅程",
@@ -6966,7 +7127,7 @@ const COLLAB_I18N = {
   },
   ja: {
     share:"↗ 共有", localOnly:"ローカルのみ", synced:"同期済み", saving:"保存中…", syncError:"同期エラー", viewOnlyStatus:"閲覧のみ",
-    viewOnlyBanner:"閲覧専用です。変更はできません。", shareTitle:"共有と共同編集", accountTitle:"アカウントとサインイン", done:"完了", email:"メール",
+    viewOnlyBanner:"閲覧専用です。変更はできません。", shareTitle:"共有と共同編集", accountTitle:"アカウントとサインイン", done:"完了", email:"メール", codeSentTo:"コードの送信先",
     authHelp:"メールアドレスを入力し、このアプリ内でコードを確認してください。", shareAuthHelp:"先にサインインしてください。アカウントは全旅行共通ですが、共有権限は旅行ごとに独立しています。", globalAccountHelp:"サインイン状態はすべての旅行で共通です。共有相手と権限は旅行ごとに独立しています。", signIn:"サインイン", account:"アカウント", sendSignIn:"サインインコードを送信", signOut:"サインアウト", verificationCode:"確認コード", verifyCode:"コードを確認", otpHelp:"メールに記載されたサインインコードをこのアプリ内で入力してください。", useAnotherEmail:"別のメールを使用", invalidOtp:"6～10桁の有効な確認コードを入力してください。", otpVerified:"サインインしました。",
     signInSent:"サインインコードを送信しました。ここに戻り、コードを入力してください。", sessionNote:"コードはこのアプリ内で確認されるため、ホーム画面アプリにサインイン状態が保存されます。", resendIn:"{seconds}秒後に再送信", emailRateLimited:"サインインメールの要求が多すぎます。制限の解除を待つか、Supabase でカスタム SMTP を設定してください。", configMissing:"クラウド共同編集は未設定です。COLLAB_CONFIG に Supabase URL と publishable key を入力し、付属 SQL を実行して、このファイルを HTTPS で公開してください。",
     publishTitle:"この旅行を公開", publishHelp:"現在、この旅行はこのブラウザだけに保存されています。公開するとクラウドコピーと固定共有 URL が作成されます。", publish:"共有旅行を作成",
@@ -7102,7 +7263,7 @@ function applyCollabTranslations() {
   const set = (id, key) => { const element = document.getElementById(id); if (element) element.textContent = ct(key); };
   set("share-trip-btn", "share"); set("chat-trip-btn", "chat"); set("backup-trip-btn", "backups"); set("readonly-banner", "viewOnlyBanner"); set("share-modal-title", "shareTitle"); set("share-done", "done"); set("chat-modal-title", "chatTitle"); set("chat-send-btn", "send"); set("chat-image-send-btn", "send"); set("chat-filter-label", "showModifications"); set("chat-tab-conversation-label", "conversationTab"); set("chat-tab-activity-label", "activityTab"); set("chat-tab-album-label", "albumTab"); set("chat-jump-label", "jumpToDate"); set("chat-jump-btn", "go");
   set("backup-modal-title", "backupsTitle"); set("backup-help", "backupHelp"); set("backup-create-btn", "createBackup"); set("backup-refresh-btn", "refresh");
-  set("account-modal-title", "accountTitle"); set("account-done", "done"); set("profile-title", "profileTitle"); set("profile-help", "profileHelp"); set("profile-name-label", "displayName"); set("profile-visibility-label", "showMeAs"); set("profile-save-btn", "saveIdentity"); set("member-directory-title", "memberDirectory"); set("member-directory-help", "memberDirectoryHelp"); set("collab-email-label", "email"); set("collab-auth-help", "authHelp"); set("share-auth-help", "shareAuthHelp"); set("account-global-help", "globalAccountHelp"); set("share-open-account-btn", "signIn"); set("collab-session-note", "sessionNote"); set("collab-login-btn", "sendSignIn"); set("collab-otp-label", "verificationCode"); set("collab-verify-otp-btn", "verifyCode"); set("collab-otp-help", "otpHelp"); set("collab-change-email-btn", "useAnotherEmail"); set("collab-logout-btn", "signOut");
+  set("account-modal-title", "accountTitle"); set("account-done", "done"); set("profile-title", "profileTitle"); set("profile-help", "profileHelp"); set("profile-name-label", "displayName"); set("profile-visibility-label", "showMeAs"); set("profile-save-btn", "saveIdentity"); set("member-directory-title", "memberDirectory"); set("member-directory-help", "memberDirectoryHelp"); set("collab-email-label", "email"); set("collab-pending-email-label", "codeSentTo"); set("collab-auth-help", "authHelp"); set("share-auth-help", "shareAuthHelp"); set("account-global-help", "globalAccountHelp"); set("share-open-account-btn", "signIn"); set("collab-session-note", "sessionNote"); set("collab-login-btn", "sendSignIn"); set("collab-otp-label", "verificationCode"); set("collab-verify-otp-btn", "verifyCode"); set("collab-otp-help", "otpHelp"); set("collab-change-email-btn", "useAnotherEmail"); set("collab-logout-btn", "signOut");
   const accountButton = document.getElementById("account-btn");
   if (accountButton) accountButton.textContent = `◎ ${ct(collabUser ? "account" : "signIn")}`;
   set("publish-title", "publishTitle"); set("publish-help", "publishHelp"); set("publish-trip-btn", "publish"); set("access-label", "yourAccess");
@@ -9077,12 +9238,19 @@ function setOtpPanelVisible(visible, email = "") {
   const panel = document.getElementById("collab-otp-panel");
   const emailInput = document.getElementById("collab-login-email");
   const otpInput = document.getElementById("collab-otp-code");
+  const emailRow = document.getElementById("collab-email-row");
+  const pendingEmailRow = document.getElementById("collab-pending-email-row");
+  const pendingEmailText = document.getElementById("collab-pending-email");
   if (!panel || !emailInput) return;
 
   const normalizedEmail = String(email || restorePendingAuthEmail() || emailInput.value || "").trim().toLowerCase();
   panel.classList.toggle("show", Boolean(visible));
+  emailRow?.classList.toggle("otp-active", Boolean(visible));
+  document.getElementById("collab-auth-panel")?.classList.toggle("otp-active", Boolean(visible));
   emailInput.readOnly = Boolean(visible);
   if (visible && normalizedEmail) emailInput.value = normalizedEmail;
+  if (pendingEmailRow) pendingEmailRow.hidden = !visible;
+  if (pendingEmailText) pendingEmailText.textContent = visible ? normalizedEmail : "";
   if (!visible && otpInput) otpInput.value = "";
 }
 function resetOtpSignIn({ clearEmail = false } = {}) {
