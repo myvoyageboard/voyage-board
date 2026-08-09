@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Voyage Board v40 Map Resolver Test</title>
+  <style>
+    :root { color-scheme:dark; font-family:system-ui,sans-serif; }
+    body { margin:0; padding:20px; background:#07101d; color:#edf5fb; }
+    main { max-width:900px; margin:auto; }
+    article { padding:16px; margin:14px 0; border:1px solid #365772; border-radius:14px; background:#101d2c; }
+    button { min-height:44px; padding:8px 14px; margin:4px 8px 4px 0; border-radius:9px; border:1px solid #73a7d0; background:#173653; color:white; }
+    code { overflow-wrap:anywhere; }
+    .ok { color:#8bea9d; }
+    .bad { color:#ff9ca6; }
+    .pending { color:#ffd47a; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Voyage Board v40 Map Resolver Test</h1>
+  <p>This tests your deployed Supabase <code>resolve-map-link</code> function.</p>
+  <button id="run-all">Run all live tests</button>
+  <div id="results"></div>
+</main>
+<script>
+const SUPABASE_URL = "https://ssqdatwuoefjzpmseyhm.supabase.co";
+const PUBLISHABLE_KEY = "sb_publishable_d1cBXwtzJIgzDAbX1FU3-A_RFk42Clt";
+const ENDPOINT = `${SUPABASE_URL}/functions/v1/resolve-map-link`;
+
+const tests = [
+  {
+    name:"Hsinchu Zoo",
+    short:"https://maps.app.goo.gl/jUbQsUWyYaogz1949?g_st=ic",
+    expected:"https://www.google.com/maps?q=Hsinchu+Zoo,+No.+66%E8%99%9F%E9%A3%9F%E5%93%81%E8%B7%AF+Gongyuan+Village,+East+District,+Hsinchu+City,+300&ftid=0x346835dd9e16bf97:0x655055c03a215bcf&entry=gps&shh=CAE&lucs=,94297699,94231188,94280568,100821559,47071704,94218641,94282134,100813464,94286869,100820247,100813014,100822499&g_ep=CAISEjI2LjMxLjUuOTU0MzA2MDQzMBgAIIgnKnEsOTQyOTc2OTksOTQyMzExODgsOTQyODA1NjgsMTAwODIxNTU5LDQ3MDcxNzA0LDk0MjE4NjQxLDk0MjgyMTM0LDEwMDgxMzQ2NCw5NDI4Njg2OSwxMDA4MjAyNDcsMTAwODEzMDE0LDEwMDgyMjQ5OUICVFc%3D&skid=5af5a530-4e60-47df-b93b-438e55044dce&g_st=ic"
+  },
+  {
+    name:"艷麗南洋鹹甜食",
+    short:"https://maps.app.goo.gl/8eHtihcCRqsDmZEF6?g_st=ic",
+    expected:"https://www.google.com/maps?q=%E8%89%B7%E9%BA%97%E5%8D%97%E6%B4%8B%E9%B9%B9%E7%94%9C%E9%A3%9F,+No.+52%E8%99%9F,+Nanda+Rd,+%E6%9D%B1%E5%8D%80+East+District,+Hsinchu+City,+300&ftid=0x34683582abfd61ab:0xfb22aec1683d4114&entry=gps&shh=CAE&lucs=,94297699,94231188,94280568,100821559,47071704,94218641,94282134,100813464,94286869,100820247,100813014,100822499&g_ep=CAISEjI2LjMxLjUuOTU0MzA2MDQzMBgAIIgnKnEsOTQyOTc2OTksOTQyMzExODgsOTQyODA1NjgsMTAwODIxNTU5LDQ3MDcxNzA0LDk0MjE4NjQxLDk0MjgyMTM0LDEwMDgxMzQ2NCw5NDI4Njg2OSwxMDA4MjAyNDcsMTAwODEzMDE0LDEwMDgyMjQ5OUICVFc%3D&skid=0a1e613c-152b-45b6-a328-08ba35b6f9d2&g_st=ic"
+  },
+  {
+    name:"DoubleTree Seattle Airport",
+    short:"https://maps.app.goo.gl/rfSrJ1Qr9SaJLsZg8?g_st=ic",
+    expected:"https://www.google.com/maps?q=DoubleTree+by+Hilton+Hotel+Seattle+Airport,+18740+International+Blvd,+Seattle,+WA+98188,+United+States&ftid=0x54905ca75f4c722b:0xd407b9006acd55ee&entry=gps&shh=CAE&lucs=,94297699,94231188,94280568,100821559,47071704,94218641,94282134,100813464,94286869,100820247,100813014,100822499&g_ep=CAISEjI2LjMxLjUuOTU0MzA2MDQzMBgAIIgnKnEsOTQyOTc2OTksOTQyMzExODgsOTQyODA1NjgsMTAwODIxNTU5LDQ3MDcxNzA0LDk0MjE4NjQxLDk0MjgyMTM0LDEwMDgxMzQ2NCw5NDI4Njg2OSwxMDA4MjAyNDcsMTAwODEzMDE0LDEwMDgyMjQ5OUICVFc%3D&skid=d7e754a5-769b-4115-8c43-a0598001c6c2&g_st=ic"
+  }
+];
+
+function comparable(raw) {
+  const url = new URL(raw);
+  return JSON.stringify({
+    protocol:url.protocol,
+    host:url.host.toLowerCase(),
+    pathname:url.pathname,
+    params:[...url.searchParams.entries()].sort()
+  });
+}
+
+async function runOne(test, article) {
+  const status = article.querySelector(".status");
+  status.className = "status pending";
+  status.textContent = "Testing…";
+
+  try {
+    const response = await fetch(ENDPOINT, {
+      method:"POST",
+      cache:"no-store",
+      headers:{
+        "Content-Type":"application/json",
+        "apikey":PUBLISHABLE_KEY
+      },
+      body:JSON.stringify({ url:test.short })
+    });
+
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(body.error || `HTTP ${response.status}`);
+    }
+
+    const match = comparable(body.finalUrl) === comparable(test.expected);
+    status.className = `status ${match ? "ok" : "bad"}`;
+    status.textContent = match ? "PASS" : "MISMATCH";
+    article.querySelector(".actual").textContent = body.finalUrl || "Missing finalUrl";
+    article.querySelector(".open").disabled = !body.finalUrl;
+    article.querySelector(".open").onclick = () => window.location.assign(body.finalUrl);
+  } catch (error) {
+    status.className = "status bad";
+    status.textContent = `FAIL: ${error.message}`;
+  }
+}
+
+const results = document.getElementById("results");
+tests.forEach((test, index) => {
+  const article = document.createElement("article");
+  article.innerHTML = `
+    <h2>${index + 1}. ${test.name}</h2>
+    <p class="status">Not run</p>
+    <p><strong>Short:</strong><br><code>${test.short}</code></p>
+    <p><strong>Actual expanded:</strong><br><code class="actual">—</code></p>
+    <button class="run">Run test</button>
+    <button class="open" disabled>Open expanded URL</button>
+  `;
+  article.querySelector(".run").onclick = () => runOne(test, article);
+  results.append(article);
+});
+
+document.getElementById("run-all").onclick = async () => {
+  const articles = [...document.querySelectorAll("article")];
+  for (let index = 0; index < tests.length; index += 1) {
+    await runOne(tests[index], articles[index]);
+  }
+};
+</script>
+</body>
+</html>
