@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Voyage Board v28 — visible notes, service details, and reliable map links -->
+<!-- Voyage Board v32 — three-day scheduled backups with manual backup retained -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -2005,6 +2005,56 @@
     }
   }
 
+
+  /* v30 map-link actions */
+  .map-link-field-row {
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) auto;
+    align-items:stretch;
+    gap:7px;
+    min-width:0;
+  }
+  .map-link-field-row > .field-input {
+    min-width:0;
+    width:100%;
+  }
+  .map-link-actions {
+    display:flex;
+    align-items:stretch;
+    gap:7px;
+    flex:0 0 auto;
+  }
+  .map-link-actions .field-action {
+    min-width:max-content;
+    white-space:nowrap;
+  }
+  .map-clear-btn {
+    color:var(--text-lo);
+  }
+  .map-clear-btn:not(:disabled):hover {
+    color:var(--danger);
+    border-color:color-mix(in srgb, var(--danger) 58%, var(--border));
+  }
+  .map-clear-btn:disabled {
+    opacity:.42;
+    cursor:default;
+  }
+
+  @media (max-width:720px) {
+    .map-link-field-row {
+      grid-template-columns:minmax(0, 1fr) auto;
+      gap:6px;
+    }
+    .map-link-actions {
+      gap:5px;
+      width:auto;
+    }
+    .map-link-actions .field-action {
+      min-height:38px;
+      padding-inline:9px;
+    }
+  }
+
 </style>
 </head>
 <body>
@@ -2145,12 +2195,15 @@
         <input class="field-input" id="f-bus-number" autocomplete="off" placeholder="307">
       </div>
 
-      <label class="field-label" data-i18n="googleMapsLink">Google Maps link</label>
-      <div class="field-row">
-        <input class="field-input" id="f-map-link" type="url" placeholder="Paste a Google Maps or maps.app.goo.gl link">
-        <button type="button" class="field-action" id="map-search-btn">Open Maps</button>
+      <label class="field-label" data-i18n="googleMapsLink">Map link</label>
+      <div class="field-row map-link-field-row">
+        <input class="field-input" id="f-map-link" type="text" inputmode="url" autocomplete="url" placeholder="Paste a Google Maps or Naver Map link">
+        <div class="map-link-actions">
+          <button type="button" class="field-action" id="map-search-btn">Open Maps</button>
+          <button type="button" class="field-action map-clear-btn" id="map-clear-btn">Clear</button>
+        </div>
       </div>
-      <div class="field-help" data-i18n="mapHelp">Paste a place link, or use “Open Maps” to search using the location or route above.</div>
+      <div class="field-help" data-i18n="mapHelp">Paste a Google Maps or Naver Map link. Open uses the saved link first, or searches from the location when the field is empty.</div>
 
       <div class="grid-3">
         <div><label class="field-label" id="f-date-label" data-i18n="date">Date</label><input type="date" class="field-input" id="f-date"></div>
@@ -2500,7 +2553,7 @@
     <div id="backup-auth-note" class="muted-box backup-auth-note" style="display:none;"></div>
     <div id="backup-content" class="modal-body" style="display:none;">
       <div class="backup-toolbar">
-        <div id="backup-help" class="backup-help">Server snapshots are created before cloud changes and every six hours.</div>
+        <div id="backup-help" class="backup-help">A scheduled server backup is created every three days. You can also create a manual backup at any time.</div>
         <div class="backup-toolbar-actions">
           <button id="backup-refresh-btn" class="btn btn-ghost" type="button">Refresh</button>
           <button id="backup-create-btn" class="btn btn-primary" type="button">Create backup now</button>
@@ -2567,7 +2620,7 @@ const I18N = {
     toolbarHint:"Drag timeline blocks to reorder them. Drag trips in the left list to arrange the list.", type:"Type", titleLabel:"Title", entryColor:"Entry color",
     useTypeDefault:"Use type default", colorDefaultHelp:"Uses the selected type's default color unless you choose a custom color.", colorCustomHelp:"Custom color override is active for this entry.",
     location:"Location", propertyLocation:"Property / location", from:"From", to:"To", departureAirport:"Departure airport", arrivalAirport:"Arrival airport",
-    googleMapsLink:"Google Maps link", openMaps:"Open Maps", mapHelp:"Paste a place link, or use “Open Maps” to search using the location or route above.",
+    googleMapsLink:"Map link", openMaps:"Open", clearMapLink:"Clear", mapHelp:"Paste a Google Maps or Naver Map link. Open uses the saved link first, or searches from the location when the field is empty.",
     date:"Date", start:"Start", end:"End", price:"Price", currency:"Currency", spendingCategory:"Spending category", add:"Add", trip:"Trip", notes:"Notes",
     flightNumber:"Flight number", departureTerminal:"Departure terminal", arrivalTerminal:"Arrival terminal", busNumber:"Bus number",
     flightService:"Flight {number}", busService:"Bus {number}", terminalRoute:"Terminal {departure} → {arrival}", departureTerminalOnly:"Departure terminal {terminal}", arrivalTerminalOnly:"Arrival terminal {terminal}",
@@ -2580,7 +2633,7 @@ const I18N = {
     noCosts:"No costs logged yet", noTrips:"No trips yet", createFirstTrip:"Create your first trip", emptyTrip:"{name} is empty", emptyTripHelp:"Use “Add entry” to log a flight, hotel, meal, shopping stop, or activity.",
     item:"item", items:"items", until:"until", tripDefault:"Trip default ({currency})", inheritedCurrency:"Using trip default: {currency}. Select another currency to override it for this entry.",
     customCurrency:"This entry overrides the trip default ({currency}).", invalidMap:"Please enter a valid http:// or https:// map link.", untitled:"Untitled", optional:"Optional",
-    addCustomCategory:"＋ Add custom category…", titlePlaceholder:"e.g. Flight to Tokyo", mapPlaceholder:"Paste a Google Maps or maps.app.goo.gl link", categoryPlaceholder:"e.g. Shopping", tripNamePlaceholder:"e.g. Iceland Roadtrip — leave blank for Untitled",
+    addCustomCategory:"＋ Add custom category…", titlePlaceholder:"e.g. Flight to Tokyo", mapPlaceholder:"Paste a Google Maps, maps.app.goo.gl, map.naver.com, or naver.me link", categoryPlaceholder:"e.g. Shopping", tripNamePlaceholder:"e.g. Iceland Roadtrip — leave blank for Untitled",
     selectAirport:"Select or type an airport", origin:"Origin", destination:"Destination", placeAddress:"Place or address", hotelPlaceholder:"Hotel or property name",
     foodPlaceholder:"Restaurant, café, or market", activityPlaceholder:"Venue or meeting point", sightseeingPlaceholder:"Landmark or area", meetingPlaceholder:"Office or meeting venue",
     confirmDelete:'Delete "{label}"?', cannotUndo:"This can't be undone.", deleteAction:"Delete",
@@ -2594,7 +2647,7 @@ const I18N = {
     toolbarHint:"拖曳時間軸項目可重新排序；拖曳左側旅程可調整旅程順序。", type:"類型", titleLabel:"標題", entryColor:"項目顏色",
     useTypeDefault:"使用類型預設色", colorDefaultHelp:"除非選擇自訂顏色，否則會使用所選類型的預設色。", colorCustomHelp:"此項目已啟用自訂顏色。",
     location:"地點", propertyLocation:"住宿／地點", from:"出發地", to:"目的地", departureAirport:"出發機場", arrivalAirport:"抵達機場",
-    googleMapsLink:"Google 地圖連結", openMaps:"開啟地圖", mapHelp:"貼上地點連結，或使用「開啟地圖」依上方地點或路線搜尋。",
+    googleMapsLink:"地圖連結", openMaps:"開啟", clearMapLink:"清除", mapHelp:"可貼上 Google 地圖或 Naver Map 連結。欄位有連結時會優先開啟；留空時則依地點或路線搜尋。",
     date:"日期", start:"開始", end:"結束", price:"價格", currency:"幣別", spendingCategory:"支出分類", add:"新增", trip:"旅程", notes:"備註",
     flightNumber:"航班編號", departureTerminal:"出發航廈", arrivalTerminal:"抵達航廈", busNumber:"公車號碼",
     flightService:"航班 {number}", busService:"公車 {number}", terminalRoute:"航廈 {departure} → {arrival}", departureTerminalOnly:"出發航廈 {terminal}", arrivalTerminalOnly:"抵達航廈 {terminal}",
@@ -2607,7 +2660,7 @@ const I18N = {
     noCosts:"尚未記錄支出", noTrips:"尚無旅程", createFirstTrip:"建立第一個旅程", emptyTrip:"{name} 尚無內容", emptyTripHelp:"使用「新增項目」記錄航班、住宿、餐飲、購物或活動。",
     item:"個項目", items:"個項目", until:"至", tripDefault:"旅程預設（{currency}）", inheritedCurrency:"使用旅程預設：{currency}。選擇其他幣別即可覆寫此項目。",
     customCurrency:"此項目已覆寫旅程預設幣別（{currency}）。", invalidMap:"請輸入有效的 http:// 或 https:// 地圖連結。", untitled:"未命名", optional:"選填",
-    addCustomCategory:"＋ 新增自訂分類…", titlePlaceholder:"例如：前往東京的航班", mapPlaceholder:"貼上 Google 地圖或 maps.app.goo.gl 連結", categoryPlaceholder:"例如：購物", tripNamePlaceholder:"例如：冰島自駕；留白則使用「未命名」",
+    addCustomCategory:"＋ 新增自訂分類…", titlePlaceholder:"例如：前往東京的航班", mapPlaceholder:"貼上 Google 地圖、maps.app.goo.gl、map.naver.com 或 naver.me 連結", categoryPlaceholder:"例如：購物", tripNamePlaceholder:"例如：冰島自駕；留白則使用「未命名」",
     selectAirport:"選擇或輸入機場", origin:"出發地", destination:"目的地", placeAddress:"地點或地址", hotelPlaceholder:"飯店或住宿名稱",
     foodPlaceholder:"餐廳、咖啡廳或市場", activityPlaceholder:"場地或集合點", sightseeingPlaceholder:"景點或區域", meetingPlaceholder:"辦公室或會議地點",
     confirmDelete:'刪除「{label}」？', cannotUndo:"此動作無法復原。", deleteAction:"刪除",
@@ -2621,7 +2674,7 @@ const I18N = {
     toolbarHint:"タイムライン項目をドラッグして並べ替えます。左側の旅行もドラッグできます。", type:"種類", titleLabel:"タイトル", entryColor:"項目の色",
     useTypeDefault:"種類の既定色", colorDefaultHelp:"カスタム色を選ばない場合、種類の既定色を使用します。", colorCustomHelp:"この項目にはカスタム色が設定されています。",
     location:"場所", propertyLocation:"宿泊施設／場所", from:"出発地", to:"目的地", departureAirport:"出発空港", arrivalAirport:"到着空港",
-    googleMapsLink:"Google マップリンク", openMaps:"マップを開く", mapHelp:"場所のリンクを貼るか、上の場所／経路から検索できます。",
+    googleMapsLink:"地図リンク", openMaps:"開く", clearMapLink:"クリア", mapHelp:"Google マップまたは Naver Map のリンクを貼り付けられます。リンクがある場合は優先して開き、空欄の場合は場所／経路から検索します。",
     date:"日付", start:"開始", end:"終了", price:"価格", currency:"通貨", spendingCategory:"支出カテゴリ", add:"追加", trip:"旅行", notes:"メモ",
     flightNumber:"便名", departureTerminal:"出発ターミナル", arrivalTerminal:"到着ターミナル", busNumber:"バス番号",
     flightService:"便名 {number}", busService:"バス {number}", terminalRoute:"ターミナル {departure} → {arrival}", departureTerminalOnly:"出発ターミナル {terminal}", arrivalTerminalOnly:"到着ターミナル {terminal}",
@@ -2634,7 +2687,7 @@ const I18N = {
     noCosts:"支出はまだありません", noTrips:"旅行はまだありません", createFirstTrip:"最初の旅行を作成", emptyTrip:"{name} は空です", emptyTripHelp:"「予定を追加」でフライト、ホテル、食事、買い物、アクティビティを登録します。",
     item:"件", items:"件", until:"まで", tripDefault:"旅行の既定値（{currency}）", inheritedCurrency:"旅行の既定値を使用：{currency}。別の通貨を選ぶと上書きできます。",
     customCurrency:"この項目は旅行の既定通貨（{currency}）を上書きしています。", invalidMap:"有効な http:// または https:// の地図リンクを入力してください。", untitled:"無題", optional:"任意",
-    addCustomCategory:"＋ カスタムカテゴリを追加…", titlePlaceholder:"例：東京へのフライト", mapPlaceholder:"Google マップまたは maps.app.goo.gl のリンクを貼り付け", categoryPlaceholder:"例：買い物", tripNamePlaceholder:"例：アイスランド旅行（空欄は「無題」）",
+    addCustomCategory:"＋ カスタムカテゴリを追加…", titlePlaceholder:"例：東京へのフライト", mapPlaceholder:"Google マップ、maps.app.goo.gl、map.naver.com、naver.me のリンクを貼り付け", categoryPlaceholder:"例：買い物", tripNamePlaceholder:"例：アイスランド旅行（空欄は「無題」）",
     selectAirport:"空港を選択または入力", origin:"出発地", destination:"目的地", placeAddress:"場所または住所", hotelPlaceholder:"ホテルまたは宿泊施設名",
     foodPlaceholder:"レストラン、カフェ、市場", activityPlaceholder:"会場または集合場所", sightseeingPlaceholder:"観光地またはエリア", meetingPlaceholder:"オフィスまたは会議場所",
     confirmDelete:'「{label}」を削除しますか？', cannotUndo:"この操作は元に戻せません。", deleteAction:"削除",
@@ -3202,7 +3255,7 @@ function applyStaticTranslations() {
   });
   const textMap = {
     "trips-label":"trips", "trip-spend-label":"tripSpend", "new-trip-btn":"newTrip", "add-entry-btn":"addEntry", "hotel-modal-title":"hotelMenu", "hotel-menu-intro":"hotelMenuIntro", "hotel-add-btn":"addHotel",
-    "trip-settings-btn":"tripSettings", "hotel-menu-btn":"hotelMenu", "app-settings-btn":"appSettings", "toolbar-hint":"toolbarHint", "map-search-btn":"openMaps",
+    "trip-settings-btn":"tripSettings", "hotel-menu-btn":"hotelMenu", "app-settings-btn":"appSettings", "toolbar-hint":"toolbarHint", "map-search-btn":"openMaps", "map-clear-btn":"clearMapLink",
     "spend-summary-btn":"spending", "spend-modal-title":"tripSpend",
     "item-cancel":"cancel", "item-save":"save", "trip-cancel":"cancel", "app-cancel":"cancel", "app-save":"save",
     "currency-default-note":"currencyDefaultNote", "trip-color-help":"tripColorHelp", "appearance-help":"appearanceHelp"
@@ -4001,9 +4054,13 @@ function secondsToTime(seconds) {
 function safeHttpUrl(raw) {
   const value = String(raw || "").trim();
   if (!value) return "";
-  const candidate = /^(?:www\.|maps\.|google\.)/i.test(value)
-    ? `https://${value}`
-    : value;
+
+  // Accept scheme-less shared links from Google Maps, Naver Map, and other
+  // normal web map providers. Non-web schemes such as javascript: remain
+  // rejected below.
+  const looksLikeDomain = /^[a-z0-9.-]+\.[a-z]{2,}(?::\d+)?(?:[/?#]|$)/i.test(value);
+  const candidate = looksLikeDomain ? `https://${value}` : value;
+
   try {
     const url = new URL(candidate);
     return ["http:", "https:"].includes(url.protocol) ? url.href : "";
@@ -4026,30 +4083,17 @@ function googleMapsDirectionsUrl(origin, destination) {
 function mapHrefForItem(item) {
   if (!item) return "";
 
+  // A link explicitly pasted by the user must always win. The previous
+  // implementation replaced Google Maps links with a generated route based
+  // on the entry's from/to fields, so changing the saved link appeared to do
+  // nothing and could repeatedly open an airport terminal.
+  const explicitUrl = safeHttpUrl(item.mapUrl);
+  if (explicitUrl) return explicitUrl;
+
+  // Generate a dependable fallback only when no map link was saved.
   const routeUrl = googleMapsDirectionsUrl(item.fromPlace, item.toPlace);
   const searchUrl = googleMapsSearchUrl(item.location || item.title);
-  const generatedUrl = routeUrl || searchUrl;
-  const explicitUrl = safeHttpUrl(item.mapUrl);
-
-  if (!explicitUrl) return generatedUrl;
-
-  try {
-    const url = new URL(explicitUrl);
-    const host = url.hostname.toLowerCase();
-    const isGoogleMapsHost =
-      host === "maps.app.goo.gl" ||
-      host === "goo.gl" ||
-      host === "maps.google.com" ||
-      host === "www.google.com" ||
-      host.endsWith(".google.com");
-
-    // Google short/app links may be rejected by an installed Maps app or a
-    // restricted webview. Use the universal API=1 URL built from the saved
-    // entry data whenever possible.
-    if (isGoogleMapsHost && generatedUrl) return generatedUrl;
-  } catch {}
-
-  return explicitUrl || generatedUrl;
+  return routeUrl || searchUrl;
 }
 
 function splitRoute(location) {
@@ -5241,6 +5285,7 @@ function openItemModal(itemId) {
   document.getElementById("f-arrival-terminal").value = item?.arrivalTerminal || "";
   document.getElementById("f-bus-number").value = item?.busNumber || "";
   document.getElementById("f-map-link").value = item?.mapUrl || "";
+  updateMapClearButton();
   document.getElementById("f-date").value = item?.date || TODAY;
   document.getElementById("f-start").value = item?.startTime || "";
   document.getElementById("f-end").value = item?.endTime || "";
@@ -5311,6 +5356,18 @@ document.getElementById("f-category-name").addEventListener("keydown", event => 
   }
 });
 
+function updateMapClearButton() {
+  const input = document.getElementById("f-map-link");
+  const button = document.getElementById("map-clear-btn");
+  if (button) button.disabled = !input?.value.trim();
+}
+document.getElementById("f-map-link").addEventListener("input", updateMapClearButton);
+document.getElementById("map-clear-btn").addEventListener("click", () => {
+  const input = document.getElementById("f-map-link");
+  input.value = "";
+  input.dispatchEvent(new Event("input", { bubbles:true }));
+  input.focus();
+});
 document.getElementById("map-search-btn").addEventListener("click", () => {
   const kind = selectedKind();
   const config = KIND_CONFIG[kind] || KIND_CONFIG.other;
@@ -6233,15 +6290,15 @@ Object.assign(COLLAB_I18N.ja, {
 });
 
 Object.assign(COLLAB_I18N.en, {
-  backups:"Backups", backupsTitle:"Trip backups", backupHelp:"Server recovery snapshots are created before every cloud change and every six hours. Up to 1,000 snapshots are retained for each trip.", backupNeedsSignIn:"Sign in to use server backups.", backupNeedsSharedTrip:"Publish this trip before using server backups.", backupNoPermission:"Editing access is required to view or restore backups.", backupLoading:"Loading backups…", backupEmpty:"No recovery snapshots are available yet.", createBackup:"Create backup now", refresh:"Refresh", backupCreated:"Backup created.", backupCreateError:"The backup could not be created.", backupBackendMissing:"The backup database is not ready. Run the supplied v5 Supabase SQL, wait a few seconds, and reload this page.", backupAutomatic:"Before change", backupScheduled:"Scheduled", backupManual:"Manual", backupRestorePoint:"Before restore", backupVersion:"Version {version}", backupBy:"by {name}", server:"Server", restore:"Restore", downloadJson:"Download JSON", confirmRestore:"Restore this backup? The current trip will first be saved as another recovery point.", restoring:"Restoring backup…", restored:"Backup restored.", restoreError:"The backup could not be restored.",
+  backups:"Backups", backupsTitle:"Trip backups", backupHelp:"A scheduled server backup is created every three days. You can also create a manual backup at any time. Up to 1,000 snapshots are retained for each trip.", backupNeedsSignIn:"Sign in to use server backups.", backupNeedsSharedTrip:"Publish this trip before using server backups.", backupNoPermission:"Editing access is required to view or restore backups.", backupLoading:"Loading backups…", backupEmpty:"No recovery snapshots are available yet.", createBackup:"Create backup now", refresh:"Refresh", backupCreated:"Backup created.", backupCreateError:"The backup could not be created.", backupBackendMissing:"The backup database is not ready. Run the supplied v5 Supabase SQL, wait a few seconds, and reload this page.", backupAutomatic:"Before change", backupScheduled:"Scheduled", backupManual:"Manual", backupRestorePoint:"Before restore", backupVersion:"Version {version}", backupBy:"by {name}", server:"Server", restore:"Restore", downloadJson:"Download JSON", confirmRestore:"Restore this backup? The current trip will first be saved as another recovery point.", restoring:"Restoring backup…", restored:"Backup restored.", restoreError:"The backup could not be restored.",
   attachImage:"Attach images", removeSelectedImage:"Remove selected image", imageTooLarge:"Images must be 8 MB or smaller.", imageBatchSelected:"{count} images selected", imageBatchLimit:"Select up to {count} images at a time.", imageTypeUnsupported:"Use a JPEG, PNG, WebP, or GIF image.", imageUploadError:"The image could not be uploaded.", unsend:"Unsend", removeMessage:"Remove", confirmUnsend:"Unsend this message?", confirmRemoveMessage:"Remove this member's message?", messageUnsent:"Message unsent", messageRemoved:"Message removed by an administrator", messageRemoveError:"The message could not be removed."
 });
 Object.assign(COLLAB_I18N["zh-TW"], {
-  backups:"備份", backupsTitle:"旅程備份", backupHelp:"伺服器會在每次雲端修改前及每六小時建立復原快照；每個旅程最多保留 1,000 份。", backupNeedsSignIn:"請先登入才能使用伺服器備份。", backupNeedsSharedTrip:"請先發布此旅程，才能使用伺服器備份。", backupNoPermission:"需要可編輯權限才能查看或還原備份。", backupLoading:"正在載入備份…", backupEmpty:"目前沒有可用的復原快照。", createBackup:"立即建立備份", refresh:"重新整理", backupCreated:"備份已建立。", backupCreateError:"無法建立備份。", backupBackendMissing:"備份資料庫尚未就緒。請執行隨附的 v5 Supabase SQL，等待數秒後重新載入。", backupAutomatic:"修改前", backupScheduled:"定時備份", backupManual:"手動備份", backupRestorePoint:"還原前", backupVersion:"版本 {version}", backupBy:"由 {name}", server:"伺服器", restore:"還原", downloadJson:"下載 JSON", confirmRestore:"要還原此備份嗎？目前的旅程會先另存為一個復原點。", restoring:"正在還原備份…", restored:"備份已還原。", restoreError:"無法還原備份。",
+  backups:"備份", backupsTitle:"旅程備份", backupHelp:"伺服器每三天建立一次定時備份；使用者也可以隨時手動建立備份。每個旅程最多保留 1,000 份。", backupNeedsSignIn:"請先登入才能使用伺服器備份。", backupNeedsSharedTrip:"請先發布此旅程，才能使用伺服器備份。", backupNoPermission:"需要可編輯權限才能查看或還原備份。", backupLoading:"正在載入備份…", backupEmpty:"目前沒有可用的復原快照。", createBackup:"立即建立備份", refresh:"重新整理", backupCreated:"備份已建立。", backupCreateError:"無法建立備份。", backupBackendMissing:"備份資料庫尚未就緒。請執行隨附的 v5 Supabase SQL，等待數秒後重新載入。", backupAutomatic:"修改前", backupScheduled:"定時備份", backupManual:"手動備份", backupRestorePoint:"還原前", backupVersion:"版本 {version}", backupBy:"由 {name}", server:"伺服器", restore:"還原", downloadJson:"下載 JSON", confirmRestore:"要還原此備份嗎？目前的旅程會先另存為一個復原點。", restoring:"正在還原備份…", restored:"備份已還原。", restoreError:"無法還原備份。",
   attachImage:"附加圖片", removeSelectedImage:"移除已選圖片", imageTooLarge:"圖片大小不可超過 8 MB。", imageBatchSelected:"已選擇 {count} 張圖片", imageBatchLimit:"一次最多選擇 {count} 張圖片。", imageTypeUnsupported:"請使用 JPEG、PNG、WebP 或 GIF 圖片。", imageUploadError:"圖片上傳失敗。", unsend:"收回", removeMessage:"移除", confirmUnsend:"要收回這則訊息嗎？", confirmRemoveMessage:"要移除此成員的訊息嗎？", messageUnsent:"訊息已收回", messageRemoved:"訊息已由管理者移除", messageRemoveError:"無法移除訊息。"
 });
 Object.assign(COLLAB_I18N.ja, {
-  backups:"バックアップ", backupsTitle:"旅行のバックアップ", backupHelp:"クラウド変更の直前と6時間ごとにサーバー復元スナップショットを作成します。旅行ごとに最大1,000件を保持します。", backupNeedsSignIn:"サーバーバックアップを使うにはサインインしてください。", backupNeedsSharedTrip:"サーバーバックアップを使う前に旅行を共有してください。", backupNoPermission:"バックアップの表示と復元には編集権限が必要です。", backupLoading:"バックアップを読み込んでいます…", backupEmpty:"復元スナップショットはまだありません。", createBackup:"今すぐバックアップ", refresh:"更新", backupCreated:"バックアップを作成しました。", backupCreateError:"バックアップを作成できませんでした。", backupBackendMissing:"バックアップ用データベースの準備ができていません。付属の v5 Supabase SQL を実行し、数秒待ってから再読み込みしてください。", backupAutomatic:"変更前", backupScheduled:"定期", backupManual:"手動", backupRestorePoint:"復元前", backupVersion:"バージョン {version}", backupBy:"{name}", server:"サーバー", restore:"復元", downloadJson:"JSONをダウンロード", confirmRestore:"このバックアップを復元しますか？現在の旅行は先に別の復元ポイントとして保存されます。", restoring:"バックアップを復元中…", restored:"バックアップを復元しました。", restoreError:"バックアップを復元できませんでした。",
+  backups:"バックアップ", backupsTitle:"旅行のバックアップ", backupHelp:"サーバーは3日ごとに定期バックアップを作成します。ユーザーはいつでも手動バックアップを作成できます。旅行ごとに最大1,000件を保持します。", backupNeedsSignIn:"サーバーバックアップを使うにはサインインしてください。", backupNeedsSharedTrip:"サーバーバックアップを使う前に旅行を共有してください。", backupNoPermission:"バックアップの表示と復元には編集権限が必要です。", backupLoading:"バックアップを読み込んでいます…", backupEmpty:"復元スナップショットはまだありません。", createBackup:"今すぐバックアップ", refresh:"更新", backupCreated:"バックアップを作成しました。", backupCreateError:"バックアップを作成できませんでした。", backupBackendMissing:"バックアップ用データベースの準備ができていません。付属の v5 Supabase SQL を実行し、数秒待ってから再読み込みしてください。", backupAutomatic:"変更前", backupScheduled:"定期", backupManual:"手動", backupRestorePoint:"復元前", backupVersion:"バージョン {version}", backupBy:"{name}", server:"サーバー", restore:"復元", downloadJson:"JSONをダウンロード", confirmRestore:"このバックアップを復元しますか？現在の旅行は先に別の復元ポイントとして保存されます。", restoring:"バックアップを復元中…", restored:"バックアップを復元しました。", restoreError:"バックアップを復元できませんでした。",
   attachImage:"画像を添付", removeSelectedImage:"選択した画像を削除", imageTooLarge:"画像は8 MB以下にしてください。", imageBatchSelected:"画像を {count} 枚選択", imageBatchLimit:"一度に選択できる画像は {count} 枚までです。", imageTypeUnsupported:"JPEG、PNG、WebP、GIF画像を使用してください。", imageUploadError:"画像をアップロードできませんでした。", unsend:"送信取消", removeMessage:"削除", confirmUnsend:"このメッセージの送信を取り消しますか？", confirmRemoveMessage:"このメンバーのメッセージを削除しますか？", messageUnsent:"メッセージの送信が取り消されました", messageRemoved:"管理者がメッセージを削除しました", messageRemoveError:"メッセージを削除できませんでした。"
 });
 
@@ -6249,7 +6306,7 @@ Object.assign(COLLAB_I18N.en, {
   activitySummaryTitle:"Activity log",
   activitySummaryMeta:"{count} modifications · latest {time}",
   backupsTitle:"Trip & chat backups",
-  backupHelp:"Each trip is backed up independently. Snapshots include the itinerary, conversation, activity log, and photo references. The server creates one for every trip every six hours; up to 1,000 are retained per trip.",
+  backupHelp:"Each trip is backed up independently. Snapshots include the itinerary, conversation, activity log, and photo references. The server creates one every three days, and users can create a manual backup at any time. Up to 1,000 are retained per trip.",
   backupCreated:"Trip and chat backup created.",
   backupBackendMissing:"The backup database is not ready. Run the supplied v9 Supabase SQL, wait a few seconds, and reload this page.",
   backupChatIncluded:"Chat: {messages} messages · {logs} activity records · {images} photos",
@@ -6266,7 +6323,7 @@ Object.assign(COLLAB_I18N["zh-TW"], {
   activitySummaryTitle:"修改紀錄",
   activitySummaryMeta:"{count} 筆修改 · 最新 {time}",
   backupsTitle:"旅程與聊天備份",
-  backupHelp:"每個旅程都會獨立備份。快照包含行程、對話、活動紀錄及照片參照；伺服器每六小時為每個旅程建立一次備份，每個旅程最多保留 1,000 份。",
+  backupHelp:"每個旅程都會獨立備份。快照包含行程、對話、活動紀錄及照片參照；伺服器每三天建立一次定時備份，使用者也可以隨時手動備份。每個旅程最多保留 1,000 份。",
   backupCreated:"已建立旅程與聊天備份。",
   backupBackendMissing:"備份資料庫尚未就緒。請執行隨附的 v9 Supabase SQL，等待數秒後重新載入。",
   backupChatIncluded:"聊天：{messages} 則訊息 · {logs} 筆活動紀錄 · {images} 張照片",
@@ -6283,7 +6340,7 @@ Object.assign(COLLAB_I18N.ja, {
   activitySummaryTitle:"変更履歴",
   activitySummaryMeta:"変更 {count} 件 · 最新 {time}",
   backupsTitle:"旅行とチャットのバックアップ",
-  backupHelp:"旅行ごとに独立してバックアップします。スナップショットには予定、会話、アクティビティ履歴、写真参照が含まれます。サーバーは旅行ごとに6時間ごとに保存し、最大1,000件保持します。",
+  backupHelp:"旅行ごとに独立してバックアップします。スナップショットには予定、会話、アクティビティ履歴、写真参照が含まれます。サーバーは3日ごとに定期保存し、ユーザーはいつでも手動バックアップを作成できます。旅行ごとに最大1,000件保持します。",
   backupCreated:"旅行とチャットのバックアップを作成しました。",
   backupBackendMissing:"バックアップ用データベースの準備ができていません。付属の v9 Supabase SQL を実行し、数秒待ってから再読み込みしてください。",
   backupChatIncluded:"チャット：{messages}件 · アクティビティ{logs}件 · 写真{images}枚",
