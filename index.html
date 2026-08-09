@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Voyage Board v40 — first-party Supabase Google Maps short-link expansion -->
-<!-- Voyage Board v43: desktop schedule alignment, desktop chat workspace, and desktop new-tab map opening -->
+<!-- Voyage Board v44: compact consistent desktop schedule cards; mobile layout preserved -->
 <!-- Voyage Board collaboration v8: chat tabs, album, date jump, silent delete -->
 <!-- Voyage Board collaboration stability fixes v7 -->
 <!-- Voyage Board update v5: chat moderation, private image messages, and server recovery snapshots -->
@@ -2158,6 +2158,235 @@
     }
     .chat-composer {
       min-height:68px;
+    }
+  }
+
+
+  /* v44 desktop-only schedule typography and information layout.
+     This block intentionally does not affect screens at 720px or below. */
+  @media (min-width:721px) {
+    /* Every schedule block uses the same compact two-column structure:
+       information on the left; price, map and edit controls on the right. */
+    .event-card,
+    .transport-row .transport-chip {
+      min-height:88px;
+      padding:13px 16px;
+    }
+
+    .event-card {
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) auto;
+      align-items:center;
+      column-gap:18px;
+    }
+    .event-card .event-top {
+      grid-column:1;
+      min-width:0;
+    }
+    .event-card .event-main-content {
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:7px 10px;
+      min-width:0;
+    }
+    .event-card .event-main-content > * {
+      margin-top:0;
+      margin-bottom:0;
+    }
+    .event-card .kind-pill {
+      order:0;
+      flex:0 0 auto;
+    }
+    .event-card .event-title {
+      order:1;
+      flex:0 1 auto;
+      max-width:min(38vw, 600px);
+      margin:0;
+      font-size:14px;
+      line-height:1.35;
+    }
+    .event-card .staying-badge {
+      order:2;
+      flex:0 0 auto;
+    }
+    .event-card .event-until {
+      order:3;
+      flex:0 0 auto;
+      margin:0;
+      white-space:nowrap;
+    }
+    .event-card .event-loc {
+      order:4;
+      flex:0 1 auto;
+      max-width:min(27vw, 420px);
+      margin:0;
+      white-space:nowrap;
+    }
+    .event-card .event-notes {
+      order:5;
+      flex:0 1 auto;
+      max-width:min(27vw, 460px);
+      margin:0;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .event-card > .card-footer-row {
+      grid-column:2;
+      grid-row:1;
+      align-self:center;
+      width:auto;
+      margin:0;
+      padding:0;
+      gap:9px;
+    }
+
+    /* Hotel-night continuation cards use the same horizontal reading flow. */
+    .event-continuation .event-top > div {
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:7px 10px;
+      min-width:0;
+    }
+    .event-continuation .event-title,
+    .event-continuation .event-notes {
+      margin:0;
+    }
+    .event-continuation .event-title {
+      max-width:min(42vw, 640px);
+    }
+
+    /* Bus and flight blocks follow the same left-information/right-actions
+       template as ordinary event and hotel cards. */
+    .transport-row .transport-chip {
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) auto;
+      grid-template-rows:auto auto;
+      align-items:center;
+      column-gap:18px;
+      row-gap:5px;
+    }
+    .transport-row .transport-main-content {
+      grid-column:1;
+      grid-row:1;
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:7px 10px;
+      width:auto;
+      min-width:0;
+    }
+    .transport-row .transport-detail-block {
+      grid-column:1;
+      grid-row:2;
+      display:flex;
+      flex-direction:row;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:6px 9px;
+      width:auto;
+      min-width:0;
+      margin:0;
+      padding:0;
+    }
+    .transport-row .transport-chip > .card-footer-row {
+      grid-column:2;
+      grid-row:1 / span 2;
+      align-self:center;
+      width:auto;
+      margin:0;
+      padding:0;
+      gap:9px;
+    }
+    .transport-row .transport-title {
+      flex:0 1 auto;
+      max-width:min(40vw, 650px);
+      font-size:14px;
+      line-height:1.35;
+    }
+    .transport-row .transport-meta {
+      flex:0 0 auto;
+      font-size:11.5px;
+      white-space:nowrap;
+    }
+    .transport-row .transport-notes {
+      flex:0 1 auto;
+      max-width:min(34vw, 560px);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* On a wide desktop, departure, arrival and duration read as one route
+       sentence rather than three stacked lines. They wrap only when needed. */
+    .flight-chip .flight-route-block {
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:6px 10px;
+      min-width:0;
+    }
+    .flight-chip .flight-route-line {
+      display:inline-flex;
+      align-items:center;
+      column-gap:5px;
+      min-width:0;
+    }
+    .flight-chip .flight-route-marker {
+      width:auto;
+      min-width:0;
+    }
+    .flight-chip .flight-route-arrival {
+      margin-top:0;
+    }
+    .flight-chip .flight-local-time {
+      white-space:nowrap;
+    }
+    .flight-chip .flight-duration-line {
+      display:inline-flex;
+      align-items:center;
+      padding-left:0;
+      font-size:11px;
+      white-space:nowrap;
+    }
+
+    /* Linked arrival continuation blocks also use a compact horizontal flow. */
+    .flight-arrival-continuation-card {
+      display:flex !important;
+      flex-direction:row !important;
+      align-items:center !important;
+      flex-wrap:wrap;
+      gap:7px 12px !important;
+    }
+    .flight-arrival-continuation-card .flight-continuation-title,
+    .flight-arrival-continuation-card .flight-continuation-meta,
+    .flight-arrival-continuation-card .flight-continuation-footer {
+      width:auto;
+      margin-top:0;
+    }
+    .flight-arrival-continuation-card .flight-continuation-footer {
+      margin-left:auto;
+    }
+
+    /* Use a consistent, slightly larger desktop action area while keeping
+       mobile tap-target rules untouched. */
+    .event-card .card-footer-row .icon-btn,
+    .transport-chip .card-footer-row .icon-btn {
+      width:32px;
+      height:32px;
+      flex:0 0 32px;
+    }
+    .event-card .card-footer-left,
+    .transport-chip .card-footer-left,
+    .event-card .card-footer-actions,
+    .transport-chip .card-footer-actions {
+      gap:6px;
+    }
+    .event-card .card-footer-price,
+    .transport-chip .card-footer-price {
+      font-size:12.5px;
     }
   }
 
